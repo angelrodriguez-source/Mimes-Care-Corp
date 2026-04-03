@@ -13,86 +13,48 @@
     align-items: center;
     min-height: 100vh;
     font-family: Arial, sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
   }
   h1 {
     color: #5C6BC0;
     font-size: 22px;
-    margin-top: 16px;
+    margin-top: 14px;
     text-shadow: 0 1px 2px rgba(255,255,255,0.8);
   }
-  .subtitle {
-    color: #9E9E9E;
-    font-size: 12px;
-    margin-top: 4px;
-  }
-  canvas {
-    margin-top: 10px;
-    border-radius: 12px;
-    touch-action: none;
-  }
+  .subtitle { color: #9E9E9E; font-size: 12px; margin-top: 2px; }
+  canvas { margin-top: 6px; touch-action: none; }
   .labels {
-    display: flex;
-    width: 100%;
-    max-width: 400px;
-    justify-content: space-around;
-    margin-top: 8px;
+    display: flex; width: 100%; max-width: 420px;
+    justify-content: space-around; margin-top: 4px;
   }
   .label {
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 13px; font-weight: bold;
     text-shadow: 0 1px 2px rgba(255,255,255,0.8);
     text-align: center;
   }
-  .label small {
-    display: block;
-    font-weight: normal;
-    font-size: 10px;
-    color: #999;
-    margin-top: 2px;
-  }
-  .hint {
-    color: #BDBDBD;
-    font-size: 11px;
-    margin-top: 12px;
-  }
+  .label small { display: block; font-weight: normal; font-size: 10px; color: #999; margin-top: 1px; }
   .mood-selector {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 0 12px;
+    display: flex; gap: 6px; margin-top: 10px;
+    flex-wrap: wrap; justify-content: center; padding: 0 8px;
   }
   .mood-btn {
-    padding: 6px 12px;
-    border: 2px solid #C5CAE9;
-    border-radius: 20px;
-    background: white;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
+    padding: 5px 10px; border: 2px solid #C5CAE9; border-radius: 20px;
+    background: white; font-size: 12px; cursor: pointer; transition: all 0.2s;
   }
-  .mood-btn.active {
-    background: #5C6BC0;
-    color: white;
-    border-color: #5C6BC0;
-  }
+  .mood-btn.active { background: #5C6BC0; color: white; border-color: #5C6BC0; }
+  .hint { color: #BDBDBD; font-size: 11px; margin-top: 8px; }
 </style>
 </head>
 <body>
 
 <h1>Mimes Care Corp</h1>
 <p class="subtitle">Preview de personalidades</p>
-
 <canvas id="c"></canvas>
-
 <div class="labels">
-  <div class="label" style="color:#0288D1">Aventurero<small>Celeste · Rayas</small></div>
-  <div class="label" style="color:#7E57C2">Tranquilo<small>Lila · Liso</small></div>
-  <div class="label" style="color:#EF6C00">Picaro<small>Melocot&oacute;n · Manchas</small></div>
+  <div class="label" style="color:#0288D1">Aventurero<small>Pelo revuelto</small></div>
+  <div class="label" style="color:#7E57C2">Tranquilo<small>Pelo peinado</small></div>
+  <div class="label" style="color:#EF6C00">P&iacute;caro<small>Pelo con estilo</small></div>
 </div>
-
 <div class="mood-selector">
   <button class="mood-btn active" data-mood="contento">😊 Contento</button>
   <button class="mood-btn" data-mood="euforico">🤩 Euf&oacute;rico</button>
@@ -100,419 +62,401 @@
   <button class="mood-btn" data-mood="enfadado">😠 Enfadado</button>
   <button class="mood-btn" data-mood="dormido">😴 Dormido</button>
 </div>
-
 <p class="hint">Toca un Mime para interactuar</p>
 
 <script>
-// === CANVAS SETUP ===
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 const W = Math.min(window.innerWidth, 420);
-const H = Math.round(W * 1.1);
-canvas.width = W * 2; // retina
+const H = Math.round(W * 1.2);
+canvas.width = W * 2;
 canvas.height = H * 2;
 canvas.style.width = W + 'px';
 canvas.style.height = H + 'px';
 ctx.scale(2, 2);
 
-// === COLORES ===
-function hexToRgb(hex) {
-  return { r: (hex >> 16) & 255, g: (hex >> 8) & 255, b: hex & 255 };
-}
-function rgbStr(r, g, b, a = 1) { return `rgba(${r|0},${g|0},${b|0},${a})`; }
-function colorStr(hex, a = 1) { const c = hexToRgb(hex); return rgbStr(c.r, c.g, c.b, a); }
-function darker(hex, amt = 40) {
-  const c = hexToRgb(hex);
-  return { r: Math.max(0, c.r - amt), g: Math.max(0, c.g - amt), b: Math.max(0, c.b - amt) };
-}
-function lighter(hex, amt = 40) {
-  const c = hexToRgb(hex);
-  return { r: Math.min(255, c.r + amt), g: Math.min(255, c.g + amt), b: Math.min(255, c.b + amt) };
+// === HELPERS ===
+function hexRgb(h) { return { r: (h >> 16) & 255, g: (h >> 8) & 255, b: h & 255 }; }
+function rgb(r, g, b, a = 1) { return `rgba(${r|0},${g|0},${b|0},${a})`; }
+function col(h, a = 1) { const c = hexRgb(h); return rgb(c.r, c.g, c.b, a); }
+function dk(h, n = 50) { const c = hexRgb(h); return { r: Math.max(0,c.r-n), g: Math.max(0,c.g-n), b: Math.max(0,c.b-n) }; }
+function lt(h, n = 50) { const c = hexRgb(h); return { r: Math.min(255,c.r+n), g: Math.min(255,c.g+n), b: Math.min(255,c.b+n) }; }
+function ell(x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(x, y, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI*2); ctx.fill(); }
+function tri(x1,y1,x2,y2,x3,y3) { ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill(); }
+
+// Draw a heart shape at (cx, cy) with given size
+function drawHeart(cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.beginPath();
+  const s = size;
+  ctx.moveTo(0, s * 0.3);
+  ctx.bezierCurveTo(-s * 0.5, -s * 0.3, -s, s * 0.1, 0, s);
+  ctx.moveTo(0, s * 0.3);
+  ctx.bezierCurveTo(s * 0.5, -s * 0.3, s, s * 0.1, 0, s);
+  ctx.fill();
+  ctx.restore();
 }
 
-// === MIME DATA ===
+// === MIMES ===
 const mimes = [
-  {
-    color: 0x81D4FA, personality: 'aventurero', fur: 'rayas',
-    x: W / 4, y: H * 0.68, speed: 0.7, amp: 1.4, tailSpeed: 0.6,
-    bounce: 0, bounceV: 0, phase: 0,
-  },
-  {
-    color: 0xB39DDB, personality: 'tranquilo', fur: 'liso',
-    x: W / 2, y: H * 0.68, speed: 1.5, amp: 0.6, tailSpeed: 1.8,
-    bounce: 0, bounceV: 0, phase: 1,
-  },
-  {
-    color: 0xFFCC80, personality: 'picaro', fur: 'manchas',
-    x: W * 3 / 4, y: H * 0.68, speed: 0.9, amp: 1.0, tailSpeed: 1.0,
-    bounce: 0, bounceV: 0, phase: 2,
-  }
+  { color: 0x81D4FA, personality: 'aventurero',
+    x: W/4, y: H*0.62, speed: 0.7, amp: 1.4, bounce: 0, phase: 0 },
+  { color: 0xB39DDB, personality: 'tranquilo',
+    x: W/2, y: H*0.62, speed: 1.5, amp: 0.6, bounce: 0, phase: 1 },
+  { color: 0xFFCC80, personality: 'picaro',
+    x: W*3/4, y: H*0.62, speed: 0.9, amp: 1.0, bounce: 0, phase: 2 },
 ];
 
 let currentMood = 'contento';
-let blinkTimer = 0;
-let blinkState = 0; // 0 = open, 1 = closing, 2 = closed, 3 = opening
-let time = 0;
+let blinkTimer = 2000, blinkState = 0;
 
-// === DRAW FUNCTIONS ===
-
-function drawEllipse(cx, cy, rx, ry) {
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawTriangle(x1, y1, x2, y2, x3, y3) {
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.lineTo(x3, y3);
-  ctx.closePath();
-  ctx.fill();
-}
-
+// === DRAW MIME ===
 function drawMime(m, t) {
-  const scale = 0.75;
-  const col = m.color;
-  const dk = darker(col);
-  const lt = lighter(col);
-  const breathe = Math.sin(t / (600 * m.speed)) * 2 * m.amp;
-  const tailAngle = Math.sin(t / (400 * m.tailSpeed)) * 15 * m.amp * (Math.PI / 180);
-  const earWiggle = Math.sin(t / (1000 * m.speed)) * 3 * m.amp;
-  const pupilX = Math.sin(t / 1200) * 2;
-  const armSwing = Math.sin(t / (900 * m.speed)) * 5 * m.amp * (Math.PI / 180);
+  const c = m.color;
+  const d = dk(c); const l = lt(c);
+  const breathe = Math.sin(t / (600 * m.speed)) * m.amp;
+  const pupilX = Math.sin(t / 1200) * 2.5;
+  const earWig = Math.sin(t / (1000 * m.speed)) * 4 * m.amp;
+  const handWig = Math.sin(t / (800 * m.speed)) * 6 * m.amp;
+  const mood = currentMood;
 
-  // Bounce animation
   let by = 0;
   if (m.bounce > 0) {
-    by = -Math.sin(m.bounce * Math.PI) * 18;
-    m.bounce = Math.max(0, m.bounce - 0.03);
+    by = -Math.sin(m.bounce * Math.PI) * 20;
+    m.bounce = Math.max(0, m.bounce - 0.025);
   }
 
+  const S = 0.7; // scale
   ctx.save();
   ctx.translate(m.x, m.y + by);
-  ctx.scale(scale, scale);
+  ctx.scale(S, S);
 
-  // === COLA ===
+  // ============ BODY (big egg/ball) ============
+  const bodyR = 52;  // radius
+  const bodyH = 60;  // slightly taller than wide
+  const bY = -bodyH; // body center Y
+
   ctx.save();
-  ctx.translate(38, -30);
-  ctx.rotate(tailAngle);
-  ctx.fillStyle = colorStr(col);
-  drawEllipse(0, 0, 14, 11);
-  ctx.fillStyle = rgbStr(lt.r, lt.g, lt.b, 0.6);
-  drawEllipse(2, -2, 9, 7);
+  ctx.translate(0, 0);
+  ctx.scale(1, 1 + breathe * 0.004);
+
+  // Shadow on ground
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ell(0, 8, bodyR * 0.8, 8);
+
+  // === PATITAS (behind body, close to bottom) ===
+  ctx.fillStyle = rgb(d.r, d.g, d.b);
+  ell(-18, -2, 14, 10);
+  ell(18, -2, 14, 10);
+  // Toe lines
+  ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.5);
+  ctx.lineWidth = 1.2;
+  [-24, -18, -12].forEach(x => {
+    ctx.beginPath(); ctx.moveTo(x, -6); ctx.lineTo(x, 0); ctx.stroke();
+  });
+  [12, 18, 24].forEach(x => {
+    ctx.beginPath(); ctx.moveTo(x, -6); ctx.lineTo(x, 0); ctx.stroke();
+  });
+
+  // === MAIN BODY ===
+  // Back/sides darker (penguin-like)
+  ctx.fillStyle = col(c);
+  ell(0, bY, bodyR, bodyH);
+
+  // Belly (lighter, front)
+  ctx.fillStyle = rgb(l.r, l.g, l.b, 0.8);
+  ell(0, bY + 8, bodyR * 0.65, bodyH * 0.7);
+
+  // Subtle body outline
+  ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.2);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(0, bY, bodyR, bodyH, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore(); // breathe
+
+  // ============ HANDS (heart shape, on sides) ============
+  // Left hand
+  ctx.save();
+  ctx.translate(-bodyR - 6, bY + 15);
+  ctx.rotate((handWig - 5) * Math.PI / 180);
+  ctx.fillStyle = col(c);
+  drawHeart(0, -8, 13);
   ctx.restore();
 
-  // === PATAS ===
-  ctx.fillStyle = rgbStr(dk.r, dk.g, dk.b);
-  drawEllipse(-22, 0, 13, 8);
-  drawEllipse(22, 0, 13, 8);
-  // Deditos
-  ctx.fillStyle = colorStr(col, 0.8);
-  [-28, -22, -16].forEach(x => { drawEllipse(x, -2, 3, 3); });
-  [16, 22, 28].forEach(x => { drawEllipse(x, -2, 3, 3); });
-
-  // === CUERPO ===
+  // Right hand
   ctx.save();
-  ctx.translate(0, -40);
-  ctx.scale(1, 1 + breathe * 0.005);
+  ctx.translate(bodyR + 6, bY + 15);
+  ctx.rotate((-handWig + 5) * Math.PI / 180);
+  ctx.fillStyle = col(c);
+  drawHeart(0, -8, 13);
+  ctx.restore();
 
-  // Cuerpo principal
-  ctx.fillStyle = colorStr(col);
-  drawEllipse(0, -20, 45, 35);
-  drawEllipse(0, -50, 39, 30);
+  // ============ CAT EARS (small, peeking through hair) ============
+  const earY = bY - bodyH + 12;
 
-  // Barriga
-  ctx.fillStyle = rgbStr(lt.r, lt.g, lt.b, 0.7);
-  drawEllipse(0, -22, 27, 22);
+  // Left ear
+  ctx.save();
+  ctx.translate(-20, earY);
+  ctx.rotate((-10 + earWig) * Math.PI / 180);
+  ctx.fillStyle = col(c);
+  tri(0, 5, -10, -16, 10, -16);
+  // Inner ear
+  ctx.fillStyle = 'rgba(255,171,145,0.5)';
+  tri(0, 0, -6, -12, 6, -12);
+  ctx.restore();
 
-  // Pelaje
-  if (m.fur === 'rayas') {
-    ctx.fillStyle = rgbStr(dk.r, dk.g, dk.b, 0.15);
-    for (let i = 0; i < 4; i++) {
-      const ry = -55 + i * 12;
-      ctx.fillRect(-22, ry, 44, 3);
-    }
-  } else if (m.fur === 'manchas') {
-    ctx.fillStyle = rgbStr(dk.r, dk.g, dk.b, 0.2);
-    drawEllipse(-15, -55, 8, 7);
-    drawEllipse(18, -38, 6, 6);
-    drawEllipse(-8, -25, 9, 8);
-    drawEllipse(22, -55, 5, 5);
+  // Right ear
+  ctx.save();
+  ctx.translate(20, earY);
+  ctx.rotate((10 - earWig) * Math.PI / 180);
+  ctx.fillStyle = col(c);
+  tri(0, 5, -10, -16, 10, -16);
+  ctx.fillStyle = 'rgba(255,171,145,0.5)';
+  tri(0, 0, -6, -12, 6, -12);
+  ctx.restore();
+
+  // ============ HAIR / PELO ============
+  const hairY = bY - bodyH + 8;
+  const hairColor = rgb(d.r - 30, d.g - 30, d.b - 30);
+
+  if (m.personality === 'aventurero') {
+    // Messy, spiky hair - revuelto
+    ctx.fillStyle = hairColor;
+    tri(-25, hairY + 14, -15, hairY - 18, -2, hairY + 8);
+    tri(-10, hairY + 10, 0, hairY - 22, 12, hairY + 6);
+    tri(5, hairY + 12, 18, hairY - 16, 28, hairY + 10);
+    tri(-18, hairY + 12, -8, hairY - 14, 5, hairY + 10);
+    tri(0, hairY + 8, 10, hairY - 20, 22, hairY + 8);
+    // Extra wild tufts
+    tri(-22, hairY + 10, -30, hairY - 8, -12, hairY + 6);
+    tri(15, hairY + 8, 30, hairY - 10, 25, hairY + 10);
+  } else if (m.personality === 'tranquilo') {
+    // Neat, smooth hair - peinado suave
+    ctx.fillStyle = hairColor;
+    ctx.beginPath();
+    ctx.moveTo(-28, hairY + 16);
+    ctx.quadraticCurveTo(-30, hairY - 5, -10, hairY - 14);
+    ctx.quadraticCurveTo(0, hairY - 18, 10, hairY - 14);
+    ctx.quadraticCurveTo(30, hairY - 5, 28, hairY + 16);
+    ctx.quadraticCurveTo(15, hairY + 8, 0, hairY + 10);
+    ctx.quadraticCurveTo(-15, hairY + 8, -28, hairY + 16);
+    ctx.fill();
+    // A little swoosh
+    ctx.beginPath();
+    ctx.moveTo(10, hairY - 14);
+    ctx.quadraticCurveTo(20, hairY - 22, 14, hairY - 10);
+    ctx.fill();
+  } else if (m.personality === 'picaro') {
+    // Styled hair with a quiff/flick - con estilo
+    ctx.fillStyle = hairColor;
+    ctx.beginPath();
+    ctx.moveTo(-26, hairY + 16);
+    ctx.quadraticCurveTo(-28, hairY, -12, hairY - 10);
+    ctx.quadraticCurveTo(0, hairY - 16, 12, hairY - 10);
+    ctx.quadraticCurveTo(26, hairY - 4, 28, hairY + 16);
+    ctx.quadraticCurveTo(10, hairY + 8, 0, hairY + 10);
+    ctx.quadraticCurveTo(-12, hairY + 8, -26, hairY + 16);
+    ctx.fill();
+    // Quiff to the side
+    tri(16, hairY - 8, 32, hairY - 26, 26, hairY - 4);
+    tri(20, hairY - 10, 36, hairY - 20, 30, hairY - 2);
+    // A little curl
+    ctx.beginPath();
+    ctx.moveTo(-18, hairY - 6);
+    ctx.quadraticCurveTo(-26, hairY - 18, -14, hairY - 8);
+    ctx.fill();
   }
-  ctx.restore();
 
-  // === BRAZOS ===
-  // Izquierdo
-  ctx.save();
-  ctx.translate(-42, -48);
-  ctx.rotate(armSwing);
-  ctx.fillStyle = colorStr(col);
-  drawEllipse(0, 0, 10, 18);
-  ctx.fillStyle = rgbStr(dk.r, dk.g, dk.b);
-  drawEllipse(0, 14, 7, 6);
-  ctx.restore();
-
-  // Derecho
-  ctx.save();
-  ctx.translate(42, -48);
-  ctx.rotate(-armSwing);
-  ctx.fillStyle = colorStr(col);
-  drawEllipse(0, 0, 10, 18);
-  ctx.fillStyle = rgbStr(dk.r, dk.g, dk.b);
-  drawEllipse(0, 14, 7, 6);
-  ctx.restore();
-
-  // === CABEZA ===
-  ctx.save();
-  ctx.translate(0, -85);
-
-  // Forma cabeza
-  ctx.fillStyle = colorStr(col);
-  drawEllipse(0, 0, 40, 36);
-
-  // Mejillas
-  ctx.fillStyle = 'rgba(255,171,145,0.3)';
-  drawEllipse(-26, 12, 9, 6);
-  drawEllipse(26, 12, 9, 6);
-
-  // === OREJAS ===
-  // Izquierda
-  ctx.save();
-  ctx.translate(-24, -28);
-  ctx.rotate(earWiggle * Math.PI / 180);
-  ctx.fillStyle = colorStr(col);
-  drawTriangle(0, 0, -14, -24, 14, -24);
-  drawTriangle(-10, -20, 10, -20, 0, -30);
-  ctx.fillStyle = 'rgba(255,171,145,0.5)';
-  drawTriangle(0, -4, -8, -20, 8, -20);
-  ctx.restore();
-
-  // Derecha
-  ctx.save();
-  ctx.translate(24, -28);
-  ctx.rotate(-earWiggle * Math.PI / 180);
-  ctx.fillStyle = colorStr(col);
-  drawTriangle(0, 0, -14, -24, 14, -24);
-  drawTriangle(-10, -20, 10, -20, 0, -30);
-  ctx.fillStyle = 'rgba(255,171,145,0.5)';
-  drawTriangle(0, -4, -8, -20, 8, -20);
-  ctx.restore();
-
-  // === NARIZ ===
-  ctx.fillStyle = 'rgba(255,171,145,1)';
-  drawTriangle(0, 2, -4, 7, 4, 7);
-  drawEllipse(0, 8, 6, 3);
-
-  // === OJOS ===
-  const mood = currentMood;
-  const eyeYOffset = (mood === 'triste') ? 2 : 0;
+  // ============ EYES (big!) ============
+  const eyeY = bY - 10;
+  const eyeSpacing = 20;
+  const eyeRX = 16, eyeRY = 18;
 
   if (mood === 'dormido') {
-    // Ojos cerrados con curva
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 2;
+    // Closed eyes - curved lines
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(-18, -2, 8, 0.2, Math.PI - 0.2);
+    ctx.arc(-eyeSpacing, eyeY, 10, 0.2, Math.PI - 0.2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(18, -2, 8, 0.2, Math.PI - 0.2);
+    ctx.arc(eyeSpacing, eyeY, 10, 0.2, Math.PI - 0.2);
     ctx.stroke();
-
-    // ZZZ
+    // ZZZ floating
     ctx.fillStyle = '#9E9E9E';
-    ctx.font = 'bold 12px Arial';
-    ctx.fillText('z', 30, -20 + Math.sin(t / 500) * 3);
-    ctx.font = 'bold 16px Arial';
-    ctx.fillText('z', 38, -32 + Math.sin(t / 500 + 1) * 3);
-    ctx.font = 'bold 10px Arial';
-    ctx.fillText('z', 46, -16 + Math.sin(t / 500 + 2) * 3);
+    ctx.font = 'bold 14px Arial';
+    ctx.fillText('z', 34, bY - 40 + Math.sin(t/500)*4);
+    ctx.font = 'bold 18px Arial';
+    ctx.fillText('Z', 42, bY - 56 + Math.sin(t/500+1)*4);
   } else {
-    // Ojo izquierdo
-    ctx.fillStyle = '#fff';
-    drawEllipse(-18, -4 + eyeYOffset, 12, 13);
-    ctx.strokeStyle = 'rgba(51,51,51,0.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.ellipse(-18, -4 + eyeYOffset, 12, 13, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    const eyeYOff = mood === 'triste' ? 3 : 0;
 
-    // Ojo derecho
+    // Eye whites
     ctx.fillStyle = '#fff';
-    drawEllipse(18, -4 + eyeYOffset, 12, 13);
-    ctx.strokeStyle = 'rgba(51,51,51,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(18, -4 + eyeYOffset, 12, 13, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    ell(-eyeSpacing, eyeY + eyeYOff, eyeRX, eyeRY);
+    ell(eyeSpacing, eyeY + eyeYOff, eyeRX, eyeRY);
 
-    // Pupilas
-    if (blinkState === 0 || blinkState === 3) {
-      const pSize = (mood === 'euforico') ? 9 : (mood === 'enfadado') ? 6 : 8;
+    // Eye outline
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(-eyeSpacing, eyeY + eyeYOff, eyeRX, eyeRY, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(eyeSpacing, eyeY + eyeYOff, eyeRX, eyeRY, 0, 0, Math.PI*2); ctx.stroke();
+
+    // Pupils (if not blinking)
+    if (blinkState < 2) {
+      const pR = mood === 'euforico' ? 10 : mood === 'enfadado' ? 6 : 8;
       ctx.fillStyle = '#1a1a2e';
-      drawEllipse(-18 + pupilX, -4 + eyeYOffset, pSize, pSize);
-      drawEllipse(18 + pupilX, -4 + eyeYOffset, pSize, pSize);
+      ell(-eyeSpacing + pupilX, eyeY + eyeYOff + 1, pR, pR + 1);
+      ell(eyeSpacing + pupilX, eyeY + eyeYOff + 1, pR, pR + 1);
 
-      // Brillo
+      // Shine
       ctx.fillStyle = '#fff';
-      drawEllipse(-15 + pupilX, -7 + eyeYOffset, 3, 3);
-      drawEllipse(21 + pupilX, -7 + eyeYOffset, 3, 3);
-      drawEllipse(-20 + pupilX, -1 + eyeYOffset, 1.5, 1.5);
-      drawEllipse(16 + pupilX, -1 + eyeYOffset, 1.5, 1.5);
-
-      // Euforico: estrellitas en los ojos
-      if (mood === 'euforico') {
-        ctx.fillStyle = 'rgba(255,235,59,0.6)';
-        drawStar(-18, -4, 3, 5, 4);
-        drawStar(18, -4, 3, 5, 4);
-      }
+      ell(-eyeSpacing + pupilX + 4, eyeY + eyeYOff - 3, 3.5, 3.5);
+      ell(eyeSpacing + pupilX + 4, eyeY + eyeYOff - 3, 3.5, 3.5);
+      ell(-eyeSpacing + pupilX - 2, eyeY + eyeYOff + 3, 1.8, 1.8);
+      ell(eyeSpacing + pupilX - 2, eyeY + eyeYOff + 3, 1.8, 1.8);
     }
 
-    // Párpados (blink)
-    if (blinkState === 1 || blinkState === 2) {
-      ctx.fillStyle = colorStr(col);
-      drawEllipse(-18, -4 + eyeYOffset, 13, 14);
-      drawEllipse(18, -4 + eyeYOffset, 13, 14);
+    // Blink
+    if (blinkState >= 2) {
+      ctx.fillStyle = col(c);
+      ell(-eyeSpacing, eyeY + eyeYOff, eyeRX + 1, eyeRY + 1);
+      ell(eyeSpacing, eyeY + eyeYOff, eyeRX + 1, eyeRY + 1);
     }
 
-    // Cejas enfadadas
+    // Eyebrows
     if (mood === 'enfadado') {
-      ctx.strokeStyle = rgbStr(dk.r, dk.g, dk.b);
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(-26, -14);
-      ctx.lineTo(-12, -10);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(26, -14);
-      ctx.lineTo(12, -10);
-      ctx.stroke();
-    }
-
-    // Ojos tristes: cejas caídas
-    if (mood === 'triste') {
-      ctx.strokeStyle = rgbStr(dk.r, dk.g, dk.b, 0.6);
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(-eyeSpacing - 14, eyeY - 20); ctx.lineTo(-eyeSpacing + 6, eyeY - 16); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(eyeSpacing + 14, eyeY - 20); ctx.lineTo(eyeSpacing - 6, eyeY - 16); ctx.stroke();
+    } else if (mood === 'triste') {
+      ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.6);
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(-eyeSpacing - 12, eyeY - 16); ctx.lineTo(-eyeSpacing + 8, eyeY - 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(eyeSpacing + 12, eyeY - 16); ctx.lineTo(eyeSpacing - 8, eyeY - 20); ctx.stroke();
+    } else {
+      // Normal/happy subtle brows
+      ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.4);
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(-26, -12);
-      ctx.lineTo(-12, -14);
+      ctx.arc(-eyeSpacing, eyeY - 14, 12, Math.PI + 0.4, -0.4);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(26, -12);
-      ctx.lineTo(12, -14);
+      ctx.arc(eyeSpacing, eyeY - 14, 12, Math.PI + 0.4, -0.4);
       ctx.stroke();
     }
   }
 
-  // === BOCA ===
-  ctx.translate(0, 14);
+  // ============ MOUTH (big and expressive) ============
+  const mouthY = bY + 18;
+
   if (mood === 'euforico') {
-    ctx.fillStyle = '#555';
-    drawEllipse(0, 0, 9, 6);
-    ctx.fillStyle = 'rgba(239,83,80,0.6)';
-    drawEllipse(0, 2, 5, 3);
+    // Big open smile
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.moveTo(-22, mouthY - 2);
+    ctx.quadraticCurveTo(-24, mouthY - 4, -20, mouthY - 4);
+    ctx.quadraticCurveTo(0, mouthY + 28, 20, mouthY - 4);
+    ctx.quadraticCurveTo(24, mouthY - 4, 22, mouthY - 2);
+    ctx.quadraticCurveTo(0, mouthY + 32, -22, mouthY - 2);
+    ctx.fill();
+    // Tongue
+    ctx.fillStyle = '#E53935';
+    ell(0, mouthY + 16, 8, 6);
+    // Smile lines
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-22, mouthY - 2); ctx.lineTo(-26, mouthY - 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(22, mouthY - 2); ctx.lineTo(26, mouthY - 5); ctx.stroke();
   } else if (mood === 'contento') {
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 2.5;
+    // Nice wide smile
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(0, -4, 8, 0.3, Math.PI - 0.3);
+    ctx.moveTo(-18, mouthY);
+    ctx.quadraticCurveTo(0, mouthY + 20, 18, mouthY);
     ctx.stroke();
+    // Smile lines
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-18, mouthY); ctx.lineTo(-22, mouthY - 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(18, mouthY); ctx.lineTo(22, mouthY - 3); ctx.stroke();
   } else if (mood === 'triste') {
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(0, 6, 8, Math.PI + 0.3, -0.3);
-    ctx.stroke();
-  } else if (mood === 'enfadado') {
+    // Frown
     ctx.strokeStyle = '#555';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(-8, 0);
-    ctx.lineTo(8, 2);
+    ctx.moveTo(-14, mouthY + 8);
+    ctx.quadraticCurveTo(0, mouthY - 6, 14, mouthY + 8);
+    ctx.stroke();
+  } else if (mood === 'enfadado') {
+    // Tight angry line
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-14, mouthY + 2);
+    ctx.lineTo(14, mouthY + 4);
     ctx.stroke();
   } else if (mood === 'dormido') {
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-5, 0);
-    ctx.lineTo(5, 0);
-    ctx.stroke();
+    // Small sleeping mouth
+    ctx.fillStyle = '#555';
+    ell(0, mouthY + 4, 5, 4);
   }
 
-  ctx.restore(); // cabeza
-  ctx.restore(); // main
-}
-
-function drawStar(cx, cy, inner, outer, points) {
-  ctx.beginPath();
-  for (let i = 0; i < points * 2; i++) {
-    const r = i % 2 === 0 ? outer : inner;
-    const a = (i * Math.PI / points) - Math.PI / 2;
-    const x = cx + Math.cos(a) * r;
-    const y = cy + Math.sin(a) * r;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+  // ============ CHEEKS (blush) ============
+  if (mood !== 'enfadado') {
+    ctx.fillStyle = 'rgba(255,150,130,0.25)';
+    ell(-30, bY + 8, 10, 7);
+    ell(30, bY + 8, 10, 7);
   }
-  ctx.closePath();
-  ctx.fill();
+
+  // ============ NOSE (tiny cat/penguin nose) ============
+  ctx.fillStyle = 'rgba(255,150,130,0.9)';
+  // Small triangle nose
+  tri(0, bY + 4, -4, bY + 10, 4, bY + 10);
+
+  ctx.restore();
 }
 
-// === SUELO ===
+// === FLOOR ===
 function drawFloor() {
-  ctx.fillStyle = 'rgba(188,170,164,0.3)';
-  ctx.fillRect(0, H - 60, W, 60);
-  ctx.fillStyle = 'rgba(215,204,200,0.3)';
-  ctx.fillRect(0, H - 60, W, 2);
+  ctx.fillStyle = 'rgba(188,170,164,0.25)';
+  ctx.fillRect(0, H - 55, W, 55);
+  ctx.fillStyle = 'rgba(200,190,180,0.2)';
+  ctx.fillRect(0, H - 55, W, 2);
 }
 
-// === BLINK LOGIC ===
+// === BLINK ===
 function updateBlink(dt) {
   blinkTimer -= dt;
   if (blinkTimer <= 0) {
-    if (blinkState === 0) {
-      blinkState = 1;
-      blinkTimer = 80;
-    } else if (blinkState === 1) {
-      blinkState = 2;
-      blinkTimer = 60;
-    } else if (blinkState === 2) {
-      blinkState = 3;
-      blinkTimer = 80;
-    } else {
-      blinkState = 0;
-      blinkTimer = 2500 + Math.random() * 2000;
-    }
+    if (blinkState === 0) { blinkState = 1; blinkTimer = 60; }
+    else if (blinkState === 1) { blinkState = 2; blinkTimer = 80; }
+    else if (blinkState === 2) { blinkState = 3; blinkTimer = 60; }
+    else { blinkState = 0; blinkTimer = 2500 + Math.random() * 2000; }
   }
 }
 
-// === TOUCH / CLICK ===
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left);
-  const y = (e.clientY - rect.top);
-
+// === INTERACTION ===
+function handleTap(x, y) {
   mimes.forEach(m => {
-    const dx = x - m.x;
-    const dy = y - (m.y - 50);
-    if (Math.abs(dx) < 50 && Math.abs(dy) < 70) {
+    if (Math.abs(x - m.x) < 50 && Math.abs(y - (m.y - 40)) < 70) {
       m.bounce = 1;
     }
   });
+}
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  handleTap(e.clientX - r.left, e.clientY - r.top);
 });
-
-canvas.addEventListener('touchstart', (e) => {
+canvas.addEventListener('touchstart', e => {
   e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
-  const x = touch.clientX - rect.left;
-  const y = touch.clientY - rect.top;
-
-  mimes.forEach(m => {
-    const dx = x - m.x;
-    const dy = y - (m.y - 50);
-    if (Math.abs(dx) < 50 && Math.abs(dy) < 70) {
-      m.bounce = 1;
-    }
-  });
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  handleTap(t.clientX - r.left, t.clientY - r.top);
 });
 
 // === MOOD BUTTONS ===
@@ -524,23 +468,16 @@ document.querySelectorAll('.mood-btn').forEach(btn => {
   });
 });
 
-// === RENDER LOOP ===
+// === LOOP ===
 let lastTime = 0;
-
-function loop(timestamp) {
-  const dt = timestamp - lastTime;
-  lastTime = timestamp;
-  time = timestamp;
-
+function loop(ts) {
+  const dt = ts - lastTime; lastTime = ts;
   ctx.clearRect(0, 0, W, H);
   drawFloor();
   updateBlink(dt);
-
-  mimes.forEach(m => drawMime(m, timestamp + m.phase * 800));
-
+  mimes.forEach(m => drawMime(m, ts + m.phase * 800));
   requestAnimationFrame(loop);
 }
-
 requestAnimationFrame(loop);
 </script>
 </body>
