@@ -2,425 +2,652 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mimes Care Corp - Preview</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: linear-gradient(180deg, #F5F5DC 0%, #FFF8E7 100%);
-    display: flex; flex-direction: column; align-items: center;
-    min-height: 100vh; font-family: Arial, sans-serif; overflow-x: hidden;
-  }
-  h1 { color: #5C6BC0; font-size: 22px; margin-top: 14px; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
-  .subtitle { color: #9E9E9E; font-size: 12px; margin-top: 2px; }
-  canvas { margin-top: 6px; touch-action: none; }
-  .labels { display: flex; width: 100%; max-width: 420px; justify-content: space-around; margin-top: 4px; }
-  .label { font-size: 13px; font-weight: bold; text-shadow: 0 1px 2px rgba(255,255,255,0.8); text-align: center; }
-  .label small { display: block; font-weight: normal; font-size: 10px; color: #999; margin-top: 1px; }
-  .mood-selector { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; justify-content: center; padding: 0 8px; }
-  .mood-btn { padding: 5px 10px; border: 2px solid #C5CAE9; border-radius: 20px; background: white; font-size: 12px; cursor: pointer; transition: all 0.2s; }
-  .mood-btn.active { background: #5C6BC0; color: white; border-color: #5C6BC0; }
-  .hint { color: #BDBDBD; font-size: 11px; margin-top: 8px; }
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #fefce8;
+        background-image:
+            radial-gradient(ellipse at 20% 80%, #fde68a33 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, #bfdbfe22 0%, transparent 50%);
+        font-family: 'Baloo 2', cursive;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .particle {
+        position: absolute; border-radius: 50%; opacity: 0.15;
+        animation: float-particle linear infinite;
+    }
+    @keyframes float-particle {
+        0% { transform: translateY(100vh) scale(0); opacity: 0; }
+        10% { opacity: 0.15; } 90% { opacity: 0.15; }
+        100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .page-title {
+        font-size: 28px; font-weight: 700; color: #5C6BC0;
+        margin-bottom: 4px; z-index: 1;
+        text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+        animation: fade-up 0.6s ease both;
+    }
+    .page-subtitle { font-size: 14px; color: #9E9E9E; margin-bottom: 12px; z-index: 1; }
+
+    /* === 3 MIMES ROW === */
+    .mimes-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        z-index: 1;
+        animation: scene-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes scene-enter {
+        from { opacity: 0; transform: translateY(40px) scale(0.9); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .mime-wrapper {
+        display: flex; flex-direction: column; align-items: center;
+    }
+
+    /* === MOOD SELECTOR === */
+    .mood-selector {
+        display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap;
+        justify-content: center; padding: 0 8px; z-index: 1;
+    }
+    .mood-btn {
+        padding: 5px 12px; border: 2px solid #C5CAE9; border-radius: 20px;
+        background: white; font-size: 13px; cursor: pointer; transition: all 0.2s;
+        font-family: 'Baloo 2', cursive;
+    }
+    .mood-btn.active { background: #5C6BC0; color: white; border-color: #5C6BC0; }
+
+    /* === CHARACTER (scaled down for 3) === */
+    .scene {
+        position: relative;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    .ground-shadow {
+        width: 100px; height: 10px;
+        background: rgba(26,26,46,0.12);
+        border-radius: 50%; margin-top: -6px;
+        filter: blur(5px);
+        animation: shadow-breathe 3s ease-in-out infinite;
+    }
+    @keyframes shadow-breathe {
+        0%, 100% { transform: scaleX(1); opacity: 0.5; }
+        50% { transform: scaleX(1.08); opacity: 0.35; }
+    }
+
+    .character {
+        position: relative;
+        width: 150px; height: 180px;
+        cursor: pointer;
+        animation: breathe 3s ease-in-out infinite;
+    }
+    @keyframes breathe {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+
+    .body {
+        position: absolute; bottom: 26px; left: 50%;
+        transform: translateX(-50%);
+        width: 120px; height: 132px;
+        background: var(--body-color);
+        border-radius: 50% 50% 45% 45%;
+        overflow: hidden;
+        box-shadow: inset -8px -6px 16px rgba(255,255,255,0.04), 0 4px 16px rgba(26,26,46,0.12);
+    }
+    .belly {
+        position: absolute; bottom: -10px; left: 50%;
+        transform: translateX(-50%);
+        width: 100px; height: 112px;
+        background: var(--belly-color);
+        border-radius: 50%;
+        box-shadow: inset 0 -6px 12px rgba(251,191,36,0.08);
+    }
+
+    /* Ears */
+    .ear {
+        position: absolute; top: 12px;
+        width: 30px; height: 30px;
+        background: var(--body-color); z-index: 1;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .ear.left { left: 22px; border-radius: 5px 20px 5px 5px; transform: rotate(-15deg); }
+    .ear.right { right: 22px; border-radius: 20px 5px 5px 5px; transform: rotate(15deg); }
+    .ear::after {
+        content: ''; position: absolute; top: 5px; left: 50%;
+        transform: translateX(-50%);
+        width: 15px; height: 15px;
+        background: var(--ear-inner); border-radius: inherit; opacity: 0.4;
+    }
+    .character:hover .ear.left { transform: rotate(-25deg) translateY(-3px); }
+    .character:hover .ear.right { transform: rotate(25deg) translateY(-3px); }
+
+    /* Hair / Fur on top */
+    .hair {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        z-index: 2; pointer-events: none;
+    }
+    .hair-tuft {
+        position: absolute;
+        background: var(--body-color);
+    }
+
+    /* Aventurero: wild spiky */
+    .aventurero .hair { width: 80px; height: 35px; top: -2px; }
+    .aventurero .hair-tuft:nth-child(1) {
+        width: 16px; height: 26px; left: 8px; top: 2px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(-25deg);
+    }
+    .aventurero .hair-tuft:nth-child(2) {
+        width: 14px; height: 30px; left: 22px; top: -4px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(-8deg);
+    }
+    .aventurero .hair-tuft:nth-child(3) {
+        width: 16px; height: 28px; left: 34px; top: -2px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(10deg);
+    }
+    .aventurero .hair-tuft:nth-child(4) {
+        width: 14px; height: 24px; left: 48px; top: 0px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(22deg);
+    }
+    .aventurero .hair-tuft:nth-child(5) {
+        width: 12px; height: 20px; left: 58px; top: 4px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(35deg);
+    }
+
+    /* Tranquilo: smooth round dome */
+    .tranquilo .hair { width: 90px; height: 30px; top: 0px; }
+    .tranquilo .hair-tuft:nth-child(1) {
+        width: 80px; height: 26px; left: 5px; top: 0px;
+        border-radius: 50% 50% 40% 40%;
+    }
+    .tranquilo .hair-tuft:nth-child(2) {
+        width: 60px; height: 18px; left: 15px; top: 2px;
+        border-radius: 50%;
+        opacity: 0.3;
+        background: rgba(255,255,255,0.15);
+    }
+
+    /* Picaro: quiff/styled */
+    .picaro .hair { width: 90px; height: 40px; top: -4px; }
+    .picaro .hair-tuft:nth-child(1) {
+        width: 70px; height: 22px; left: 6px; top: 10px;
+        border-radius: 50% 50% 40% 40%;
+    }
+    .picaro .hair-tuft:nth-child(2) {
+        width: 20px; height: 32px; left: 52px; top: -4px;
+        border-radius: 60% 40% 30% 30%;
+        transform: rotate(20deg);
+    }
+    .picaro .hair-tuft:nth-child(3) {
+        width: 16px; height: 28px; left: 60px; top: 0px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(30deg);
+    }
+    .picaro .hair-tuft:nth-child(4) {
+        width: 14px; height: 22px; left: 10px; top: 6px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(-18deg);
+    }
+
+    /* Collar */
+    .collar {
+        position: absolute; top: 78px; left: 50%;
+        transform: translateX(-50%);
+        width: 100px; height: 18px;
+        background: var(--collar-color);
+        border-radius: 50px; z-index: 10;
+        box-shadow: 0 2px 0 rgba(0,0,0,0.04), inset 0 -2px 4px rgba(0,0,0,0.03);
+    }
+
+    /* Eyes */
+    .eye {
+        position: absolute; top: 40px;
+        width: 40px; height: 50px;
+        background: white; border-radius: 50%;
+        z-index: 5; border: 1.5px solid #0f0f1a;
+        overflow: hidden;
+        box-shadow: inset 0 -2px 4px rgba(0,0,0,0.04);
+    }
+    .eye.left { left: 31px; }
+    .eye.right { right: 31px; }
+
+    .pupil {
+        position: absolute; top: 14px; left: 50%;
+        transform: translateX(-50%);
+        width: 24px; height: 28px;
+        background: #0f0f1a; border-radius: 50%;
+        transition: transform 0.15s ease-out;
+    }
+    .pupil::before {
+        content: ''; position: absolute; top: 4px; right: 3px;
+        width: 8px; height: 8px;
+        background: white; border-radius: 50%;
+        animation: sparkle 2.5s ease-in-out infinite;
+    }
+    .pupil::after {
+        content: ''; position: absolute; top: 14px; right: 5px;
+        width: 4px; height: 4px;
+        background: rgba(255,255,255,0.6); border-radius: 50%;
+    }
+    @keyframes sparkle {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.15); opacity: 0.8; }
+    }
+
+    .eye-lid {
+        position: absolute; top: -1px; left: -1px; right: -1px;
+        height: 0%; background: var(--body-color);
+        z-index: 6; border-radius: 50% 50% 0 0;
+        animation: blink 4s ease-in-out infinite;
+    }
+    @keyframes blink {
+        0%, 95%, 100% { height: 0%; }
+        97% { height: 100%; }
+    }
+
+    /* Blush */
+    .blush {
+        position: absolute; top: 72px;
+        width: 18px; height: 10px;
+        background: #fca5a5; border-radius: 50%;
+        z-index: 8; opacity: 0.5; filter: blur(2px);
+        transition: opacity 0.4s;
+    }
+    .blush.left { left: 26px; }
+    .blush.right { right: 26px; }
+    .character:hover .blush { opacity: 0.8; }
+
+    /* Mouth */
+    .mouth {
+        position: absolute; top: 73px; left: 50%;
+        transform: translateX(-50%);
+        width: 24px; height: 20px; z-index: 15;
+    }
+    .mouth-upper {
+        position: absolute; top: 0; left: 0;
+        width: 24px; height: 11px;
+        background: var(--beak-color);
+        border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        border: 1.5px solid #b45309; border-bottom: none;
+        box-shadow: inset 0 2px 3px rgba(255,255,255,0.25);
+        z-index: 2;
+    }
+    .mouth-lower {
+        position: absolute; top: 10px; left: 2px;
+        width: 20px; height: 9px;
+        background: var(--beak-color);
+        border-radius: 0 0 50% 50% / 0 0 100% 100%;
+        border: 1.5px solid #b45309; border-top: none;
+        transform-origin: top center;
+        animation: mouth-talk 4s ease-in-out infinite;
+        overflow: hidden;
+    }
+    .mouth-inside {
+        position: absolute; top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 14px; height: 5px;
+        background: #c0392b;
+        border-radius: 0 0 50% 50%;
+        opacity: 0;
+        animation: tongue-show 4s ease-in-out infinite;
+    }
+    @keyframes mouth-talk {
+        0%, 35%, 100% { transform: scaleY(1) translateY(0); }
+        6% { transform: scaleY(1.8) translateY(2px); }
+        12% { transform: scaleY(0.7) translateY(0); }
+        18% { transform: scaleY(1.6) translateY(2px); }
+        24% { transform: scaleY(0.9) translateY(0); }
+        28% { transform: scaleY(1.4) translateY(1px); }
+    }
+    @keyframes tongue-show {
+        0%, 35%, 100% { opacity: 0; }
+        6% { opacity: 1; } 12% { opacity: 0; }
+        18% { opacity: 1; } 24% { opacity: 0; }
+        28% { opacity: 0.8; }
+    }
+
+    /* Heart hands */
+    .hand {
+        position: absolute; top: 96px; z-index: 20;
+    }
+    .hand.left {
+        left: -2px;
+        animation: wave-left 2.8s ease-in-out infinite;
+        transform-origin: right center;
+    }
+    .hand.right {
+        right: -2px;
+        animation: wave-right 2.8s ease-in-out infinite;
+        transform-origin: left center;
+    }
+    .heart-shape {
+        position: relative; width: 22px; height: 20px;
+    }
+    .heart-shape::before, .heart-shape::after {
+        content: ''; position: absolute; top: 0;
+        width: 12px; height: 18px;
+        background: var(--body-color);
+        border-radius: 12px 12px 0 0;
+    }
+    .heart-shape::before {
+        left: 0; transform: rotate(-45deg); transform-origin: 100% 100%;
+    }
+    .heart-shape::after {
+        right: 0; transform: rotate(45deg); transform-origin: 0 100%;
+    }
+    @keyframes wave-left {
+        0%, 100% { transform: rotate(0deg); }
+        20% { transform: rotate(-18deg); }
+        40% { transform: rotate(8deg); }
+        60% { transform: rotate(-12deg); }
+        80% { transform: rotate(4deg); }
+    }
+    @keyframes wave-right {
+        0%, 100% { transform: rotate(0deg); }
+        15% { transform: rotate(18deg); }
+        35% { transform: rotate(-8deg); }
+        55% { transform: rotate(12deg); }
+        75% { transform: rotate(-4deg); }
+    }
+    .character:hover .hand.left {
+        animation: wave-left-fast 0.5s ease-in-out infinite;
+    }
+    .character:hover .hand.right {
+        animation: wave-right-fast 0.5s ease-in-out infinite;
+    }
+    @keyframes wave-left-fast {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-28deg) translateY(-4px); }
+    }
+    @keyframes wave-right-fast {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(28deg) translateY(-4px); }
+    }
+
+    /* Feet */
+    .foot {
+        position: absolute; bottom: 16px;
+        width: 32px; height: 20px;
+        background: var(--beak-color);
+        border-radius: 12px 12px 6px 6px;
+        border: 1.5px solid #b45309;
+        box-shadow: inset 0 -2px 3px rgba(180,83,9,0.12), 0 1px 2px rgba(26,26,46,0.12);
+    }
+    .foot.left { left: 38px; }
+    .foot.right { right: 38px; }
+    .foot::before {
+        content: ''; position: absolute; top: 4px; left: 50%;
+        transform: translateX(-50%);
+        width: 16px; height: 10px;
+        border-left: 1.5px solid rgba(180,83,9,0.2);
+        border-right: 1.5px solid rgba(180,83,9,0.2);
+    }
+
+    /* Tail */
+    .tail {
+        position: absolute; bottom: 38px; right: 8px;
+        width: 8px; height: 26px;
+        background: var(--body-color);
+        border-radius: 6px 6px 50% 50%;
+        transform-origin: bottom center;
+        animation: wag 2s ease-in-out infinite;
+        z-index: -1;
+    }
+    .tail::after {
+        content: ''; position: absolute; top: -4px; left: 50%;
+        transform: translateX(-50%);
+        width: 10px; height: 10px;
+        background: var(--body-color); border-radius: 50%;
+    }
+    @keyframes wag {
+        0%, 100% { transform: rotate(-15deg); }
+        50% { transform: rotate(15deg); }
+    }
+
+    /* Heart burst on click */
+    .heart-burst { position: absolute; pointer-events: none; z-index: 100; }
+    .mini-heart {
+        position: absolute; font-size: 14px;
+        animation: heart-fly 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        opacity: 0;
+    }
+    @keyframes heart-fly {
+        0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; }
+        60% { opacity: 1; }
+        100% { transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot)); opacity: 0; }
+    }
+
+    .mime-label {
+        margin-top: 8px; font-size: 15px; font-weight: 700;
+        letter-spacing: 0.5px;
+        opacity: 0;
+        animation: fade-up 0.6s 0.5s ease both;
+    }
+    .mime-sublabel {
+        font-size: 11px; color: #999; font-weight: 500;
+    }
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hint {
+        color: #BDBDBD; font-size: 12px; margin-top: 14px; z-index: 1;
+    }
+
+    /* ====== COLOR THEMES ====== */
+    .mime-celeste {
+        --body-color: #1565C0;
+        --belly-color: #E3F2FD;
+        --collar-color: #BBDEFB;
+        --beak-color: #FFB74D;
+        --ear-inner: #1E88E5;
+    }
+    .mime-lila {
+        --body-color: #6A1B9A;
+        --belly-color: #F3E5F5;
+        --collar-color: #E1BEE7;
+        --beak-color: #FFB74D;
+        --ear-inner: #8E24AA;
+    }
+    .mime-melocoton {
+        --body-color: #E65100;
+        --belly-color: #FFF3E0;
+        --collar-color: #FFE0B2;
+        --beak-color: #FFB74D;
+        --ear-inner: #F4511E;
+    }
 </style>
 </head>
 <body>
-<h1>Mimes Care Corp</h1>
-<p class="subtitle">Preview de personalidades</p>
-<canvas id="c"></canvas>
-<div class="labels">
-  <div class="label" style="color:#0288D1">Aventurero<small>Pelo revuelto</small></div>
-  <div class="label" style="color:#7E57C2">Tranquilo<small>Pelo peinado</small></div>
-  <div class="label" style="color:#EF6C00">P&iacute;caro<small>Pelo con estilo</small></div>
+
+<div class="particles" id="particles"></div>
+
+<div class="page-title">Mimes Care Corp</div>
+<p class="page-subtitle">Preview de personalidades</p>
+
+<div class="mimes-row">
+
+  <!-- AVENTURERO -->
+  <div class="mime-wrapper">
+    <div class="scene">
+      <div class="character aventurero mime-celeste" data-name="aventurero">
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="hair">
+          <div class="hair-tuft"></div><div class="hair-tuft"></div>
+          <div class="hair-tuft"></div><div class="hair-tuft"></div>
+          <div class="hair-tuft"></div>
+        </div>
+        <div class="tail"></div>
+        <div class="body"><div class="belly"></div></div>
+        <div class="eye left"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="eye right"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="blush left"></div><div class="blush right"></div>
+        <div class="mouth">
+          <div class="mouth-upper"></div>
+          <div class="mouth-lower"><div class="mouth-inside"></div></div>
+        </div>
+        <div class="collar"></div>
+        <div class="hand left"><div class="heart-shape"></div></div>
+        <div class="hand right"><div class="heart-shape"></div></div>
+        <div class="foot left"></div><div class="foot right"></div>
+      </div>
+      <div class="ground-shadow"></div>
+    </div>
+    <div class="mime-label" style="color:#1565C0">Aventurero<br><span class="mime-sublabel">Pelo revuelto</span></div>
+  </div>
+
+  <!-- TRANQUILO -->
+  <div class="mime-wrapper">
+    <div class="scene">
+      <div class="character tranquilo mime-lila" data-name="tranquilo">
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="hair">
+          <div class="hair-tuft"></div><div class="hair-tuft"></div>
+        </div>
+        <div class="tail"></div>
+        <div class="body"><div class="belly"></div></div>
+        <div class="eye left"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="eye right"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="blush left"></div><div class="blush right"></div>
+        <div class="mouth">
+          <div class="mouth-upper"></div>
+          <div class="mouth-lower"><div class="mouth-inside"></div></div>
+        </div>
+        <div class="collar"></div>
+        <div class="hand left"><div class="heart-shape"></div></div>
+        <div class="hand right"><div class="heart-shape"></div></div>
+        <div class="foot left"></div><div class="foot right"></div>
+      </div>
+      <div class="ground-shadow"></div>
+    </div>
+    <div class="mime-label" style="color:#6A1B9A">Tranquilo<br><span class="mime-sublabel">Pelo peinado</span></div>
+  </div>
+
+  <!-- PICARO -->
+  <div class="mime-wrapper">
+    <div class="scene">
+      <div class="character picaro mime-melocoton" data-name="picaro">
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="hair">
+          <div class="hair-tuft"></div><div class="hair-tuft"></div>
+          <div class="hair-tuft"></div><div class="hair-tuft"></div>
+        </div>
+        <div class="tail"></div>
+        <div class="body"><div class="belly"></div></div>
+        <div class="eye left"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="eye right"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="blush left"></div><div class="blush right"></div>
+        <div class="mouth">
+          <div class="mouth-upper"></div>
+          <div class="mouth-lower"><div class="mouth-inside"></div></div>
+        </div>
+        <div class="collar"></div>
+        <div class="hand left"><div class="heart-shape"></div></div>
+        <div class="hand right"><div class="heart-shape"></div></div>
+        <div class="foot left"></div><div class="foot right"></div>
+      </div>
+      <div class="ground-shadow"></div>
+    </div>
+    <div class="mime-label" style="color:#E65100">P&iacute;caro<br><span class="mime-sublabel">Pelo con estilo</span></div>
+  </div>
+
 </div>
-<div class="mood-selector">
-  <button class="mood-btn active" data-mood="contento">😊 Contento</button>
-  <button class="mood-btn" data-mood="euforico">🤩 Euf&oacute;rico</button>
-  <button class="mood-btn" data-mood="triste">😢 Triste</button>
-  <button class="mood-btn" data-mood="enfadado">😠 Enfadado</button>
-  <button class="mood-btn" data-mood="dormido">😴 Dormido</button>
-</div>
+
 <p class="hint">Toca un Mime para interactuar</p>
 
 <script>
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const W = Math.min(window.innerWidth, 420);
-const H = Math.round(W * 1.25);
-canvas.width = W * 2; canvas.height = H * 2;
-canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-ctx.scale(2, 2);
+// Eye tracking
+document.addEventListener('mousemove', track);
+document.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  track({ clientX: t.clientX, clientY: t.clientY });
+});
 
-function hexRgb(h){return{r:(h>>16)&255,g:(h>>8)&255,b:h&255}}
-function rgb(r,g,b,a=1){return`rgba(${r|0},${g|0},${b|0},${a})`}
-function col(h,a=1){const c=hexRgb(h);return rgb(c.r,c.g,c.b,a)}
-function dk(h,n=50){const c=hexRgb(h);return{r:Math.max(0,c.r-n),g:Math.max(0,c.g-n),b:Math.max(0,c.b-n)}}
-function lt(h,n=50){const c=hexRgb(h);return{r:Math.min(255,c.r+n),g:Math.min(255,c.g+n),b:Math.min(255,c.b+n)}}
-function ell(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);ctx.fill()}
-function sEll(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);ctx.stroke()}
-function tri(x1,y1,x2,y2,x3,y3){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.closePath();ctx.fill()}
-
-// Heart shape
-function drawHeart(cx, cy, size) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.beginPath();
-  ctx.moveTo(0, size * 0.35);
-  ctx.bezierCurveTo(-size*0.5, -size*0.35, -size, size*0.15, 0, size);
-  ctx.moveTo(0, size * 0.35);
-  ctx.bezierCurveTo(size*0.5, -size*0.35, size, size*0.15, 0, size);
-  ctx.fill();
-  ctx.restore();
-}
-
-const mimes = [
-  { color: 0x4FC3F7, personality: 'aventurero',
-    x: W/4, y: H*0.64, speed: 0.7, amp: 1.4, bounce: 0, phase: 0 },
-  { color: 0x9575CD, personality: 'tranquilo',
-    x: W/2, y: H*0.64, speed: 1.5, amp: 0.6, bounce: 0, phase: 1 },
-  { color: 0xFFB74D, personality: 'picaro',
-    x: W*3/4, y: H*0.64, speed: 0.9, amp: 1.0, bounce: 0, phase: 2 },
-];
-
-let currentMood = 'contento';
-let blinkTimer = 2000, blinkState = 0;
-
-function drawMime(m, t) {
-  const c = m.color;
-  // Dark fur = much darker version of the color
-  const fur = dk(c, 100);
-  // Face/belly = very light warm version
-  const face = lt(c, 70);
-  // Belly = white/very light
-  const belly = lt(c, 90);
-
-  const breathe = Math.sin(t / (600 * m.speed)) * m.amp;
-  const pupilX = Math.sin(t / 1200) * 2;
-  const earWig = Math.sin(t / (1000 * m.speed)) * 3 * m.amp;
-  const handWig = Math.sin(t / (800 * m.speed)) * 5 * m.amp;
-  const mood = currentMood;
-
-  let by = 0;
-  if (m.bounce > 0) {
-    by = -Math.sin(m.bounce * Math.PI) * 18;
-    m.bounce = Math.max(0, m.bounce - 0.025);
-  }
-
-  const S = 0.62;
-  ctx.save();
-  ctx.translate(m.x, m.y + by);
-  ctx.scale(S, S);
-
-  ctx.save();
-  ctx.scale(1, 1 + breathe * 0.003);
-
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.06)';
-  ell(0, 12, 50, 8);
-
-  // ===== FEET (cream/light, wide, at very bottom) =====
-  ctx.fillStyle = rgb(face.r, face.g, face.b);
-  // Left foot - wide flat oval
-  ell(-22, 6, 20, 10);
-  // Right foot
-  ell(22, 6, 20, 10);
-  // Toe bumps on feet
-  ctx.fillStyle = rgb(face.r - 15, face.g - 15, face.b - 10);
-  ell(-32, 4, 5, 4); ell(-24, 2, 5, 4); ell(-16, 4, 5, 4);
-  ell(16, 4, 5, 4); ell(24, 2, 5, 4); ell(32, 4, 5, 4);
-
-  // ===== MAIN BODY SHAPE (one round/oval blob) =====
-  // The whole body is covered in dark fur first
-  ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  // Main body - round, slightly taller than wide
-  ell(0, -52, 54, 58);
-
-  // ===== BELLY + FACE (light area - one connected inverted-drop shape) =====
-  // This is the key shape: a large light area covering the front
-  // Goes from lower belly up through chest and face
-  ctx.fillStyle = rgb(belly.r, belly.g, belly.b);
-  // Big belly circle
-  ell(0, -32, 38, 36);
-
-  // Chest/upper belly connecting to face
-  ctx.fillStyle = rgb(belly.r, belly.g, belly.b, 0.95);
-  ell(0, -56, 30, 20);
-
-  // Face area - cream colored, slightly warmer than belly
-  ctx.fillStyle = rgb(face.r, face.g, face.b);
-  ell(0, -72, 28, 24);
-
-  ctx.restore(); // breathe
-
-  // ===== HANDS (heart-shaped, dark fur color) =====
-  // Left heart hand
-  ctx.save();
-  ctx.translate(-54, -50);
-  ctx.rotate((handWig - 15) * Math.PI / 180);
-  ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  drawHeart(0, -10, 14);
-  ctx.restore();
-
-  // Right heart hand
-  ctx.save();
-  ctx.translate(54, -50);
-  ctx.rotate((-handWig + 15) * Math.PI / 180);
-  ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  drawHeart(0, -10, 14);
-  ctx.restore();
-
-  // ===== CAT EARS (small, peeking from dark fur) =====
-  const earY = -106;
-  // Left ear
-  ctx.save();
-  ctx.translate(-20, earY);
-  ctx.rotate((-6 + earWig) * Math.PI / 180);
-  ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  tri(0, 8, -9, -10, 9, -10);
-  ctx.fillStyle = rgb(face.r, face.g, face.b, 0.4);
-  tri(0, 4, -5, -6, 5, -6);
-  ctx.restore();
-  // Right ear
-  ctx.save();
-  ctx.translate(20, earY);
-  ctx.rotate((6 - earWig) * Math.PI / 180);
-  ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  tri(0, 8, -9, -10, 9, -10);
-  ctx.fillStyle = rgb(face.r, face.g, face.b, 0.4);
-  tri(0, 4, -5, -6, 5, -6);
-  ctx.restore();
-
-  // ===== FLUFFY HAIR/FUR on top (dark, personality-based) =====
-  const hB = -108;
-  const hC = rgb(fur.r, fur.g, fur.b);
-  const hL = rgb(fur.r + 25, fur.g + 25, fur.b + 25);
-
-  if (m.personality === 'aventurero') {
-    // Wild messy spikes
-    ctx.fillStyle = hC;
-    tri(-28, hB+28, -18, hB-8, -4, hB+20);
-    tri(-14, hB+22, -2, hB-14, 10, hB+18);
-    tri(0, hB+20, 12, hB-12, 24, hB+18);
-    tri(10, hB+22, 22, hB-6, 32, hB+26);
-    tri(-34, hB+30, -36, hB+10, -18, hB+22);
-    tri(20, hB+20, 38, hB+8, 34, hB+28);
-    tri(-8, hB+18, 4, hB-18, 16, hB+16);
-    ctx.fillStyle = hL;
-    tri(-10, hB+20, 0, hB-6, 8, hB+18);
-    tri(4, hB+18, 14, hB-8, 20, hB+16);
-  } else if (m.personality === 'tranquilo') {
-    // Smooth round dome
-    ctx.fillStyle = hC;
-    ctx.beginPath();
-    ctx.moveTo(-34, hB+32);
-    ctx.quadraticCurveTo(-38, hB+4, -16, hB-6);
-    ctx.quadraticCurveTo(0, hB-14, 16, hB-6);
-    ctx.quadraticCurveTo(38, hB+4, 34, hB+32);
-    ctx.quadraticCurveTo(18, hB+20, 0, hB+22);
-    ctx.quadraticCurveTo(-18, hB+20, -34, hB+32);
-    ctx.fill();
-    ctx.fillStyle = hL;
-    ctx.beginPath();
-    ctx.moveTo(-22, hB+26);
-    ctx.quadraticCurveTo(-24, hB+10, -8, hB+2);
-    ctx.quadraticCurveTo(0, hB-2, 8, hB+2);
-    ctx.quadraticCurveTo(24, hB+10, 22, hB+26);
-    ctx.quadraticCurveTo(0, hB+18, -22, hB+26);
-    ctx.fill();
-  } else if (m.personality === 'picaro') {
-    // Styled with quiff
-    ctx.fillStyle = hC;
-    ctx.beginPath();
-    ctx.moveTo(-32, hB+32);
-    ctx.quadraticCurveTo(-36, hB+2, -14, hB-4);
-    ctx.quadraticCurveTo(0, hB-10, 14, hB-4);
-    ctx.quadraticCurveTo(34, hB+2, 32, hB+32);
-    ctx.quadraticCurveTo(14, hB+20, 0, hB+22);
-    ctx.quadraticCurveTo(-14, hB+20, -32, hB+32);
-    ctx.fill();
-    tri(16, hB, 38, hB-24, 32, hB+6);
-    tri(20, hB-4, 42, hB-20, 36, hB+2);
-    tri(12, hB+2, 32, hB-18, 26, hB+6);
-    ctx.fillStyle = hL;
-    tri(18, hB-2, 36, hB-18, 30, hB+2);
-  }
-
-  // ===== DARK FUR framing the face (hood effect) =====
-  // Left side of face frame
-  ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  ctx.beginPath();
-  ctx.moveTo(-28, -58);
-  ctx.quadraticCurveTo(-36, -68, -32, -80);
-  ctx.quadraticCurveTo(-34, -92, -28, -98);
-  ctx.lineTo(-24, -92);
-  ctx.quadraticCurveTo(-28, -82, -26, -72);
-  ctx.quadraticCurveTo(-26, -62, -22, -56);
-  ctx.closePath();
-  ctx.fill();
-  // Right side of face frame
-  ctx.beginPath();
-  ctx.moveTo(28, -58);
-  ctx.quadraticCurveTo(36, -68, 32, -80);
-  ctx.quadraticCurveTo(34, -92, 28, -98);
-  ctx.lineTo(24, -92);
-  ctx.quadraticCurveTo(28, -82, 26, -72);
-  ctx.quadraticCurveTo(26, -62, 22, -56);
-  ctx.closePath();
-  ctx.fill();
-
-  // ===== EYES (very large, round, close together) =====
-  const eyeY = -78;
-  const eyeSp = 15;
-  const eRX = 16, eRY = 17;
-
-  if (mood === 'dormido') {
-    ctx.strokeStyle = '#444'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(-eyeSp, eyeY, 12, 0.15, Math.PI - 0.15); ctx.stroke();
-    ctx.beginPath(); ctx.arc(eyeSp, eyeY, 12, 0.15, Math.PI - 0.15); ctx.stroke();
-    ctx.fillStyle = '#9E9E9E';
-    ctx.font = 'bold 14px Arial';
-    ctx.fillText('z', 34, eyeY - 16 + Math.sin(t/500)*4);
-    ctx.font = 'bold 18px Arial';
-    ctx.fillText('Z', 42, eyeY - 34 + Math.sin(t/500+1)*4);
-  } else {
-    const eo = mood === 'triste' ? 3 : 0;
-
-    // Eye whites
-    ctx.fillStyle = '#fff';
-    ell(-eyeSp, eyeY + eo, eRX, eRY);
-    ell(eyeSp, eyeY + eo, eRX, eRY);
-    // Subtle outline
-    ctx.strokeStyle = 'rgba(60,60,60,0.3)'; ctx.lineWidth = 1.5;
-    sEll(-eyeSp, eyeY + eo, eRX, eRY);
-    sEll(eyeSp, eyeY + eo, eRX, eRY);
-
-    if (blinkState < 2) {
-      // Large pupils
-      const pR = mood === 'euforico' ? 11 : mood === 'enfadado' ? 7 : 9;
-      ctx.fillStyle = '#222';
-      ell(-eyeSp + pupilX, eyeY + eo + 1, pR, pR + 1);
-      ell(eyeSp + pupilX, eyeY + eo + 1, pR, pR + 1);
-      // Single large shine (like the reference)
-      ctx.fillStyle = '#fff';
-      ell(-eyeSp + pupilX + 4, eyeY + eo - 4, 4.5, 4.5);
-      ell(eyeSp + pupilX + 4, eyeY + eo - 4, 4.5, 4.5);
-    }
-    if (blinkState >= 2) {
-      ctx.fillStyle = rgb(face.r, face.g, face.b);
-      ell(-eyeSp, eyeY + eo, eRX + 1, eRY + 1);
-      ell(eyeSp, eyeY + eo, eRX + 1, eRY + 1);
-    }
-    if (mood === 'enfadado') {
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 3.5;
-      ctx.beginPath(); ctx.moveTo(-eyeSp-14,eyeY-20); ctx.lineTo(-eyeSp+6,eyeY-15); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(eyeSp+14,eyeY-20); ctx.lineTo(eyeSp-6,eyeY-15); ctx.stroke();
-    } else if (mood === 'triste') {
-      ctx.strokeStyle = 'rgba(80,80,80,0.5)'; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(-eyeSp-12,eyeY-15); ctx.lineTo(-eyeSp+8,eyeY-19); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(eyeSp+12,eyeY-15); ctx.lineTo(eyeSp-8,eyeY-19); ctx.stroke();
-    }
-  }
-
-  // ===== MUZZLE / HOCICO (small rounded bump below eyes) =====
-  const muzzY = -60;
-  ctx.fillStyle = rgb(face.r, face.g, face.b);
-  ell(0, muzzY, 12, 9);
-
-  // Nose (small dark oval on top of muzzle)
-  ctx.fillStyle = rgb(fur.r + 20, fur.g + 20, fur.b + 20);
-  ell(0, muzzY - 4, 5, 3.5);
-
-  // ===== WHISKERS =====
-  ctx.strokeStyle = 'rgba(100,100,100,0.25)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath(); ctx.moveTo(-12, muzzY-1); ctx.lineTo(-32, muzzY-6); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-12, muzzY+2); ctx.lineTo(-32, muzzY+3); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-11, muzzY+4); ctx.lineTo(-30, muzzY+11); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(12, muzzY-1); ctx.lineTo(32, muzzY-6); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(12, muzzY+2); ctx.lineTo(32, muzzY+3); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(11, muzzY+4); ctx.lineTo(30, muzzY+11); ctx.stroke();
-
-  // ===== MOUTH (small, below muzzle) =====
-  const moY = muzzY + 8;
-
-  if (mood === 'euforico') {
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.moveTo(-10, moY);
-    ctx.quadraticCurveTo(0, moY + 14, 10, moY);
-    ctx.quadraticCurveTo(0, moY + 16, -10, moY);
-    ctx.fill();
-    ctx.fillStyle = '#E53935';
-    ell(0, moY + 8, 5, 3.5);
-  } else if (mood === 'contento') {
-    ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-9, moY);
-    ctx.quadraticCurveTo(0, moY + 12, 9, moY);
-    ctx.stroke();
-  } else if (mood === 'triste') {
-    ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-8, moY + 6);
-    ctx.quadraticCurveTo(0, moY - 1, 8, moY + 6);
-    ctx.stroke();
-  } else if (mood === 'enfadado') {
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(-8, moY+1); ctx.lineTo(8, moY+2); ctx.stroke();
-  } else if (mood === 'dormido') {
-    ctx.fillStyle = '#555'; ell(0, moY + 2, 3.5, 3);
-  }
-
-  // Cheeks
-  if (mood !== 'enfadado') {
-    ctx.fillStyle = 'rgba(255,140,120,0.15)';
-    ell(-22, muzzY, 8, 6);
-    ell(22, muzzY, 8, 6);
-  }
-
-  ctx.restore();
-}
-
-function drawFloor() {
-  ctx.fillStyle = 'rgba(188,170,164,0.12)';
-  ctx.fillRect(0, H-45, W, 45);
-}
-
-function updateBlink(dt) {
-  blinkTimer -= dt;
-  if (blinkTimer <= 0) {
-    if (blinkState === 0) { blinkState=1; blinkTimer=60; }
-    else if (blinkState === 1) { blinkState=2; blinkTimer=80; }
-    else if (blinkState === 2) { blinkState=3; blinkTimer=60; }
-    else { blinkState=0; blinkTimer=2500+Math.random()*2000; }
-  }
-}
-
-function handleTap(x,y) {
-  mimes.forEach(m => {
-    if (Math.abs(x-m.x)<50 && Math.abs(y-(m.y-50))<80) m.bounce=1;
+function track(e) {
+  document.querySelectorAll('.character').forEach(ch => {
+    const rect = ch.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height * 0.3;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const max = 5;
+    const mx = (dx / dist) * Math.min(dist * 0.02, max);
+    const my = (dy / dist) * Math.min(dist * 0.02, max);
+    ch.querySelectorAll('.pupil').forEach(p => {
+      p.style.transform = `translate(calc(-50% + ${mx}px), ${my}px)`;
+    });
   });
 }
-canvas.addEventListener('click', e => { const r=canvas.getBoundingClientRect(); handleTap(e.clientX-r.left, e.clientY-r.top); });
-canvas.addEventListener('touchstart', e => { e.preventDefault(); const r=canvas.getBoundingClientRect(); const t=e.touches[0]; handleTap(t.clientX-r.left, t.clientY-r.top); });
 
-document.querySelectorAll('.mood-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentMood = btn.dataset.mood;
+// Click interaction
+const phrases = ['¡Hola! 🐾','Miau~ 💕','¡Te quiero!','Noot noot! 🐧','*purrs* ✨','¡Abrazo! 🤗','Nya~ 🎀','♪ ♫ ♪'];
+let idx = 0;
+
+document.querySelectorAll('.character').forEach(ch => {
+  ch.addEventListener('click', e => {
+    const burst = document.createElement('div');
+    burst.className = 'heart-burst';
+    const rect = ch.getBoundingClientRect();
+    burst.style.left = (e.clientX - rect.left) + 'px';
+    burst.style.top = (e.clientY - rect.top) + 'px';
+
+    const hearts = ['❤️','💛','💖','🧡','💜','💗'];
+    for (let i = 0; i < 6; i++) {
+      const h = document.createElement('div');
+      h.className = 'mini-heart';
+      h.textContent = hearts[i];
+      const a = (Math.PI * 2 / 6) * i + (Math.random() - 0.5);
+      const r = 30 + Math.random() * 25;
+      h.style.setProperty('--tx', `${Math.cos(a)*r}px`);
+      h.style.setProperty('--ty', `${Math.sin(a)*r - 20}px`);
+      h.style.setProperty('--rot', `${(Math.random()-0.5)*60}deg`);
+      h.style.animationDelay = `${i*0.05}s`;
+      burst.appendChild(h);
+    }
+    ch.appendChild(burst);
+    setTimeout(() => burst.remove(), 1200);
   });
 });
 
-let lastTime = 0;
-function loop(ts) {
-  const dt=ts-lastTime; lastTime=ts;
-  ctx.clearRect(0,0,W,H);
-  drawFloor();
-  updateBlink(dt);
-  mimes.forEach(m => drawMime(m, ts+m.phase*800));
-  requestAnimationFrame(loop);
+// Particles
+const particlesEl = document.getElementById('particles');
+const colors = ['#fbbf24','#fca5a5','#a5b4fc','#86efac','#fde68a'];
+for (let i = 0; i < 15; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const s = 4 + Math.random() * 8;
+  p.style.width = s + 'px'; p.style.height = s + 'px';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.background = colors[Math.floor(Math.random() * colors.length)];
+  p.style.animationDuration = (8 + Math.random() * 12) + 's';
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  particlesEl.appendChild(p);
 }
-requestAnimationFrame(loop);
 </script>
 </body>
 </html>
