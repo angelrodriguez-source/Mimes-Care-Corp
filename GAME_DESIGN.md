@@ -1,6 +1,6 @@
 # Mimes Care Corp: The Game
 
-## Manifiesto de Diseño del Juego - v0.2
+## Manifiesto de Diseño del Juego - v0.3
 
 ---
 
@@ -90,15 +90,54 @@ El cuidador puede realizar **6 acciones** sobre los Mimes a su cargo:
 
 Cada Mime tiene estas 6 variables como estadísticas. La personalidad del Mime modifica cuánto necesita de cada una y a qué ritmo decaen.
 
+**Todas las acciones de cuidado cuestan Puntos Mimes** (ver sección 5).
+
 ---
 
-## 5. Afinidad
+## 5. Economía: Puntos Mimes (Core Loop)
+
+Los **Puntos Mimes** son la moneda central del juego y el motor de la mecánica social. Crean un **ciclo de interdependencia** entre usuarios.
+
+### 5.1 ¿Cómo se ganan?
+
+| Fuente | Descripción |
+|--------|-------------|
+| **Tus Mimes bien cuidados** | Cuanto mejor cuiden otros tus Mimes, más Puntos Mimes generas. Es la fuente principal. |
+| **Tareas mínimas** | Ver anuncios, pruebas o mini-actividades. Generan una cantidad reducida de puntos. |
+
+> **El ciclo virtuoso**: Si cuidas bien los Mimes de otros → ellos tienen más puntos → pueden cuidar mejor los tuyos → tú tienes más puntos → puedes cuidar mejor los suyos.
+
+### 5.2 ¿Cómo se gastan?
+
+- Cada acción de cuidado (alimentar, limpiar, jugar, dar cariño, descansar, vestir) **cuesta Puntos Mimes**.
+- Las acciones básicas cuestan pocos puntos.
+- Las acciones especiales/premium cuestan más pero suben más la afinidad.
+
+### 5.3 Techo de afinidad según fuente de puntos
+
+| Fuente de puntos | Afinidad máxima alcanzable |
+|-------------------|---------------------------|
+| **Solo tareas mínimas** (anuncios, etc.) | 40% - 60% (mantenimiento básico) |
+| **Puntos de tus Mimes** + acciones normales | Hasta ~80% |
+| **Puntos de tus Mimes** + acciones especiales | Hasta 100% |
+
+> Para superar el 60% de afinidad **necesitas que otros estén cuidando bien tus Mimes**. No hay atajo. Esta es la mecánica que hace que el juego funcione socialmente.
+
+### 5.4 Implicación estratégica
+
+- Si nadie cuida tus Mimes (o los cuidan mal), tendrás pocos puntos y solo podrás mantener cuidados básicos.
+- Esto incentiva **elegir bien a quién cedes tus Mimes** y **cuidar bien los ajenos** para que la otra persona también pueda cuidar los tuyos.
+- Crea una relación de compromiso mutuo real entre usuarios.
+
+---
+
+## 6. Afinidad
 
 - La **afinidad** es el valor central del juego (0% - 100%).
 - Mide la calidad de la relación entre dos usuarios, basada en cómo se cuida el Mime cedido.
 - Se calcula a partir del promedio de las 6 variables de cuidado a lo largo del tiempo.
 
-### 5.1 Consecuencias por descuido
+### 6.1 Consecuencias por descuido
 
 | Rango de afinidad | Estado |
 |--------------------|--------|
@@ -110,7 +149,7 @@ Cada Mime tiene estas 6 variables como estadísticas. La personalidad del Mime m
 
 ---
 
-## 6. Capacidad de Recepción (Progresiva)
+## 7. Capacidad de Recepción (Progresiva)
 
 - Al inicio, un usuario puede recibir y cuidar un número limitado de Mimes ajenos.
 - Conforme sube de nivel o logra hitos, se desbloquean más slots para recibir Mimes.
@@ -125,7 +164,7 @@ Cada Mime tiene estas 6 variables como estadísticas. La personalidad del Mime m
 
 ---
 
-## 7. Reglas Base
+## 8. Reglas Base
 
 | Regla | Detalle |
 |-------|---------|
@@ -138,7 +177,7 @@ Cada Mime tiene estas 6 variables como estadísticas. La personalidad del Mime m
 
 ---
 
-## 8. Plataforma
+## 9. Plataforma
 
 - **Tecnología**: HTML5 + JavaScript (Phaser.js)
 - **Build**: Vite
@@ -147,16 +186,20 @@ Cada Mime tiene estas 6 variables como estadísticas. La personalidad del Mime m
 
 ---
 
-## 9. Preguntas Abiertas
+## 10. Preguntas Abiertas
 
+- [x] ~~¿Hay algún tipo de moneda o economía interna?~~ → Sí: **Puntos Mimes**
 - [ ] ¿Cuáles son los tipos de personalidad exactos?
 - [ ] ¿Cómo se calcula exactamente la afinidad? (media ponderada, decaimiento temporal, etc.)
+- [ ] ¿Cuántos Puntos Mimes cuesta cada acción de cuidado?
+- [ ] ¿Cuántos Puntos Mimes genera un Mime bien cuidado por unidad de tiempo?
+- [ ] ¿Cuántos puntos dan las tareas mínimas (anuncios)?
+- [ ] ¿Qué son las "acciones especiales" que permiten llegar al 100%?
 - [ ] ¿Cuántos Mimes puedes recibir en cada nivel?
 - [ ] ¿Se puede recuperar/reasignar un Mime cedido voluntariamente?
 - [ ] ¿Hay notificaciones push cuando un Mime necesita cuidado?
 - [ ] ¿Qué items de ropa/accesorios existen para vestir?
-- [ ] ¿Se desbloquean items con monedas, logros, o ambos?
-- [ ] ¿Hay algún tipo de moneda o economía interna?
+- [ ] ¿Se desbloquean items con Puntos Mimes, logros, o ambos?
 - [ ] ¿Backend: Firebase, Supabase, custom API?
 - [ ] ¿Hay chat o mensajes entre usuarios conectados?
 
