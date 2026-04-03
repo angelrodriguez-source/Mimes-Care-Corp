@@ -132,10 +132,11 @@ function drawMime(m, t) {
   ctx.translate(m.x, m.y + by);
   ctx.scale(S, S);
 
-  // ============ BODY (round ball, not egg) ============
-  const bodyR = 54;  // radius
-  const bodyH = 54;  // same as width = round ball
-  const bY = -bodyH; // body center Y
+  // ============ TWO-BALL BODY: head + torso ============
+  const torsoR = 42;    // torso ball radius
+  const headR = 38;     // head ball radius
+  const torsoY = -torsoR; // torso center
+  const headY = torsoY - torsoR - headR + 20; // head overlaps torso slightly
 
   ctx.save();
   ctx.translate(0, 0);
@@ -143,74 +144,73 @@ function drawMime(m, t) {
 
   // Shadow on ground
   ctx.fillStyle = 'rgba(0,0,0,0.08)';
-  ell(0, 8, bodyR * 0.8, 8);
+  ell(0, 8, torsoR * 0.8, 8);
 
-  // === PATITAS (behind body, close to bottom) ===
+  // === PATITAS (close to body bottom) ===
   ctx.fillStyle = rgb(d.r, d.g, d.b);
-  ell(-18, -2, 14, 10);
-  ell(18, -2, 14, 10);
-  // Toe lines
+  ell(-16, -2, 14, 10);
+  ell(16, -2, 14, 10);
   ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.5);
   ctx.lineWidth = 1.2;
-  [-24, -18, -12].forEach(x => {
+  [-22, -16, -10].forEach(x => {
     ctx.beginPath(); ctx.moveTo(x, -6); ctx.lineTo(x, 0); ctx.stroke();
   });
-  [12, 18, 24].forEach(x => {
+  [10, 16, 22].forEach(x => {
     ctx.beginPath(); ctx.moveTo(x, -6); ctx.lineTo(x, 0); ctx.stroke();
   });
 
-  // === MAIN BODY ===
-  // Back/sides darker (penguin-like)
+  // === TORSO (lower ball) ===
   ctx.fillStyle = col(c);
-  ell(0, bY, bodyR, bodyH);
+  ell(0, torsoY, torsoR, torsoR);
 
-  // Belly (lighter, front)
+  // Belly on torso
   ctx.fillStyle = rgb(l.r, l.g, l.b, 0.8);
-  ell(0, bY + 8, bodyR * 0.65, bodyH * 0.7);
+  ell(0, torsoY + 4, torsoR * 0.65, torsoR * 0.7);
 
-  // Subtle body outline
-  ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.2);
+  // Torso outline
+  ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.15);
   ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.ellipse(0, bY, bodyR, bodyH, 0, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(0, torsoY, torsoR, torsoR, 0, 0, Math.PI * 2); ctx.stroke();
+
+  // === HEAD (upper ball) ===
+  ctx.fillStyle = col(c);
+  ell(0, headY, headR, headR);
+
+  // Head outline
+  ctx.strokeStyle = rgb(d.r, d.g, d.b, 0.15);
+  ctx.beginPath(); ctx.ellipse(0, headY, headR, headR, 0, 0, Math.PI * 2); ctx.stroke();
 
   ctx.restore(); // breathe
 
-  // ============ HANDS (heart shape, on sides) ============
-  // Left hand
+  // ============ HANDS (heart shape, on torso sides) ============
   ctx.save();
-  ctx.translate(-bodyR - 6, bY + 15);
+  ctx.translate(-torsoR - 8, torsoY);
   ctx.rotate((handWig - 5) * Math.PI / 180);
   ctx.fillStyle = col(c);
   drawHeart(0, -8, 13);
   ctx.restore();
 
-  // Right hand
   ctx.save();
-  ctx.translate(bodyR + 6, bY + 15);
+  ctx.translate(torsoR + 8, torsoY);
   ctx.rotate((-handWig + 5) * Math.PI / 180);
   ctx.fillStyle = col(c);
   drawHeart(0, -8, 13);
   ctx.restore();
 
-  // ============ CAT EARS (small, peeking through hair) ============
-  const earY = bY - bodyH + 12;
+  // ============ CAT EARS (on head) ============
+  const earY = headY - headR + 6;
 
-  // Left ear
   ctx.save();
-  ctx.translate(-20, earY);
+  ctx.translate(-18, earY);
   ctx.rotate((-10 + earWig) * Math.PI / 180);
   ctx.fillStyle = col(c);
   tri(0, 5, -10, -16, 10, -16);
-  // Inner ear
   ctx.fillStyle = 'rgba(255,171,145,0.5)';
   tri(0, 0, -6, -12, 6, -12);
   ctx.restore();
 
-  // Right ear
   ctx.save();
-  ctx.translate(20, earY);
+  ctx.translate(18, earY);
   ctx.rotate((10 - earWig) * Math.PI / 180);
   ctx.fillStyle = col(c);
   tri(0, 5, -10, -16, 10, -16);
@@ -218,8 +218,8 @@ function drawMime(m, t) {
   tri(0, 0, -6, -12, 6, -12);
   ctx.restore();
 
-  // ============ HAIR / PELO ============
-  const hairY = bY - bodyH + 8;
+  // ============ HAIR / PELO (on top of head) ============
+  const hairY = headY - headR + 4;
   const hairColor = rgb(d.r - 30, d.g - 30, d.b - 30);
 
   if (m.personality === 'aventurero') {
@@ -270,10 +270,10 @@ function drawMime(m, t) {
     ctx.fill();
   }
 
-  // ============ EYES (big!) ============
-  const eyeY = bY - 10;
-  const eyeSpacing = 20;
-  const eyeRX = 16, eyeRY = 18;
+  // ============ EYES (big, on head) ============
+  const eyeY = headY - 4;
+  const eyeSpacing = 18;
+  const eyeRX = 14, eyeRY = 16;
 
   if (mood === 'dormido') {
     // Closed eyes - curved lines
@@ -288,9 +288,9 @@ function drawMime(m, t) {
     // ZZZ floating
     ctx.fillStyle = '#9E9E9E';
     ctx.font = 'bold 14px Arial';
-    ctx.fillText('z', 34, bY - 40 + Math.sin(t/500)*4);
+    ctx.fillText('z', 34, headY - 30 + Math.sin(t/500)*4);
     ctx.font = 'bold 18px Arial';
-    ctx.fillText('Z', 42, bY - 56 + Math.sin(t/500+1)*4);
+    ctx.fillText('Z', 42, headY - 46 + Math.sin(t/500+1)*4);
   } else {
     const eyeYOff = mood === 'triste' ? 3 : 0;
 
@@ -351,8 +351,8 @@ function drawMime(m, t) {
     }
   }
 
-  // ============ MOUTH (big and expressive) ============
-  const mouthY = bY + 18;
+  // ============ MOUTH (big and expressive, on head) ============
+  const mouthY = headY + 16;
 
   if (mood === 'euforico') {
     // Big open smile
@@ -406,17 +406,16 @@ function drawMime(m, t) {
     ell(0, mouthY + 4, 5, 4);
   }
 
-  // ============ CHEEKS (blush) ============
+  // ============ CHEEKS (blush, on head) ============
   if (mood !== 'enfadado') {
     ctx.fillStyle = 'rgba(255,150,130,0.25)';
-    ell(-30, bY + 8, 10, 7);
-    ell(30, bY + 8, 10, 7);
+    ell(-28, headY + 8, 10, 7);
+    ell(28, headY + 8, 10, 7);
   }
 
-  // ============ NOSE (tiny cat/penguin nose) ============
+  // ============ NOSE (tiny cat/penguin nose, on head) ============
   ctx.fillStyle = 'rgba(255,150,130,0.9)';
-  // Small triangle nose
-  tri(0, bY + 4, -4, bY + 10, 4, bY + 10);
+  tri(0, headY + 4, -4, headY + 10, 4, headY + 10);
 
   ctx.restore();
 }
