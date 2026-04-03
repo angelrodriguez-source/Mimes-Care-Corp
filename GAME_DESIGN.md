@@ -1,6 +1,6 @@
 # Mimes Care Corp: The Game
 
-## Manifiesto de Diseño del Juego - v0.3
+## Manifiesto de Diseño del Juego - v0.4
 
 ---
 
@@ -64,7 +64,16 @@ Cada Mime tiene una **personalidad** que afecta tanto a lo visual como al gamepl
 - El usuario que **recibe** un Mime es responsable de cuidarlo.
 - Cuanto mejor cuide el Mime, mayor será la **afinidad** entre ambos usuarios.
 
-### 3.5 Vistas del usuario
+### 3.5 El Mime como mensajero
+
+El Mime actúa como **canal emocional** entre su dueño y su cuidador:
+
+- **Dueño → Cuidador**: El dueño puede dejar mensajes que su Mime "dirá" al cuidador. Ejemplo: el Mime dice "Mi dueño dice que te echa de menos".
+- **Mime → Dueño**: El Mime puede contarle al dueño cosas sobre su cuidador. Ejemplo: "Mi cuidador hoy me ha dado mucho cariño".
+
+> **Principio de diseño**: El Mime **representa a la persona** que te lo ha dejado. No cuidas un píxel; cuidas algo de alguien que te importa. La responsabilidad social pesa más que la individual: es más fácil ignorar "tu mascota virtual tiene hambre" que "el Mime de Laura está triste". Esta es la base emocional del juego.
+
+### 3.6 Vistas del usuario
 
 Cada usuario tiene dos vistas principales:
 
