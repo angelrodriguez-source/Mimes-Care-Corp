@@ -132,9 +132,9 @@ function drawMime(m, t) {
   ctx.translate(m.x, m.y + by);
   ctx.scale(S, S);
 
-  // ============ BODY (big egg/ball) ============
-  const bodyR = 52;  // radius
-  const bodyH = 60;  // slightly taller than wide
+  // ============ BODY (round ball, not egg) ============
+  const bodyR = 54;  // radius
+  const bodyH = 54;  // same as width = round ball
   const bY = -bodyH; // body center Y
 
   ctx.save();
