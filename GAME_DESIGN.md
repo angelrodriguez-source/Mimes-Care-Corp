@@ -1,6 +1,6 @@
 # Mimes Care Corp: The Game
 
-## Manifiesto de Diseño del Juego - v0.4
+## Manifiesto de Diseño del Juego - v0.5
 
 ---
 
@@ -25,16 +25,22 @@ La diferencia fundamental con otros juegos de mascotas virtuales es que **no cui
 
 ### 2.2 Personalidad
 
+**Esencia común**: Todos los Mimes son mimosos por naturaleza. Su razón de existir es representar la cohesión entre dos personas. La personalidad matiza cómo lo expresan, no si lo sienten.
+
 Cada Mime tiene una **personalidad** que afecta tanto a lo visual como al gameplay:
 
 - **Visual**: animaciones, expresiones y reacciones distintas según personalidad.
-- **Gameplay**: cada personalidad modifica las necesidades de cuidado. Ejemplos:
-  - Un Mime *juguetón* necesita más diversión pero menos descanso.
-  - Un Mime *mimoso* necesita más cariño/atención.
-  - Un Mime *glotón* necesita más alimentación.
-  - Un Mime *presumido* necesita más cuidado de apariencia.
+- **Gameplay**: cada personalidad modifica las necesidades de cuidado.
 
-> *Tipos de personalidad exactos: por definir en detalle.*
+**3 tipos de personalidad:**
+
+| Tipo | Pide mucho | Pide poco | Dificultad |
+|------|-----------|-----------|------------|
+| **Aventurero** | Diversión, Hambre, Energía | Higiene, Apariencia | Media-Alta |
+| **Tranquilo** | Cariño, Higiene, Apariencia | Hambre, Diversión, Energía | Media-Baja |
+| **Pícaro** | Apariencia, Diversión, Cariño | Hambre, Energía | Alta |
+
+> Fichas completas en: `design/mimes/MIME_BASE.md`, `MIME_AVENTURERO.md`, `MIME_TRANQUILO.md`, `MIME_PICARO.md`
 
 ---
 
@@ -198,7 +204,7 @@ Los **Puntos Mimes** son la moneda central del juego y el motor de la mecánica 
 ## 10. Preguntas Abiertas
 
 - [x] ~~¿Hay algún tipo de moneda o economía interna?~~ → Sí: **Puntos Mimes**
-- [ ] ¿Cuáles son los tipos de personalidad exactos?
+- [x] ~~¿Cuáles son los tipos de personalidad exactos?~~ → Aventurero, Tranquilo, Pícaro (ver `design/mimes/`)
 - [ ] ¿Cómo se calcula exactamente la afinidad? (media ponderada, decaimiento temporal, etc.)
 - [ ] ¿Cuántos Puntos Mimes cuesta cada acción de cuidado?
 - [ ] ¿Cuántos Puntos Mimes genera un Mime bien cuidado por unidad de tiempo?
