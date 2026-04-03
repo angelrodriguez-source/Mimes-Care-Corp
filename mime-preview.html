@@ -59,12 +59,25 @@ function ell(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry
 function sEll(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);ctx.stroke()}
 function tri(x1,y1,x2,y2,x3,y3){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.closePath();ctx.fill()}
 
+// Heart shape
+function drawHeart(cx, cy, size) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.beginPath();
+  ctx.moveTo(0, size * 0.35);
+  ctx.bezierCurveTo(-size*0.5, -size*0.35, -size, size*0.15, 0, size);
+  ctx.moveTo(0, size * 0.35);
+  ctx.bezierCurveTo(size*0.5, -size*0.35, size, size*0.15, 0, size);
+  ctx.fill();
+  ctx.restore();
+}
+
 const mimes = [
-  { color: 0x81D4FA, personality: 'aventurero',
+  { color: 0x4FC3F7, personality: 'aventurero',
     x: W/4, y: H*0.64, speed: 0.7, amp: 1.4, bounce: 0, phase: 0 },
-  { color: 0xB39DDB, personality: 'tranquilo',
+  { color: 0x9575CD, personality: 'tranquilo',
     x: W/2, y: H*0.64, speed: 1.5, amp: 0.6, bounce: 0, phase: 1 },
-  { color: 0xFFCC80, personality: 'picaro',
+  { color: 0xFFB74D, personality: 'picaro',
     x: W*3/4, y: H*0.64, speed: 0.9, amp: 1.0, bounce: 0, phase: 2 },
 ];
 
@@ -138,32 +151,21 @@ function drawMime(m, t) {
 
   ctx.restore(); // breathe
 
-  // ===== HANDS/PAWS (small, round, dark, at mid-body sides) =====
-  // Proportionally small compared to body, paw pads facing forward
-  // Left paw
+  // ===== HANDS (heart-shaped, dark fur color) =====
+  // Left heart hand
   ctx.save();
-  ctx.translate(-54, -48);
+  ctx.translate(-54, -50);
   ctx.rotate((handWig - 15) * Math.PI / 180);
   ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  ell(0, 0, 12, 11);
-  // Big center pad (facing forward)
-  ctx.fillStyle = rgb(face.r - 15, face.g - 15, face.b - 10, 0.55);
-  ell(0, 1, 6.5, 5.5);
-  // Three toe beans on top
-  ctx.fillStyle = rgb(face.r - 15, face.g - 15, face.b - 10, 0.4);
-  ell(-4, -5, 3, 2.5); ell(0, -6, 3, 2.5); ell(4, -5, 3, 2.5);
+  drawHeart(0, -10, 14);
   ctx.restore();
 
-  // Right paw
+  // Right heart hand
   ctx.save();
-  ctx.translate(54, -48);
+  ctx.translate(54, -50);
   ctx.rotate((-handWig + 15) * Math.PI / 180);
   ctx.fillStyle = rgb(fur.r, fur.g, fur.b);
-  ell(0, 0, 12, 11);
-  ctx.fillStyle = rgb(face.r - 15, face.g - 15, face.b - 10, 0.55);
-  ell(0, 1, 6.5, 5.5);
-  ctx.fillStyle = rgb(face.r - 15, face.g - 15, face.b - 10, 0.4);
-  ell(-4, -5, 3, 2.5); ell(0, -6, 3, 2.5); ell(4, -5, 3, 2.5);
+  drawHeart(0, -10, 14);
   ctx.restore();
 
   // ===== CAT EARS (small, peeking from dark fur) =====
