@@ -136,112 +136,99 @@
     .character:hover .ear.left { transform: rotate(-25deg) translateY(-3px); }
     .character:hover .ear.right { transform: rotate(25deg) translateY(-3px); }
 
-    /* Hair / Fur on top */
+    /* ===== HAIR between ears ===== */
     .hair {
-        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-        z-index: 2; pointer-events: none;
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .hair-tuft {
+    .strand {
         position: absolute;
         background: var(--hair-color);
         box-shadow: inset -2px -2px 4px rgba(0,0,0,0.15), inset 2px 2px 4px rgba(255,255,255,0.1);
     }
-    .hair-highlight {
-        position: absolute;
-        background: var(--hair-highlight);
+
+    /* Aventurero: Punk / Mohawk - puntas hacia arriba */
+    .aventurero .hair.punk .strand:nth-child(1) {
+        width: 16px; height: 48px;
+        top: -38px; left: -15px; transform: rotate(-12deg);
+        border-radius: 40% 40% 10% 10%;
+    }
+    .aventurero .hair.punk .strand:nth-child(2) {
+        width: 19px; height: 58px;
+        top: -45px; left: -1px; transform: rotate(3deg);
+        border-radius: 40% 40% 10% 10%;
+    }
+    .aventurero .hair.punk .strand:nth-child(3) {
+        width: 15px; height: 43px;
+        top: -30px; left: 14px; transform: rotate(14deg);
+        border-radius: 40% 40% 10% 10%;
+    }
+    .aventurero .hair.punk .strand:nth-child(4) {
+        width: 52px; height: 16px;
+        top: 2px; left: -26px;
         border-radius: 50%;
-        opacity: 0.3;
+    }
+    .aventurero .hair.punk .strand:nth-child(5) {
+        width: 15px; height: 40px;
+        top: -28px; left: -28px; transform: rotate(-18deg);
+        border-radius: 40% 40% 10% 10%;
     }
 
-    /* Aventurero: wild messy big hair */
-    .aventurero .hair { width: 120px; height: 50px; top: -14px; }
-    .aventurero .hair-tuft:nth-child(1) {
-        width: 22px; height: 38px; left: 6px; top: 12px;
-        border-radius: 60% 40% 30% 30%;
-        transform: rotate(-30deg);
-    }
-    .aventurero .hair-tuft:nth-child(2) {
-        width: 20px; height: 44px; left: 22px; top: 2px;
-        border-radius: 50% 50% 25% 25%;
-        transform: rotate(-14deg);
-    }
-    .aventurero .hair-tuft:nth-child(3) {
-        width: 22px; height: 46px; left: 40px; top: -2px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(4deg);
-    }
-    .aventurero .hair-tuft:nth-child(4) {
-        width: 20px; height: 42px; left: 56px; top: 0px;
-        border-radius: 50% 50% 25% 25%;
-        transform: rotate(16deg);
-    }
-    .aventurero .hair-tuft:nth-child(5) {
-        width: 18px; height: 36px; left: 70px; top: 6px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(28deg);
-    }
-    .aventurero .hair-tuft:nth-child(6) {
-        width: 16px; height: 30px; left: 82px; top: 12px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(40deg);
-    }
-    .aventurero .hair-tuft:nth-child(7) {
-        width: 18px; height: 32px; left: -2px; top: 18px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(-40deg);
-    }
-    .aventurero .hair-highlight {
-        width: 40px; height: 14px; left: 30px; top: 6px;
-        transform: rotate(-8deg);
-    }
-
-    /* Tranquilo: smooth fluffy dome */
-    .tranquilo .hair { width: 120px; height: 42px; top: -8px; }
-    .tranquilo .hair-tuft:nth-child(1) {
-        width: 110px; height: 36px; left: 5px; top: 4px;
-        border-radius: 50% 50% 42% 42%;
-    }
-    .tranquilo .hair-tuft:nth-child(2) {
-        width: 90px; height: 28px; left: 15px; top: 6px;
+    /* Tranquilo: Rulos / Curly */
+    .tranquilo .hair.curly .strand:nth-child(1) {
+        width: 34px; height: 34px;
+        top: -14px; left: -26px;
         border-radius: 50%;
-        background: var(--hair-highlight);
-        opacity: 0.2;
     }
-    .tranquilo .hair-tuft:nth-child(3) {
-        width: 24px; height: 18px; left: 74px; top: 0px;
-        border-radius: 50% 60% 30% 30%;
-        transform: rotate(12deg);
+    .tranquilo .hair.curly .strand:nth-child(2) {
+        width: 38px; height: 38px;
+        top: -20px; left: -4px;
+        border-radius: 50%;
+    }
+    .tranquilo .hair.curly .strand:nth-child(3) {
+        width: 32px; height: 32px;
+        top: -10px; left: 16px;
+        border-radius: 50%;
+    }
+    .tranquilo .hair.curly .strand:nth-child(4) {
+        display: none;
+    }
+    .tranquilo .hair.curly .strand:nth-child(5) {
+        width: 32px; height: 32px;
+        top: -8px; left: -46px;
+        border-radius: 50%;
     }
 
-    /* Picaro: big styled quiff */
-    .picaro .hair { width: 130px; height: 55px; top: -16px; }
-    .picaro .hair-tuft:nth-child(1) {
-        width: 100px; height: 30px; left: 6px; top: 20px;
-        border-radius: 50% 50% 42% 42%;
+    /* Picaro: Quiff estilizado - flequillo barrido a un lado */
+    .picaro .hair.quiff .strand:nth-child(1) {
+        width: 60px; height: 18px;
+        top: 0px; left: -30px;
+        border-radius: 50%;
     }
-    .picaro .hair-tuft:nth-child(2) {
-        width: 28px; height: 46px; left: 68px; top: -4px;
-        border-radius: 55% 45% 25% 30%;
-        transform: rotate(18deg);
+    .picaro .hair.quiff .strand:nth-child(2) {
+        width: 20px; height: 44px;
+        top: -34px; left: 8px; transform: rotate(16deg);
+        border-radius: 40% 40% 10% 10%;
     }
-    .picaro .hair-tuft:nth-child(3) {
-        width: 22px; height: 40px; left: 82px; top: 0px;
-        border-radius: 50% 50% 25% 25%;
-        transform: rotate(28deg);
+    .picaro .hair.quiff .strand:nth-child(3) {
+        width: 16px; height: 38px;
+        top: -26px; left: 22px; transform: rotate(26deg);
+        border-radius: 40% 40% 10% 10%;
     }
-    .picaro .hair-tuft:nth-child(4) {
-        width: 18px; height: 34px; left: 92px; top: 8px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(38deg);
+    .picaro .hair.quiff .strand:nth-child(4) {
+        width: 14px; height: 30px;
+        top: -18px; left: 32px; transform: rotate(36deg);
+        border-radius: 40% 40% 10% 10%;
     }
-    .picaro .hair-tuft:nth-child(5) {
-        width: 20px; height: 28px; left: 2px; top: 16px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(-22deg);
-    }
-    .picaro .hair-highlight {
-        width: 30px; height: 12px; left: 70px; top: 8px;
-        transform: rotate(20deg);
+    .picaro .hair.quiff .strand:nth-child(5) {
+        width: 14px; height: 22px;
+        top: -10px; left: -22px; transform: rotate(-14deg);
+        border-radius: 40% 40% 10% 10%;
     }
 
     /* Collar */
@@ -312,186 +299,157 @@
     .blush.right { right: 26px; }
     .character:hover .blush { opacity: 0.8; }
 
-    /* Mouth - cute cat style */
+    /* ===== MOUTH - cat ":3" style ===== */
     .mouth {
-        position: absolute; top: 80px; left: 50%;
+        position: absolute; top: 82px; left: 50%;
         transform: translateX(-50%);
-        width: 36px; height: 22px; z-index: 15;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 15;
     }
-    /* Cat nose */
+    /* Triangle nose */
     .mouth-nose {
-        position: absolute; top: -4px; left: 50%;
+        position: absolute; top: 0; left: 50%;
         transform: translateX(-50%);
-        width: 9px; height: 7px;
-        background: #f48fb1;
-        border-radius: 50% 50% 40% 40%;
+        width: 0; height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid #f48fb1;
         z-index: 5;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
     }
-    /* Dark interior - visible when mouth opens */
-    .mouth-interior {
+    /* The "w" / ":3" shape - a single path-like element */
+    .mouth-w {
         position: absolute; top: 5px; left: 50%;
         transform: translateX(-50%);
-        width: 0px; height: 0px;
-        background: #2a1a1a;
-        border-radius: 50%;
-        z-index: 1;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    /* "w" shaped cat mouth using two curves */
-    .mouth-line {
-        position: absolute; top: 3px; left: 0;
-        width: 36px; height: 18px;
+        width: 30px; height: 12px;
         z-index: 3;
     }
-    .mouth-curve-left, .mouth-curve-right {
+    .mouth-w::before, .mouth-w::after {
+        content: '';
         position: absolute; top: 0;
-        width: 18px; height: 14px;
-        border: 2.5px solid #4a4a4a;
+        width: 16px; height: 10px;
+        border: 2.5px solid #3a3a3a;
         border-top: none;
-        border-radius: 0 0 50% 50%;
-        background: transparent;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .mouth-curve-left { left: 0; border-right: none; border-radius: 0 0 0 60%; }
-    .mouth-curve-right { right: 0; border-left: none; border-radius: 0 0 60% 0; }
-    /* Tongue - inside mouth-line so it follows the curves */
-    .mouth-tongue {
-        position: absolute; bottom: -2px; left: 50%;
+    .mouth-w::before {
+        left: 0;
+        border-right: none;
+        border-radius: 0 0 0 10px;
+    }
+    .mouth-w::after {
+        right: 0;
+        border-left: none;
+        border-radius: 0 0 10px 0;
+    }
+    /* Open mouth area (hidden by default, visible in open moods) */
+    .mouth-open {
+        position: absolute; top: 6px; left: 50%;
         transform: translateX(-50%);
-        width: 10px; height: 0px;
-        background: #f48fb1;
+        width: 0; height: 0;
+        background: #2a1a1a;
         border-radius: 0 0 50% 50%;
-        z-index: 4;
+        z-index: 2;
+        overflow: hidden;
         transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    /* Gentle idle mouth animation */
-    .mouth-curve-left, .mouth-curve-right {
-        animation: cat-idle 5s ease-in-out infinite;
+    /* Tongue inside the open area */
+    .mouth-tongue {
+        position: absolute; bottom: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 8px; height: 5px;
+        background: #f48fb1;
+        border-radius: 50%;
+        z-index: 3;
     }
-    @keyframes cat-idle {
-        0%, 100% { transform: scaleY(1) scaleX(1); }
-        30% { transform: scaleY(1.08) scaleX(1.03); }
-        60% { transform: scaleY(0.95) scaleX(0.98); }
+    /* Idle animation - subtle "w" breathing */
+    .mouth-w {
+        animation: mouth-idle 5s ease-in-out infinite;
+    }
+    @keyframes mouth-idle {
+        0%, 100% { transform: translateX(-50%) scaleY(1); }
+        40% { transform: translateX(-50%) scaleY(1.06); }
+        70% { transform: translateX(-50%) scaleY(0.96); }
     }
 
     /* === MOOD EXPRESSIONS === */
 
-    /* Happy: bigger smile, dark interior, tongue peeking */
-    .mood-feliz .mouth { width: 42px; height: 26px; }
-    .mood-feliz .mouth-line { width: 42px; height: 22px; }
-    .mood-feliz .mouth-curve-left { width: 21px; height: 18px; border-width: 3px; }
-    .mood-feliz .mouth-curve-right { width: 21px; height: 18px; border-width: 3px; }
-    .mood-feliz .mouth-interior { width: 24px; height: 12px; top: 6px; }
-    .mood-feliz .mouth-tongue { height: 7px; bottom: -3px; }
-    .mood-feliz .mouth-curve-left, .mood-feliz .mouth-curve-right {
-        animation: cat-happy 3s ease-in-out infinite;
+    /* Feliz: wider "w", mouth opens a bit, tongue peeks */
+    .mood-feliz .mouth-w { width: 36px; }
+    .mood-feliz .mouth-w::before, .mood-feliz .mouth-w::after { width: 19px; height: 13px; border-width: 3px; }
+    .mood-feliz .mouth-open { width: 20px; height: 10px; top: 8px; }
+    .mood-feliz .mouth-tongue { width: 10px; height: 6px; }
+    .mood-feliz .mouth-w {
+        animation: mouth-happy 3.5s ease-in-out infinite;
     }
-    .mood-feliz .mouth-interior {
-        animation: interior-happy 3s ease-in-out infinite;
-    }
-    @keyframes cat-happy {
-        0%, 100% { transform: scaleY(1) scaleX(1); }
-        25% { transform: scaleY(1.12) scaleX(1.06); }
-        50% { transform: scaleY(1) scaleX(1); }
-        75% { transform: scaleY(1.08) scaleX(1.04); }
-    }
-    @keyframes interior-happy {
+    @keyframes mouth-happy {
         0%, 100% { transform: translateX(-50%) scaleY(1); }
-        25% { transform: translateX(-50%) scaleY(1.15); }
-        50% { transform: translateX(-50%) scaleY(1); }
-        75% { transform: translateX(-50%) scaleY(1.1); }
+        30% { transform: translateX(-50%) scaleY(1.1); }
+        60% { transform: translateX(-50%) scaleY(0.96); }
     }
 
-    /* Sad: inverted curves (frown), no interior */
-    .mood-triste .mouth { width: 26px; height: 16px; }
-    .mood-triste .mouth-line { width: 26px; }
-    .mood-triste .mouth-interior { width: 0; height: 0; }
-    .mood-triste .mouth-curve-left {
-        width: 13px; height: 10px;
-        border: 2.5px solid #4a4a4a;
-        border-bottom: none; border-right: none;
-        border-radius: 60% 0 0 0;
-        animation: cat-sad 4s ease-in-out infinite;
+    /* Triste: "w" inverted to frown - curves go UP */
+    .mood-triste .mouth-w { width: 24px; }
+    .mood-triste .mouth-w::before, .mood-triste .mouth-w::after {
+        width: 13px; height: 8px;
+        border: 2.5px solid #3a3a3a;
+        border-bottom: none;
+        border-top: none;
+        top: auto; bottom: 0;
     }
-    .mood-triste .mouth-curve-right {
-        width: 13px; height: 10px;
-        border: 2.5px solid #4a4a4a;
-        border-bottom: none; border-left: none;
-        border-radius: 0 60% 0 0;
-        animation: cat-sad 4s ease-in-out infinite;
+    .mood-triste .mouth-w::before {
+        border-right: none;
+        border-radius: 0;
+        border-top: 2.5px solid #3a3a3a;
+        border-radius: 10px 0 0 0;
     }
-    @keyframes cat-sad {
-        0%, 100% { transform: scaleY(1); }
-        50% { transform: scaleY(1.12) translateY(-1px); }
+    .mood-triste .mouth-w::after {
+        border-left: none;
+        border-radius: 0;
+        border-top: 2.5px solid #3a3a3a;
+        border-radius: 0 10px 0 0;
     }
-    .mood-triste .mouth-tongue { height: 0; }
+    .mood-triste .mouth-open { width: 0; height: 0; }
+    .mood-triste .mouth-w { animation: mouth-sad 5s ease-in-out infinite; }
+    @keyframes mouth-sad {
+        0%, 100% { transform: translateX(-50%) scaleY(1); }
+        50% { transform: translateX(-50%) scaleY(1.08) translateY(-1px); }
+    }
     .mood-triste .blush { opacity: 0.2 !important; }
 
-    /* Euphoric: huge open mouth, big dark interior, tongue out */
-    .mood-euforico .mouth { width: 48px; height: 32px; }
-    .mood-euforico .mouth-line { width: 48px; height: 26px; }
-    .mood-euforico .mouth-curve-left { width: 24px; height: 22px; border-width: 3px; }
-    .mood-euforico .mouth-curve-right { width: 24px; height: 22px; border-width: 3px; }
-    .mood-euforico .mouth-interior { width: 32px; height: 18px; top: 6px; }
-    .mood-euforico .mouth-tongue { height: 11px; width: 14px; bottom: -6px; }
-    .mood-euforico .mouth-curve-left, .mood-euforico .mouth-curve-right {
-        animation: cat-euphoric 2.5s ease-in-out infinite;
+    /* Euforico: big open "w", large dark mouth opening, tongue out */
+    .mood-euforico .mouth-w { width: 42px; }
+    .mood-euforico .mouth-w::before, .mood-euforico .mouth-w::after { width: 22px; height: 16px; border-width: 3px; }
+    .mood-euforico .mouth-open { width: 28px; height: 16px; top: 10px; }
+    .mood-euforico .mouth-tongue { width: 14px; height: 9px; }
+    .mood-euforico .mouth-w {
+        animation: mouth-euphoric 2.5s ease-in-out infinite;
     }
-    .mood-euforico .mouth-interior {
-        animation: interior-euphoric 2.5s ease-in-out infinite;
+    .mood-euforico .mouth-open {
+        animation: open-euphoric 2.5s ease-in-out infinite;
     }
-    .mood-euforico .mouth-tongue {
-        animation: tongue-bounce 2s ease-in-out infinite;
-    }
-    @keyframes cat-euphoric {
-        0%, 100% { transform: scaleY(1) scaleX(1); }
-        20% { transform: scaleY(1.2) scaleX(1.08); }
-        40% { transform: scaleY(0.92) scaleX(0.96); }
-        60% { transform: scaleY(1.15) scaleX(1.06); }
-        80% { transform: scaleY(0.96) scaleX(1); }
-    }
-    @keyframes interior-euphoric {
-        0%, 100% { transform: translateX(-50%) scale(1); }
-        20% { transform: translateX(-50%) scale(1.15); }
-        40% { transform: translateX(-50%) scale(0.9); }
-        60% { transform: translateX(-50%) scale(1.12); }
-        80% { transform: translateX(-50%) scale(0.95); }
-    }
-    @keyframes tongue-bounce {
+    @keyframes mouth-euphoric {
         0%, 100% { transform: translateX(-50%) scaleY(1); }
-        50% { transform: translateX(-50%) scaleY(1.15) translateY(1px); }
+        25% { transform: translateX(-50%) scaleY(1.18); }
+        50% { transform: translateX(-50%) scaleY(0.92); }
+        75% { transform: translateX(-50%) scaleY(1.12); }
+    }
+    @keyframes open-euphoric {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        25% { transform: translateX(-50%) scale(1.15); }
+        50% { transform: translateX(-50%) scale(0.9); }
+        75% { transform: translateX(-50%) scale(1.1); }
     }
     .mood-euforico .blush { opacity: 0.9 !important; }
 
-    /* Sleepy: tiny "o" mouth with small dark circle */
-    .mood-dormido .mouth { width: 16px; height: 16px; }
-    .mood-dormido .mouth-nose { top: -4px; }
-    .mood-dormido .mouth-line { width: 16px; height: 12px; }
-    .mood-dormido .mouth-interior { width: 8px; height: 8px; top: 5px; border-radius: 50%; }
-    .mood-dormido .mouth-curve-left {
-        width: 8px; height: 10px;
-        border-radius: 0 0 0 50%;
-        animation: cat-sleepy 5s ease-in-out infinite;
+    /* Dormido: tiny round "o" mouth */
+    .mood-dormido .mouth-w { width: 12px; }
+    .mood-dormido .mouth-w::before, .mood-dormido .mouth-w::after {
+        width: 7px; height: 7px;
     }
-    .mood-dormido .mouth-curve-right {
-        width: 8px; height: 10px;
-        border-radius: 0 0 50% 0;
-        animation: cat-sleepy 5s ease-in-out infinite;
-    }
-    .mood-dormido .mouth-interior {
-        animation: interior-sleepy 5s ease-in-out infinite;
-    }
-    @keyframes cat-sleepy {
-        0%, 100% { transform: scaleY(1); }
-        50% { transform: scaleY(0.85); }
-    }
-    @keyframes interior-sleepy {
-        0%, 100% { transform: translateX(-50%) scale(1); }
-        50% { transform: translateX(-50%) scale(0.8); }
-    }
-    .mood-dormido .mouth-tongue { height: 0; }
+    .mood-dormido .mouth-w::before { border-radius: 0 0 0 50%; }
+    .mood-dormido .mouth-w::after { border-radius: 0 0 50% 0; }
+    .mood-dormido .mouth-open { width: 6px; height: 6px; top: 6px; border-radius: 50%; }
+    .mood-dormido .mouth-tongue { display: none; }
+    .mood-dormido .mouth-w { animation: none; }
     .mood-dormido .eye-lid {
         animation: sleepy-eyes 5s ease-in-out infinite !important;
     }
@@ -500,35 +458,25 @@
         15% { height: 100%; }
     }
 
-    /* Hungry: licking lips, dark interior, tongue sweeps */
-    .mood-hambriento .mouth { width: 40px; height: 24px; }
-    .mood-hambriento .mouth-line { width: 40px; height: 20px; }
-    .mood-hambriento .mouth-curve-left { width: 20px; height: 16px; }
-    .mood-hambriento .mouth-curve-right { width: 20px; height: 16px; }
-    .mood-hambriento .mouth-interior { width: 22px; height: 10px; top: 6px; }
+    /* Hambriento: mouth opens and tongue licks side to side */
+    .mood-hambriento .mouth-w { width: 34px; }
+    .mood-hambriento .mouth-w::before, .mood-hambriento .mouth-w::after { width: 18px; height: 12px; }
+    .mood-hambriento .mouth-open { width: 22px; height: 12px; top: 8px; }
     .mood-hambriento .mouth-tongue {
-        height: 9px; width: 12px; bottom: -4px;
-        animation: tongue-lick 4s ease-in-out infinite;
+        width: 12px; height: 7px;
+        animation: tongue-lick 3.5s ease-in-out infinite;
     }
     @keyframes tongue-lick {
-        0%, 50%, 100% { transform: translateX(-50%); height: 0px; }
-        15% { transform: translateX(-20%); height: 9px; }
-        25% { transform: translateX(-80%); height: 9px; }
-        40% { transform: translateX(-50%); height: 4px; }
+        0%, 45%, 100% { transform: translateX(-50%); }
+        15% { transform: translateX(-10%); }
+        30% { transform: translateX(-90%); }
     }
-    .mood-hambriento .mouth-curve-left, .mood-hambriento .mouth-curve-right {
-        animation: cat-hungry 4s ease-in-out infinite;
+    .mood-hambriento .mouth-w {
+        animation: mouth-hungry 3.5s ease-in-out infinite;
     }
-    .mood-hambriento .mouth-interior {
-        animation: interior-hungry 4s ease-in-out infinite;
-    }
-    @keyframes cat-hungry {
-        0%, 50%, 100% { transform: scaleY(1); }
-        15%, 25% { transform: scaleY(1.15) scaleX(1.08); }
-    }
-    @keyframes interior-hungry {
-        0%, 50%, 100% { transform: translateX(-50%) scale(1); }
-        15%, 25% { transform: translateX(-50%) scale(1.2); }
+    @keyframes mouth-hungry {
+        0%, 45%, 100% { transform: translateX(-50%) scaleY(1); }
+        15%, 30% { transform: translateX(-50%) scaleY(1.12); }
     }
 
     /* ===== HEART HANDS (dark, body color) ===== */
@@ -677,12 +625,10 @@
       <div class="character aventurero mime-celeste" data-name="aventurero">
         <div class="ear left"></div>
         <div class="ear right"></div>
-        <div class="hair">
-          <div class="hair-tuft"></div><div class="hair-tuft"></div>
-          <div class="hair-tuft"></div><div class="hair-tuft"></div>
-          <div class="hair-tuft"></div><div class="hair-tuft"></div>
-          <div class="hair-tuft"></div>
-          <div class="hair-highlight"></div>
+        <div class="hair punk">
+          <div class="strand"></div><div class="strand"></div>
+          <div class="strand"></div><div class="strand"></div>
+          <div class="strand"></div>
         </div>
         <div class="body"><div class="belly"></div></div>
         <div class="eye left"><div class="pupil"></div><div class="eye-lid"></div></div>
@@ -690,16 +636,12 @@
         <div class="blush left"></div><div class="blush right"></div>
         <div class="mouth">
           <div class="mouth-nose"></div>
-          <div class="mouth-interior"></div>
-          <div class="mouth-line">
-            <div class="mouth-curve-left"></div>
-            <div class="mouth-curve-right"></div>
-            <div class="mouth-tongue"></div>
-          </div>
+          <div class="mouth-w"></div>
+          <div class="mouth-open"><div class="mouth-tongue"></div></div>
         </div>
         <div class="collar"></div>
-        <div class="hand left">&#x2764;&#xFE0F;</div>
-        <div class="hand right">&#x2764;&#xFE0F;</div>
+        <div class="hand left">&#9829;</div>
+        <div class="hand right">&#9829;</div>
         <div class="foot left"></div><div class="foot right"></div>
       </div>
       <div class="ground-shadow"></div>
@@ -713,9 +655,10 @@
       <div class="character tranquilo mime-lila" data-name="tranquilo">
         <div class="ear left"></div>
         <div class="ear right"></div>
-        <div class="hair">
-          <div class="hair-tuft"></div><div class="hair-tuft"></div>
-          <div class="hair-tuft"></div>
+        <div class="hair curly">
+          <div class="strand"></div><div class="strand"></div>
+          <div class="strand"></div><div class="strand"></div>
+          <div class="strand"></div>
         </div>
         <div class="body"><div class="belly"></div></div>
         <div class="eye left"><div class="pupil"></div><div class="eye-lid"></div></div>
@@ -723,16 +666,12 @@
         <div class="blush left"></div><div class="blush right"></div>
         <div class="mouth">
           <div class="mouth-nose"></div>
-          <div class="mouth-interior"></div>
-          <div class="mouth-line">
-            <div class="mouth-curve-left"></div>
-            <div class="mouth-curve-right"></div>
-            <div class="mouth-tongue"></div>
-          </div>
+          <div class="mouth-w"></div>
+          <div class="mouth-open"><div class="mouth-tongue"></div></div>
         </div>
         <div class="collar"></div>
-        <div class="hand left">&#x2764;&#xFE0F;</div>
-        <div class="hand right">&#x2764;&#xFE0F;</div>
+        <div class="hand left">&#9829;</div>
+        <div class="hand right">&#9829;</div>
         <div class="foot left"></div><div class="foot right"></div>
       </div>
       <div class="ground-shadow"></div>
@@ -746,11 +685,10 @@
       <div class="character picaro mime-melocoton" data-name="picaro">
         <div class="ear left"></div>
         <div class="ear right"></div>
-        <div class="hair">
-          <div class="hair-tuft"></div><div class="hair-tuft"></div>
-          <div class="hair-tuft"></div><div class="hair-tuft"></div>
-          <div class="hair-tuft"></div>
-          <div class="hair-highlight"></div>
+        <div class="hair quiff">
+          <div class="strand"></div><div class="strand"></div>
+          <div class="strand"></div><div class="strand"></div>
+          <div class="strand"></div>
         </div>
         <div class="body"><div class="belly"></div></div>
         <div class="eye left"><div class="pupil"></div><div class="eye-lid"></div></div>
@@ -758,16 +696,12 @@
         <div class="blush left"></div><div class="blush right"></div>
         <div class="mouth">
           <div class="mouth-nose"></div>
-          <div class="mouth-interior"></div>
-          <div class="mouth-line">
-            <div class="mouth-curve-left"></div>
-            <div class="mouth-curve-right"></div>
-            <div class="mouth-tongue"></div>
-          </div>
+          <div class="mouth-w"></div>
+          <div class="mouth-open"><div class="mouth-tongue"></div></div>
         </div>
         <div class="collar"></div>
-        <div class="hand left">&#x2764;&#xFE0F;</div>
-        <div class="hand right">&#x2764;&#xFE0F;</div>
+        <div class="hand left">&#9829;</div>
+        <div class="hand right">&#9829;</div>
         <div class="foot left"></div><div class="foot right"></div>
       </div>
       <div class="ground-shadow"></div>
