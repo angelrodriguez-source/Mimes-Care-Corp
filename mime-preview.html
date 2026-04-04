@@ -204,31 +204,41 @@
         border-radius: 50%;
     }
 
-    /* Picaro: Quiff estilizado - flequillo barrido a un lado */
+    /* Picaro: Copete / Pompadour - volumen que sube y cae a un lado */
     .picaro .hair.quiff .strand:nth-child(1) {
-        width: 42px; height: 12px;
-        top: 2px; left: -21px;
-        border-radius: 50%;
+        /* base que cubre entre las orejas */
+        width: 44px; height: 14px;
+        top: 0px; left: -22px;
+        border-radius: 50% 50% 40% 40%;
     }
     .picaro .hair.quiff .strand:nth-child(2) {
-        width: 14px; height: 32px;
-        top: -22px; left: 6px; transform: rotate(16deg);
-        border-radius: 40% 40% 10% 10%;
+        /* volumen principal del copete - bola grande que sube */
+        width: 30px; height: 28px;
+        top: -20px; left: -8px;
+        border-radius: 50% 60% 30% 40%;
+        transform: rotate(8deg);
     }
     .picaro .hair.quiff .strand:nth-child(3) {
-        width: 12px; height: 26px;
-        top: -16px; left: 16px; transform: rotate(26deg);
-        border-radius: 40% 40% 10% 10%;
+        /* punta del copete que cae hacia la derecha */
+        width: 20px; height: 18px;
+        top: -24px; left: 14px;
+        border-radius: 50% 70% 50% 30%;
+        transform: rotate(20deg);
     }
     .picaro .hair.quiff .strand:nth-child(4) {
-        width: 10px; height: 20px;
-        top: -10px; left: 24px; transform: rotate(36deg);
-        border-radius: 40% 40% 10% 10%;
+        /* mechoncito trasero que le da forma */
+        width: 16px; height: 14px;
+        top: -10px; left: -18px;
+        border-radius: 50% 40% 30% 50%;
+        transform: rotate(-10deg);
     }
     .picaro .hair.quiff .strand:nth-child(5) {
-        width: 10px; height: 16px;
-        top: -4px; left: -16px; transform: rotate(-14deg);
-        border-radius: 40% 40% 10% 10%;
+        /* highlight / brillo en el copete */
+        width: 14px; height: 10px;
+        top: -16px; left: 2px;
+        border-radius: 50%;
+        background: var(--hair-highlight);
+        opacity: 0.25;
     }
 
     /* Collar */
