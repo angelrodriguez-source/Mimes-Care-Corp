@@ -316,7 +316,7 @@
     .mouth {
         position: absolute; top: 80px; left: 50%;
         transform: translateX(-50%);
-        width: 36px; height: 20px; z-index: 15;
+        width: 36px; height: 22px; z-index: 15;
         transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     /* Cat nose */
@@ -326,12 +326,24 @@
         width: 9px; height: 7px;
         background: #f48fb1;
         border-radius: 50% 50% 40% 40%;
-        z-index: 3;
+        z-index: 5;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    /* Dark interior - visible when mouth opens */
+    .mouth-interior {
+        position: absolute; top: 5px; left: 50%;
+        transform: translateX(-50%);
+        width: 0px; height: 0px;
+        background: #2a1a1a;
+        border-radius: 50%;
+        z-index: 1;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     /* "w" shaped cat mouth using two curves */
     .mouth-line {
-        position: absolute; top: 3px; left: 0; width: 36px; height: 16px;
+        position: absolute; top: 3px; left: 0;
+        width: 36px; height: 18px;
+        z-index: 3;
     }
     .mouth-curve-left, .mouth-curve-right {
         position: absolute; top: 0;
@@ -344,47 +356,58 @@
     }
     .mouth-curve-left { left: 0; border-right: none; border-radius: 0 0 0 60%; }
     .mouth-curve-right { right: 0; border-left: none; border-radius: 0 0 60% 0; }
-    /* Tongue (hidden by default, shown in some moods) */
+    /* Tongue - inside mouth-line so it follows the curves */
     .mouth-tongue {
-        position: absolute; top: 10px; left: 50%;
+        position: absolute; bottom: -2px; left: 50%;
         transform: translateX(-50%);
-        width: 10px; height: 8px;
+        width: 10px; height: 0px;
         background: #f48fb1;
         border-radius: 0 0 50% 50%;
-        opacity: 0;
+        z-index: 4;
         transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        z-index: 2;
     }
-    /* Gentle idle mouth animation - subtle and smooth */
+    /* Gentle idle mouth animation */
     .mouth-curve-left, .mouth-curve-right {
         animation: cat-idle 5s ease-in-out infinite;
     }
     @keyframes cat-idle {
         0%, 100% { transform: scaleY(1) scaleX(1); }
-        30% { transform: scaleY(1.1) scaleX(1.05); }
+        30% { transform: scaleY(1.08) scaleX(1.03); }
         60% { transform: scaleY(0.95) scaleX(0.98); }
     }
 
     /* === MOOD EXPRESSIONS === */
-    /* Happy: bigger smile, tongue peeking */
-    .mood-feliz .mouth { width: 42px; height: 24px; }
-    .mood-feliz .mouth-line { width: 42px; }
+
+    /* Happy: bigger smile, dark interior, tongue peeking */
+    .mood-feliz .mouth { width: 42px; height: 26px; }
+    .mood-feliz .mouth-line { width: 42px; height: 22px; }
     .mood-feliz .mouth-curve-left { width: 21px; height: 18px; border-width: 3px; }
     .mood-feliz .mouth-curve-right { width: 21px; height: 18px; border-width: 3px; }
-    .mood-feliz .mouth-tongue { opacity: 1; top: 14px; }
+    .mood-feliz .mouth-interior { width: 24px; height: 12px; top: 6px; }
+    .mood-feliz .mouth-tongue { height: 7px; bottom: -3px; }
     .mood-feliz .mouth-curve-left, .mood-feliz .mouth-curve-right {
         animation: cat-happy 3s ease-in-out infinite;
     }
+    .mood-feliz .mouth-interior {
+        animation: interior-happy 3s ease-in-out infinite;
+    }
     @keyframes cat-happy {
         0%, 100% { transform: scaleY(1) scaleX(1); }
-        25% { transform: scaleY(1.15) scaleX(1.08); }
+        25% { transform: scaleY(1.12) scaleX(1.06); }
         50% { transform: scaleY(1) scaleX(1); }
-        75% { transform: scaleY(1.1) scaleX(1.05); }
+        75% { transform: scaleY(1.08) scaleX(1.04); }
+    }
+    @keyframes interior-happy {
+        0%, 100% { transform: translateX(-50%) scaleY(1); }
+        25% { transform: translateX(-50%) scaleY(1.15); }
+        50% { transform: translateX(-50%) scaleY(1); }
+        75% { transform: translateX(-50%) scaleY(1.1); }
     }
 
-    /* Sad: inverted curves (frown) */
+    /* Sad: inverted curves (frown), no interior */
     .mood-triste .mouth { width: 26px; height: 16px; }
     .mood-triste .mouth-line { width: 26px; }
+    .mood-triste .mouth-interior { width: 0; height: 0; }
     .mood-triste .mouth-curve-left {
         width: 13px; height: 10px;
         border: 2.5px solid #4a4a4a;
@@ -401,41 +424,52 @@
     }
     @keyframes cat-sad {
         0%, 100% { transform: scaleY(1); }
-        50% { transform: scaleY(1.15) translateY(-1px); }
+        50% { transform: scaleY(1.12) translateY(-1px); }
     }
-    .mood-triste .mouth-tongue { opacity: 0; }
+    .mood-triste .mouth-tongue { height: 0; }
     .mood-triste .blush { opacity: 0.2 !important; }
 
-    /* Euphoric: huge open smile, tongue out */
-    .mood-euforico .mouth { width: 48px; height: 28px; }
-    .mood-euforico .mouth-line { width: 48px; }
+    /* Euphoric: huge open mouth, big dark interior, tongue out */
+    .mood-euforico .mouth { width: 48px; height: 32px; }
+    .mood-euforico .mouth-line { width: 48px; height: 26px; }
     .mood-euforico .mouth-curve-left { width: 24px; height: 22px; border-width: 3px; }
     .mood-euforico .mouth-curve-right { width: 24px; height: 22px; border-width: 3px; }
-    .mood-euforico .mouth-tongue {
-        opacity: 1; top: 16px;
-        width: 14px; height: 12px;
-        animation: tongue-bounce 2s ease-in-out infinite;
-    }
+    .mood-euforico .mouth-interior { width: 32px; height: 18px; top: 6px; }
+    .mood-euforico .mouth-tongue { height: 11px; width: 14px; bottom: -6px; }
     .mood-euforico .mouth-curve-left, .mood-euforico .mouth-curve-right {
         animation: cat-euphoric 2.5s ease-in-out infinite;
     }
+    .mood-euforico .mouth-interior {
+        animation: interior-euphoric 2.5s ease-in-out infinite;
+    }
+    .mood-euforico .mouth-tongue {
+        animation: tongue-bounce 2s ease-in-out infinite;
+    }
     @keyframes cat-euphoric {
         0%, 100% { transform: scaleY(1) scaleX(1); }
-        20% { transform: scaleY(1.25) scaleX(1.1); }
-        40% { transform: scaleY(0.9) scaleX(0.95); }
-        60% { transform: scaleY(1.2) scaleX(1.08); }
-        80% { transform: scaleY(0.95) scaleX(1); }
+        20% { transform: scaleY(1.2) scaleX(1.08); }
+        40% { transform: scaleY(0.92) scaleX(0.96); }
+        60% { transform: scaleY(1.15) scaleX(1.06); }
+        80% { transform: scaleY(0.96) scaleX(1); }
+    }
+    @keyframes interior-euphoric {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        20% { transform: translateX(-50%) scale(1.15); }
+        40% { transform: translateX(-50%) scale(0.9); }
+        60% { transform: translateX(-50%) scale(1.12); }
+        80% { transform: translateX(-50%) scale(0.95); }
     }
     @keyframes tongue-bounce {
         0%, 100% { transform: translateX(-50%) scaleY(1); }
-        50% { transform: translateX(-50%) scaleY(1.2) translateY(1px); }
+        50% { transform: translateX(-50%) scaleY(1.15) translateY(1px); }
     }
     .mood-euforico .blush { opacity: 0.9 !important; }
 
-    /* Sleepy: tiny "o" mouth */
+    /* Sleepy: tiny "o" mouth with small dark circle */
     .mood-dormido .mouth { width: 16px; height: 16px; }
     .mood-dormido .mouth-nose { top: -4px; }
     .mood-dormido .mouth-line { width: 16px; height: 12px; }
+    .mood-dormido .mouth-interior { width: 8px; height: 8px; top: 5px; border-radius: 50%; }
     .mood-dormido .mouth-curve-left {
         width: 8px; height: 10px;
         border-radius: 0 0 0 50%;
@@ -446,11 +480,18 @@
         border-radius: 0 0 50% 0;
         animation: cat-sleepy 5s ease-in-out infinite;
     }
+    .mood-dormido .mouth-interior {
+        animation: interior-sleepy 5s ease-in-out infinite;
+    }
     @keyframes cat-sleepy {
         0%, 100% { transform: scaleY(1); }
         50% { transform: scaleY(0.85); }
     }
-    .mood-dormido .mouth-tongue { opacity: 0; }
+    @keyframes interior-sleepy {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        50% { transform: translateX(-50%) scale(0.8); }
+    }
+    .mood-dormido .mouth-tongue { height: 0; }
     .mood-dormido .eye-lid {
         animation: sleepy-eyes 5s ease-in-out infinite !important;
     }
@@ -459,29 +500,35 @@
         15% { height: 100%; }
     }
 
-    /* Hungry: licking lips */
-    .mood-hambriento .mouth { width: 40px; height: 22px; }
-    .mood-hambriento .mouth-line { width: 40px; }
+    /* Hungry: licking lips, dark interior, tongue sweeps */
+    .mood-hambriento .mouth { width: 40px; height: 24px; }
+    .mood-hambriento .mouth-line { width: 40px; height: 20px; }
     .mood-hambriento .mouth-curve-left { width: 20px; height: 16px; }
     .mood-hambriento .mouth-curve-right { width: 20px; height: 16px; }
+    .mood-hambriento .mouth-interior { width: 22px; height: 10px; top: 6px; }
     .mood-hambriento .mouth-tongue {
-        opacity: 1;
-        width: 12px; height: 10px;
+        height: 9px; width: 12px; bottom: -4px;
         animation: tongue-lick 4s ease-in-out infinite;
     }
     @keyframes tongue-lick {
-        0%, 50%, 100% { opacity: 0; transform: translateX(-50%); }
-        25% { opacity: 1; transform: translateX(-20%); }
-        35% { opacity: 1; transform: translateX(-80%); }
-        45% { opacity: 0.5; transform: translateX(-50%); }
+        0%, 50%, 100% { transform: translateX(-50%); height: 0px; }
+        15% { transform: translateX(-20%); height: 9px; }
+        25% { transform: translateX(-80%); height: 9px; }
+        40% { transform: translateX(-50%); height: 4px; }
     }
     .mood-hambriento .mouth-curve-left, .mood-hambriento .mouth-curve-right {
         animation: cat-hungry 4s ease-in-out infinite;
     }
+    .mood-hambriento .mouth-interior {
+        animation: interior-hungry 4s ease-in-out infinite;
+    }
     @keyframes cat-hungry {
-        0%, 100% { transform: scaleY(1); }
-        25% { transform: scaleY(1.2) scaleX(1.1); }
-        50% { transform: scaleY(1); }
+        0%, 50%, 100% { transform: scaleY(1); }
+        15%, 25% { transform: scaleY(1.15) scaleX(1.08); }
+    }
+    @keyframes interior-hungry {
+        0%, 50%, 100% { transform: translateX(-50%) scale(1); }
+        15%, 25% { transform: translateX(-50%) scale(1.2); }
     }
 
     /* ===== HEART HANDS (dark, body color) ===== */
@@ -643,11 +690,12 @@
         <div class="blush left"></div><div class="blush right"></div>
         <div class="mouth">
           <div class="mouth-nose"></div>
+          <div class="mouth-interior"></div>
           <div class="mouth-line">
             <div class="mouth-curve-left"></div>
             <div class="mouth-curve-right"></div>
+            <div class="mouth-tongue"></div>
           </div>
-          <div class="mouth-tongue"></div>
         </div>
         <div class="collar"></div>
         <div class="hand left">&#x2764;&#xFE0F;</div>
@@ -675,11 +723,12 @@
         <div class="blush left"></div><div class="blush right"></div>
         <div class="mouth">
           <div class="mouth-nose"></div>
+          <div class="mouth-interior"></div>
           <div class="mouth-line">
             <div class="mouth-curve-left"></div>
             <div class="mouth-curve-right"></div>
+            <div class="mouth-tongue"></div>
           </div>
-          <div class="mouth-tongue"></div>
         </div>
         <div class="collar"></div>
         <div class="hand left">&#x2764;&#xFE0F;</div>
@@ -709,11 +758,12 @@
         <div class="blush left"></div><div class="blush right"></div>
         <div class="mouth">
           <div class="mouth-nose"></div>
+          <div class="mouth-interior"></div>
           <div class="mouth-line">
             <div class="mouth-curve-left"></div>
             <div class="mouth-curve-right"></div>
+            <div class="mouth-tongue"></div>
           </div>
-          <div class="mouth-tongue"></div>
         </div>
         <div class="collar"></div>
         <div class="hand left">&#x2764;&#xFE0F;</div>
