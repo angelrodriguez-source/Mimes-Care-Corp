@@ -32,11 +32,33 @@
 
 | Campo | Tipo | Valores posibles |
 |-------|------|-----------------|
-| **color** | string | Por definir (paleta de colores) |
-| **pelaje** | string | Por definir (liso, rizado, manchas, rayas...) |
+| **color** | string | Tema de color (celeste, lila, melocotón...) |
+| **pelo** | string | Estilo de pelo según personalidad (punk, curly, pompadour) |
 | **accesorios** | lista | Items de ropa/accesorios equipados (empieza vacía) |
 
-> Todos los Mimes comparten la misma silueta/forma base. Se distinguen por color, pelaje y accesorios.
+> Todos los Mimes comparten la misma silueta/forma base (mezcla gato bebé + pingüino bebé). Se distinguen por color, pelo y accesorios.
+
+### Forma base compartida
+- **Cuerpo**: óvalo vertical redondeado con barriga clara.
+- **Cabeza**: integrada en el cuerpo (no separada), parte superior.
+- **Orejas**: dos orejas de gato triangulares redondeadas con interior de color.
+- **Ojos**: grandes, blancos, con pupilas negras que siguen al cursor/dedo. Parpadean.
+- **Boca**: estilo `:3` de gato — nariz triangular rosa + curva "w" debajo. Se abre en ciertos humores mostrando interior oscuro + lengua rosa.
+- **Manos**: forma de corazón (`♥`), color del cuerpo. Animación de saludo.
+- **Pies**: patitas redondeadas color naranja cálido.
+- **Collar**: franja redondeada en la zona del cuello.
+- **Pelo**: varía según personalidad (ver fichas individuales). Color propio más oscuro que el cuerpo, con highlights.
+- **Mejillas**: rubor rosa sutil, se intensifica al interactuar o en humor eufórico.
+
+### Variables CSS de color
+Cada tema de color define estas variables:
+- `--body-color` — cuerpo, orejas, párpados, corazones
+- `--belly-color` — barriga
+- `--collar-color` — collar
+- `--feet-color` — patitas
+- `--ear-inner` — interior orejas
+- `--hair-color` — pelo (tono más oscuro que body)
+- `--hair-highlight` — brillos del pelo
 
 ---
 

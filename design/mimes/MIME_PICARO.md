@@ -48,6 +48,39 @@ El Mime Pícaro es astuto, juguetón y un poco travieso. Le encanta llamar la at
 
 ---
 
+## Apariencia Visual
+
+### Colores (tema Melocotón)
+| Variable | Valor | Uso |
+|----------|-------|-----|
+| `--body-color` | `#E65100` | Cuerpo, orejas, párpados |
+| `--belly-color` | `#FFF3E0` | Barriga |
+| `--collar-color` | `#FFE0B2` | Collar |
+| `--feet-color` | `#FFB74D` | Patitas |
+| `--ear-inner` | `#F4511E` | Interior orejas |
+| `--hair-color` | `#BF360C` | Pelo (más oscuro que el cuerpo) |
+| `--hair-highlight` | `#FF8A65` | Brillos del pelo |
+
+### Pelo: Copete / Pompadour
+- Estilo: **volumen redondeado** que sube y cae hacia un lado, tipo copete.
+- Base ovalada (~44px) entre las orejas.
+- Masa principal grande (~30x28px) con border-radius asimétrico que le da forma orgánica.
+- Punta que cae curvada a la derecha (~20x18px, rotada 20deg).
+- Mechoncito trasero para dar forma.
+- Brillo sutil con `--hair-highlight` (opacity 0.25).
+- Transmite: estilo, presumir, personalidad.
+
+### Manos
+- Forma de corazón (`♥`), color del cuerpo (`--body-color`).
+- Animación: saludan suavemente, al hover agitan rápido.
+
+### Expresión por defecto
+- Ojos grandes con pupilas que siguen el cursor.
+- Boca `:3` de gato (nariz triangular rosa + curva "w").
+- Mejillas rosadas sutiles.
+
+---
+
 ## Estilo de Mensajería
 
 El Pícaro habla con gracia, usa humor, es un poco dramático y exagerado.

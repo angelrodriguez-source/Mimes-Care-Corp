@@ -48,6 +48,37 @@ El Mime Aventurero es inquieto, curioso y siempre quiere explorar. No para quiet
 
 ---
 
+## Apariencia Visual
+
+### Colores (tema Celeste)
+| Variable | Valor | Uso |
+|----------|-------|-----|
+| `--body-color` | `#1565C0` | Cuerpo, orejas, párpados |
+| `--belly-color` | `#E3F2FD` | Barriga |
+| `--collar-color` | `#BBDEFB` | Collar |
+| `--feet-color` | `#FFB74D` | Patitas |
+| `--ear-inner` | `#1E88E5` | Interior orejas |
+| `--hair-color` | `#0D47A1` | Pelo (más oscuro que el cuerpo) |
+| `--hair-highlight` | `#42A5F5` | Brillos del pelo |
+
+### Pelo: Punk / Mohawk
+- Estilo: **5 mechones puntiagudos** hacia arriba, desordenados.
+- Forma: `border-radius: 40% 40% 10% 10%` (puntas redondeadas arriba, rectas abajo).
+- El mechón central es el más alto (~42px), los laterales más cortos y rotados hacia fuera.
+- Base ovalada (~38px) que une los mechones entre las orejas.
+- Transmite: rebeldía, energía, desorden.
+
+### Manos
+- Forma de corazón (`♥`), color del cuerpo (`--body-color`).
+- Animación: saludan suavemente, al hover agitan rápido.
+
+### Expresión por defecto
+- Ojos grandes con pupilas que siguen el cursor.
+- Boca `:3` de gato (nariz triangular rosa + curva "w").
+- Mejillas rosadas sutiles.
+
+---
+
 ## Estilo de Mensajería
 
 El Aventurero habla con entusiasmo, usa exclamaciones, cuenta "aventuras" exageradas.

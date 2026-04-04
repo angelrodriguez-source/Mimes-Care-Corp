@@ -48,6 +48,37 @@ El Mime Tranquilo es sereno, calmado y cariñoso. Disfruta de la calma, los mimo
 
 ---
 
+## Apariencia Visual
+
+### Colores (tema Lila)
+| Variable | Valor | Uso |
+|----------|-------|-----|
+| `--body-color` | `#6A1B9A` | Cuerpo, orejas, párpados |
+| `--belly-color` | `#F3E5F5` | Barriga |
+| `--collar-color` | `#E1BEE7` | Collar |
+| `--feet-color` | `#FFB74D` | Patitas |
+| `--ear-inner` | `#8E24AA` | Interior orejas |
+| `--hair-color` | `#4A148C` | Pelo (más oscuro que el cuerpo) |
+| `--hair-highlight` | `#BA68C8` | Brillos del pelo |
+
+### Pelo: Curly / Rulos
+- Estilo: **4 bolas redondeadas** que forman un pelo esponjoso y suave.
+- Forma: `border-radius: 50%` (círculos perfectos).
+- Bola central la más grande (~28px), las laterales un poco más pequeñas (~22-24px).
+- Un strand oculto (`display: none`) para mantener la estructura de 5 divs.
+- Transmite: calma, suavidad, dulzura.
+
+### Manos
+- Forma de corazón (`♥`), color del cuerpo (`--body-color`).
+- Animación: saludan suavemente, al hover agitan rápido.
+
+### Expresión por defecto
+- Ojos grandes con pupilas que siguen el cursor.
+- Boca `:3` de gato (nariz triangular rosa + curva "w").
+- Mejillas rosadas sutiles.
+
+---
+
 ## Estilo de Mensajería
 
 El Tranquilo habla con dulzura, usa frases cortas y emotivas.
