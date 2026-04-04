@@ -143,70 +143,105 @@
     }
     .hair-tuft {
         position: absolute;
-        background: var(--body-color);
+        background: var(--hair-color);
+        box-shadow: inset -2px -2px 4px rgba(0,0,0,0.15), inset 2px 2px 4px rgba(255,255,255,0.1);
     }
-
-    /* Aventurero: wild spiky */
-    .aventurero .hair { width: 80px; height: 35px; top: -2px; }
-    .aventurero .hair-tuft:nth-child(1) {
-        width: 16px; height: 26px; left: 8px; top: 2px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(-25deg);
-    }
-    .aventurero .hair-tuft:nth-child(2) {
-        width: 14px; height: 30px; left: 22px; top: -4px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(-8deg);
-    }
-    .aventurero .hair-tuft:nth-child(3) {
-        width: 16px; height: 28px; left: 34px; top: -2px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(10deg);
-    }
-    .aventurero .hair-tuft:nth-child(4) {
-        width: 14px; height: 24px; left: 48px; top: 0px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(22deg);
-    }
-    .aventurero .hair-tuft:nth-child(5) {
-        width: 12px; height: 20px; left: 58px; top: 4px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(35deg);
-    }
-
-    /* Tranquilo: smooth round dome */
-    .tranquilo .hair { width: 90px; height: 30px; top: 0px; }
-    .tranquilo .hair-tuft:nth-child(1) {
-        width: 80px; height: 26px; left: 5px; top: 0px;
-        border-radius: 50% 50% 40% 40%;
-    }
-    .tranquilo .hair-tuft:nth-child(2) {
-        width: 60px; height: 18px; left: 15px; top: 2px;
+    .hair-highlight {
+        position: absolute;
+        background: var(--hair-highlight);
         border-radius: 50%;
         opacity: 0.3;
-        background: rgba(255,255,255,0.15);
     }
 
-    /* Picaro: quiff/styled */
-    .picaro .hair { width: 90px; height: 40px; top: -4px; }
+    /* Aventurero: wild messy big hair */
+    .aventurero .hair { width: 120px; height: 50px; top: -14px; }
+    .aventurero .hair-tuft:nth-child(1) {
+        width: 22px; height: 38px; left: 6px; top: 12px;
+        border-radius: 60% 40% 30% 30%;
+        transform: rotate(-30deg);
+    }
+    .aventurero .hair-tuft:nth-child(2) {
+        width: 20px; height: 44px; left: 22px; top: 2px;
+        border-radius: 50% 50% 25% 25%;
+        transform: rotate(-14deg);
+    }
+    .aventurero .hair-tuft:nth-child(3) {
+        width: 22px; height: 46px; left: 40px; top: -2px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(4deg);
+    }
+    .aventurero .hair-tuft:nth-child(4) {
+        width: 20px; height: 42px; left: 56px; top: 0px;
+        border-radius: 50% 50% 25% 25%;
+        transform: rotate(16deg);
+    }
+    .aventurero .hair-tuft:nth-child(5) {
+        width: 18px; height: 36px; left: 70px; top: 6px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(28deg);
+    }
+    .aventurero .hair-tuft:nth-child(6) {
+        width: 16px; height: 30px; left: 82px; top: 12px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(40deg);
+    }
+    .aventurero .hair-tuft:nth-child(7) {
+        width: 18px; height: 32px; left: -2px; top: 18px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(-40deg);
+    }
+    .aventurero .hair-highlight {
+        width: 40px; height: 14px; left: 30px; top: 6px;
+        transform: rotate(-8deg);
+    }
+
+    /* Tranquilo: smooth fluffy dome */
+    .tranquilo .hair { width: 120px; height: 42px; top: -8px; }
+    .tranquilo .hair-tuft:nth-child(1) {
+        width: 110px; height: 36px; left: 5px; top: 4px;
+        border-radius: 50% 50% 42% 42%;
+    }
+    .tranquilo .hair-tuft:nth-child(2) {
+        width: 90px; height: 28px; left: 15px; top: 6px;
+        border-radius: 50%;
+        background: var(--hair-highlight);
+        opacity: 0.2;
+    }
+    .tranquilo .hair-tuft:nth-child(3) {
+        width: 24px; height: 18px; left: 74px; top: 0px;
+        border-radius: 50% 60% 30% 30%;
+        transform: rotate(12deg);
+    }
+
+    /* Picaro: big styled quiff */
+    .picaro .hair { width: 130px; height: 55px; top: -16px; }
     .picaro .hair-tuft:nth-child(1) {
-        width: 70px; height: 22px; left: 6px; top: 10px;
-        border-radius: 50% 50% 40% 40%;
+        width: 100px; height: 30px; left: 6px; top: 20px;
+        border-radius: 50% 50% 42% 42%;
     }
     .picaro .hair-tuft:nth-child(2) {
-        width: 20px; height: 32px; left: 52px; top: -4px;
-        border-radius: 60% 40% 30% 30%;
-        transform: rotate(20deg);
+        width: 28px; height: 46px; left: 68px; top: -4px;
+        border-radius: 55% 45% 25% 30%;
+        transform: rotate(18deg);
     }
     .picaro .hair-tuft:nth-child(3) {
-        width: 16px; height: 28px; left: 60px; top: 0px;
-        border-radius: 50% 50% 30% 30%;
-        transform: rotate(30deg);
+        width: 22px; height: 40px; left: 82px; top: 0px;
+        border-radius: 50% 50% 25% 25%;
+        transform: rotate(28deg);
     }
     .picaro .hair-tuft:nth-child(4) {
-        width: 14px; height: 22px; left: 10px; top: 6px;
+        width: 18px; height: 34px; left: 92px; top: 8px;
         border-radius: 50% 50% 30% 30%;
-        transform: rotate(-18deg);
+        transform: rotate(38deg);
+    }
+    .picaro .hair-tuft:nth-child(5) {
+        width: 20px; height: 28px; left: 2px; top: 16px;
+        border-radius: 50% 50% 30% 30%;
+        transform: rotate(-22deg);
+    }
+    .picaro .hair-highlight {
+        width: 30px; height: 12px; left: 70px; top: 8px;
+        transform: rotate(20deg);
     }
 
     /* Collar */
@@ -279,33 +314,36 @@
 
     /* Mouth */
     .mouth {
-        position: absolute; top: 73px; left: 50%;
+        position: absolute; top: 70px; left: 50%;
         transform: translateX(-50%);
-        width: 24px; height: 20px; z-index: 15;
+        width: 34px; height: 28px; z-index: 15;
+        transition: all 0.3s ease;
     }
     .mouth-upper {
         position: absolute; top: 0; left: 0;
-        width: 24px; height: 11px;
+        width: 34px; height: 14px;
         background: var(--beak-color);
         border-radius: 50% 50% 0 0 / 100% 100% 0 0;
         border: 1.5px solid #b45309; border-bottom: none;
         box-shadow: inset 0 2px 3px rgba(255,255,255,0.25);
         z-index: 2;
+        transition: all 0.3s ease;
     }
     .mouth-lower {
-        position: absolute; top: 10px; left: 2px;
-        width: 20px; height: 9px;
+        position: absolute; top: 13px; left: 3px;
+        width: 28px; height: 13px;
         background: var(--beak-color);
         border-radius: 0 0 50% 50% / 0 0 100% 100%;
         border: 1.5px solid #b45309; border-top: none;
         transform-origin: top center;
         animation: mouth-talk 4s ease-in-out infinite;
         overflow: hidden;
+        transition: all 0.3s ease;
     }
     .mouth-inside {
         position: absolute; top: 0; left: 50%;
         transform: translateX(-50%);
-        width: 14px; height: 5px;
+        width: 18px; height: 7px;
         background: #c0392b;
         border-radius: 0 0 50% 50%;
         opacity: 0;
@@ -324,6 +362,91 @@
         6% { opacity: 1; } 12% { opacity: 0; }
         18% { opacity: 1; } 24% { opacity: 0; }
         28% { opacity: 0.8; }
+    }
+
+    /* === MOOD EXPRESSIONS === */
+    /* Happy: big open smile */
+    .mood-feliz .mouth { width: 38px; height: 30px; }
+    .mood-feliz .mouth-upper { width: 38px; height: 15px; }
+    .mood-feliz .mouth-lower {
+        width: 32px; height: 15px; top: 14px; left: 3px;
+        animation: mouth-talk 4s ease-in-out infinite;
+    }
+    .mood-feliz .mouth-inside { width: 20px; height: 9px; }
+
+    /* Sad: small frown */
+    .mood-triste .mouth-lower {
+        animation: none;
+        transform: scaleY(0.5) translateY(-2px);
+        border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        border: 1.5px solid #b45309; border-bottom: none; border-top: none;
+    }
+    .mood-triste .mouth-inside { animation: none; opacity: 0; }
+    .mood-triste .blush { opacity: 0.2 !important; }
+    .mood-triste .character { animation: breathe-sad 4s ease-in-out infinite; }
+    @keyframes breathe-sad {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
+    }
+
+    /* Euphoric: huge open mouth, tongue out */
+    .mood-euforico .mouth { width: 42px; height: 34px; }
+    .mood-euforico .mouth-upper { width: 42px; height: 16px; }
+    .mood-euforico .mouth-lower {
+        width: 36px; height: 18px; top: 15px; left: 3px;
+        animation: mouth-talk-fast 2s ease-in-out infinite;
+    }
+    .mood-euforico .mouth-inside {
+        width: 22px; height: 10px;
+        animation: tongue-always 2s ease-in-out infinite;
+    }
+    @keyframes mouth-talk-fast {
+        0%, 40%, 100% { transform: scaleY(1) translateY(0); }
+        8% { transform: scaleY(2) translateY(3px); }
+        16% { transform: scaleY(0.6) translateY(0); }
+        24% { transform: scaleY(1.8) translateY(3px); }
+        32% { transform: scaleY(0.8) translateY(0); }
+    }
+    @keyframes tongue-always {
+        0%, 40%, 100% { opacity: 0.5; }
+        8%, 24% { opacity: 1; }
+        16%, 32% { opacity: 0.3; }
+    }
+    .mood-euforico .blush { opacity: 0.9 !important; }
+
+    /* Sleepy: tiny "o" mouth */
+    .mood-dormido .mouth { width: 18px; height: 18px; }
+    .mood-dormido .mouth-upper { width: 18px; height: 9px; border-radius: 50% 50% 0 0; }
+    .mood-dormido .mouth-lower {
+        width: 14px; height: 9px; top: 8px; left: 2px;
+        animation: none;
+        border-radius: 0 0 50% 50%;
+    }
+    .mood-dormido .mouth-inside { animation: none; opacity: 0; }
+    .mood-dormido .eye-lid {
+        animation: sleepy-eyes 5s ease-in-out infinite !important;
+    }
+    @keyframes sleepy-eyes {
+        0%, 30%, 100% { height: 70%; }
+        15% { height: 100%; }
+    }
+
+    /* Hungry: licking mouth */
+    .mood-hambriento .mouth-lower {
+        animation: mouth-lick 3s ease-in-out infinite;
+    }
+    .mood-hambriento .mouth-inside {
+        width: 20px; height: 8px;
+        animation: tongue-lick 3s ease-in-out infinite;
+    }
+    @keyframes mouth-lick {
+        0%, 50%, 100% { transform: scaleY(1); }
+        25% { transform: scaleY(1.5) translateY(2px); }
+    }
+    @keyframes tongue-lick {
+        0%, 40%, 100% { opacity: 0; transform: translateX(-50%); }
+        20% { opacity: 1; transform: translateX(-30%); }
+        30% { opacity: 1; transform: translateX(-70%); }
     }
 
     /* Heart hands */
@@ -462,6 +585,8 @@
         --collar-color: #BBDEFB;
         --beak-color: #FFB74D;
         --ear-inner: #1E88E5;
+        --hair-color: #0D47A1;
+        --hair-highlight: #42A5F5;
     }
     .mime-lila {
         --body-color: #6A1B9A;
@@ -469,6 +594,8 @@
         --collar-color: #E1BEE7;
         --beak-color: #FFB74D;
         --ear-inner: #8E24AA;
+        --hair-color: #4A148C;
+        --hair-highlight: #BA68C8;
     }
     .mime-melocoton {
         --body-color: #E65100;
@@ -476,6 +603,8 @@
         --collar-color: #FFE0B2;
         --beak-color: #FFB74D;
         --ear-inner: #F4511E;
+        --hair-color: #BF360C;
+        --hair-highlight: #FF8A65;
     }
 </style>
 </head>
@@ -497,7 +626,9 @@
         <div class="hair">
           <div class="hair-tuft"></div><div class="hair-tuft"></div>
           <div class="hair-tuft"></div><div class="hair-tuft"></div>
+          <div class="hair-tuft"></div><div class="hair-tuft"></div>
           <div class="hair-tuft"></div>
+          <div class="hair-highlight"></div>
         </div>
         <div class="tail"></div>
         <div class="body"><div class="belly"></div></div>
@@ -526,6 +657,7 @@
         <div class="ear right"></div>
         <div class="hair">
           <div class="hair-tuft"></div><div class="hair-tuft"></div>
+          <div class="hair-tuft"></div>
         </div>
         <div class="tail"></div>
         <div class="body"><div class="belly"></div></div>
@@ -555,6 +687,8 @@
         <div class="hair">
           <div class="hair-tuft"></div><div class="hair-tuft"></div>
           <div class="hair-tuft"></div><div class="hair-tuft"></div>
+          <div class="hair-tuft"></div>
+          <div class="hair-highlight"></div>
         </div>
         <div class="tail"></div>
         <div class="body"><div class="belly"></div></div>
@@ -577,7 +711,16 @@
 
 </div>
 
-<p class="hint">Toca un Mime para interactuar</p>
+<div class="mood-selector">
+  <button class="mood-btn active" data-mood="">Normal</button>
+  <button class="mood-btn" data-mood="mood-feliz">😊 Feliz</button>
+  <button class="mood-btn" data-mood="mood-euforico">🤩 Eufórico</button>
+  <button class="mood-btn" data-mood="mood-triste">😢 Triste</button>
+  <button class="mood-btn" data-mood="mood-dormido">😴 Dormido</button>
+  <button class="mood-btn" data-mood="mood-hambriento">😋 Hambriento</button>
+</div>
+
+<p class="hint">Toca un Mime para interactuar · Cambia el humor arriba</p>
 
 <script>
 // Eye tracking
@@ -631,6 +774,22 @@ document.querySelectorAll('.character').forEach(ch => {
     }
     ch.appendChild(burst);
     setTimeout(() => burst.remove(), 1200);
+  });
+});
+
+// Mood selector
+const moodBtns = document.querySelectorAll('.mood-btn');
+const allMoods = ['mood-feliz','mood-triste','mood-euforico','mood-dormido','mood-hambriento'];
+
+moodBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    moodBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mood = btn.dataset.mood;
+    document.querySelectorAll('.character').forEach(ch => {
+      allMoods.forEach(m => ch.classList.remove(m));
+      if (mood) ch.classList.add(mood);
+    });
   });
 });
 
