@@ -1078,34 +1078,6 @@ onUnmounted(() => {
   border-right: 1.5px solid rgba(180, 83, 9, 0.2);
 }
 
-/* === HEART BURST === */
-.heart-burst {
-  position: absolute;
-  pointer-events: none;
-  z-index: 100;
-}
-
-.mini-heart {
-  position: absolute;
-  font-size: 14px;
-  animation: heart-fly 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  opacity: 0;
-}
-
-@keyframes heart-fly {
-  0% {
-    transform: translate(0, 0) scale(0) rotate(0deg);
-    opacity: 1;
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot));
-    opacity: 0;
-  }
-}
-
 /* === COLOR THEMES === */
 .mime-celeste {
   --body-color: #1565c0;
@@ -1135,5 +1107,41 @@ onUnmounted(() => {
   --ear-inner: #f4511e;
   --hair-color: #bf360c;
   --hair-highlight: #ff8a65;
+}
+</style>
+
+<!--
+  Segundo bloque <style> SIN scoped.
+  Los elementos creados con document.createElement() no reciben el atributo
+  data-v-xxxx de Vue scoped, así que sus estilos deben ser globales.
+  Usamos nombres de clase específicos (.heart-burst, .mini-heart) para
+  evitar conflictos con otros componentes.
+-->
+<style>
+.heart-burst {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.mini-heart {
+  position: absolute;
+  font-size: 14px;
+  animation: heart-fly 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes heart-fly {
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot));
+    opacity: 0;
+  }
 }
 </style>
