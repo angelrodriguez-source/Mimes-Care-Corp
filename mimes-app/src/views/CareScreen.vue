@@ -165,25 +165,27 @@ function switchPersonality(p: Personality, t: ColorTheme) {
         />
       </div>
 
-      <!-- Resumen de estado (siempre visible, sin abrir stats) -->
-      <div class="status-summary">
-        <div class="summary-item affinity">
-          <span class="summary-icon">&#9829;</span>
-          <span class="summary-value">{{ afinidad }}%</span>
-          <span class="summary-label">Afinidad</span>
-        </div>
-        <div class="summary-divider"></div>
-        <div class="summary-item mood-item">
-          <span class="summary-value">{{ moodLabel }}</span>
-          <span class="summary-label">Humor</span>
-        </div>
-        <div class="summary-divider"></div>
-        <div class="summary-item">
-          <span class="summary-value">{{ statsAvg }}</span>
-          <span class="summary-label">Estado</span>
-        </div>
-      </div>
     </div>
+
+    <!-- === RESUMEN DE ESTADO (abajo derecha, abre stats al pulsar) === -->
+    <button class="status-summary" @click="showStats = !showStats">
+      <div class="summary-item affinity">
+        <span class="summary-icon">&#9829;</span>
+        <span class="summary-value">{{ afinidad }}%</span>
+        <span class="summary-label">Afinidad</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-value">{{ moodLabel }}</span>
+        <span class="summary-label">Humor</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <span class="summary-value">{{ statsAvg }}</span>
+        <span class="summary-label">Estado</span>
+      </div>
+      <span class="summary-arrow" :class="{ open: showStats }">&#9650;</span>
+    </button>
 
     <!-- === MENÚ ACCIONES (lateral izquierdo) === -->
     <div class="actions-menu">
@@ -200,12 +202,6 @@ function switchPersonality(p: Personality, t: ColorTheme) {
         <span class="fab-cost">{{ ACTION_COSTS[a.action] }}</span>
       </button>
     </div>
-
-    <!-- === BOTÓN PARA ABRIR STATS === -->
-    <button class="stats-toggle" @click="showStats = !showStats">
-      <span class="stats-toggle-label">Stats</span>
-      <span class="stats-toggle-arrow" :class="{ open: showStats }">&#9650;</span>
-    </button>
 
     <!-- === PANEL DE STATS (se desliza desde abajo) === -->
     <div class="stats-drawer" :class="{ open: showStats }">
@@ -362,22 +358,42 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   z-index: 10;
 }
 
-/* Resumen de estado (siempre visible) */
+/* Resumen de estado (abajo derecha, actúa como botón para abrir stats) */
 .status-summary {
   position: absolute;
-  bottom: calc(30% + 210px);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 16px;
+  right: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 6px 16px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 8px 14px;
   border-radius: 16px;
-  z-index: 11;
+  border: none;
+  z-index: 25;
   backdrop-filter: blur(6px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
+  transition: all 0.2s;
+}
+
+.status-summary:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.summary-arrow {
+  font-size: 10px;
+  color: #5c6bc0;
+  transition: transform 0.3s ease;
+  margin-left: 2px;
+}
+
+.summary-arrow.open {
+  transform: rotate(180deg);
 }
 
 .summary-item {
@@ -462,42 +478,6 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   font-weight: 700;
   color: #e65100;
   margin-top: -2px;
-}
-
-/* === BOTÓN TOGGLE STATS === */
-.stats-toggle {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  border: none;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  z-index: 25;
-  font-family: 'Baloo 2', cursive;
-  backdrop-filter: blur(4px);
-}
-
-.stats-toggle-label {
-  font-size: 14px;
-  font-weight: 700;
-  color: #5c6bc0;
-}
-
-.stats-toggle-arrow {
-  font-size: 10px;
-  color: #5c6bc0;
-  transition: transform 0.3s ease;
-}
-
-.stats-toggle-arrow.open {
-  transform: rotate(180deg);
 }
 
 /* === PANEL STATS (drawer desde abajo) === */
