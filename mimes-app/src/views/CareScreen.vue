@@ -167,24 +167,21 @@ function switchPersonality(p: Personality, t: ColorTheme) {
 
     </div>
 
-    <!-- === RESUMEN DE ESTADO (abajo derecha, abre stats al pulsar) === -->
+    <!-- === RESUMEN DE ESTADO (vertical, lado derecho) === -->
     <button class="status-summary" @click="showStats = !showStats">
       <div class="summary-item affinity">
         <span class="summary-icon">&#9829;</span>
         <span class="summary-value">{{ afinidad }}%</span>
-        <span class="summary-label">Afinidad</span>
       </div>
       <div class="summary-divider"></div>
       <div class="summary-item">
         <span class="summary-value">{{ moodLabel }}</span>
-        <span class="summary-label">Humor</span>
       </div>
       <div class="summary-divider"></div>
       <div class="summary-item">
         <span class="summary-value">{{ statsAvg }}</span>
-        <span class="summary-label">Estado</span>
       </div>
-      <span class="summary-arrow" :class="{ open: showStats }">&#9650;</span>
+      <span class="summary-arrow" :class="{ open: showStats }">&#9654;</span>
     </button>
 
     <!-- === MENÚ ACCIONES (lateral izquierdo) === -->
@@ -203,8 +200,9 @@ function switchPersonality(p: Personality, t: ColorTheme) {
       </button>
     </div>
 
-    <!-- === PANEL DE STATS (se desliza desde abajo) === -->
+    <!-- === PANEL DE STATS (se desliza desde la derecha) === -->
     <div class="stats-drawer" :class="{ open: showStats }">
+      <div class="stats-drawer-handle"></div>
       <div class="stats-drawer-content">
         <StatBar
           v-for="s in statConfig"
@@ -358,49 +356,38 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   z-index: 10;
 }
 
-/* Resumen de estado (abajo derecha, actúa como botón para abrir stats) */
+/* Resumen de estado (vertical, lateral derecho) */
 .status-summary {
   position: absolute;
-  bottom: 16px;
   right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.85);
-  padding: 8px 14px;
+  padding: 12px 8px;
   border-radius: 16px;
   border: none;
   z-index: 25;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
   cursor: pointer;
   font-family: 'Baloo 2', cursive;
   transition: all 0.2s;
 }
 
 .status-summary:active {
-  transform: scale(0.95);
+  transform: translateY(-50%) scale(0.95);
   background: rgba(255, 255, 255, 0.95);
-}
-
-.summary-arrow {
-  font-size: 10px;
-  color: #5c6bc0;
-  transition: transform 0.3s ease;
-  margin-left: 2px;
-}
-
-.summary-arrow.open {
-  transform: rotate(180deg);
 }
 
 .summary-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 .summary-icon {
@@ -409,23 +396,27 @@ function switchPersonality(p: Personality, t: ColorTheme) {
 }
 
 .summary-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #333;
   line-height: 1.2;
 }
 
-.summary-label {
-  font-size: 9px;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.summary-divider {
+  width: 24px;
+  height: 1px;
+  background: #e0e0e0;
 }
 
-.summary-divider {
-  width: 1px;
-  height: 24px;
-  background: #e0e0e0;
+.summary-arrow {
+  font-size: 9px;
+  color: #5c6bc0;
+  transition: transform 0.3s ease;
+  margin-top: 2px;
+}
+
+.summary-arrow.open {
+  transform: rotate(180deg);
 }
 
 /* === MENÚ DE ACCIONES (lateral izquierdo) === */
@@ -480,42 +471,44 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   margin-top: -2px;
 }
 
-/* === PANEL STATS (drawer desde abajo) === */
+/* === PANEL STATS (drawer desde la derecha) === */
 .stats-drawer {
   position: absolute;
+  top: 0;
   bottom: 0;
-  left: 0;
   right: 0;
+  width: 260px;
   background: white;
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  border-radius: 20px 0 0 20px;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
   z-index: 40;
-  /* Empieza fuera de pantalla (abajo) */
-  transform: translateY(100%);
+  /* Empieza fuera de pantalla (derecha) */
+  transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stats-drawer.open {
-  /* Se desliza hacia arriba */
-  transform: translateY(0);
+  transform: translateX(0);
 }
 
 .stats-drawer-content {
-  padding: 20px 20px 32px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Barra decorativa de "handle" arriba del drawer */
-.stats-drawer::before {
-  content: '';
+/* Barra decorativa de "handle" en el lateral izquierdo del drawer */
+.stats-drawer-handle {
   position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 4px;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 40px;
   background: #e0e0e0;
   border-radius: 2px;
 }
