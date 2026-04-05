@@ -13,10 +13,9 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// Inicializar el store de usuario: comprueba si hay sesión guardada.
-// Esto se hace ANTES de montar la app para que el route guard
-// ya tenga la info de si el usuario está logueado o no.
+// Montar la app PRIMERO para que siempre se muestre algo en pantalla.
+// Luego inicializar auth en background.
+app.mount('#app')
+
 const userStore = useUserStore()
-userStore.init().then(() => {
-  app.mount('#app')
-})
+userStore.init()
