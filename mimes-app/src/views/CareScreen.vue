@@ -34,6 +34,7 @@ import {
   deriveMood,
   applyCareAction,
   applyDecay,
+  getStatsAverage,
   ACTION_COSTS,
 } from '../models/MimeModel'
 
@@ -43,8 +44,23 @@ const personality = ref<Personality>('aventurero')
 const colorTheme = ref<ColorTheme>('celeste')
 const stats = ref<MimeStats>(createInitialStats())
 const puntosMimes = ref(100)
+const afinidad = ref(50) // 0-100, por ahora simulada
 
 const mood = computed<Mood>(() => deriveMood(stats.value))
+const statsAvg = computed(() => Math.round(getStatsAverage(stats.value)))
+
+// Etiqueta legible para el humor
+const moodLabel = computed(() => {
+  const labels: Record<string, string> = {
+    euforico: 'Eufórico',
+    feliz: 'Feliz',
+    '': 'Normal',
+    triste: 'Triste',
+    dormido: 'Dormido',
+    hambriento: 'Hambriento',
+  }
+  return labels[mood.value] ?? 'Normal'
+})
 
 // --- UI STATE ---
 // showStats controla si el panel inferior está visible o no.
@@ -149,8 +165,24 @@ function switchPersonality(p: Personality, t: ColorTheme) {
         />
       </div>
 
-      <!-- Humor actual -->
-      <div class="mood-badge">{{ mood || 'normal' }}</div>
+      <!-- Resumen de estado (siempre visible, sin abrir stats) -->
+      <div class="status-summary">
+        <div class="summary-item affinity">
+          <span class="summary-icon">&#9829;</span>
+          <span class="summary-value">{{ afinidad }}%</span>
+          <span class="summary-label">Afinidad</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item mood-item">
+          <span class="summary-value">{{ moodLabel }}</span>
+          <span class="summary-label">Humor</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+          <span class="summary-value">{{ statsAvg }}</span>
+          <span class="summary-label">Estado</span>
+        </div>
+      </div>
     </div>
 
     <!-- === MENÚ ACCIONES (lateral izquierdo) === -->
@@ -330,22 +362,54 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   z-index: 10;
 }
 
-/* Badge de humor */
-.mood-badge {
+/* Resumen de estado (siempre visible) */
+.status-summary {
   position: absolute;
   bottom: calc(30% + 210px);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.75);
-  padding: 2px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #5c6bc0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 6px 16px;
+  border-radius: 16px;
   z-index: 11;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.summary-icon {
+  font-size: 14px;
+  color: #ef5350;
+}
+
+.summary-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.2;
+}
+
+.summary-label {
+  font-size: 9px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-divider {
+  width: 1px;
+  height: 24px;
+  background: #e0e0e0;
 }
 
 /* === MENÚ DE ACCIONES (lateral izquierdo) === */

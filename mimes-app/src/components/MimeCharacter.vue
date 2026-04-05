@@ -84,30 +84,37 @@ function onTouchMove(e: TouchEvent) {
 }
 
 // --- HEART BURST (click interaction) ---
+// Ref al contenedor .scene para que los corazones no se recorten por el .character
+const sceneRef = ref<HTMLElement | null>(null)
+
 function onCharacterClick(e: MouseEvent) {
-  const ch = characterRef.value
-  if (!ch) return
+  // Añadimos el burst al .scene (no al .character) para que los corazones
+  // puedan salir fuera de los bordes del personaje sin recortarse
+  const scene = sceneRef.value
+  if (!scene) return
 
   const burst = document.createElement('div')
   burst.className = 'heart-burst'
-  const rect = ch.getBoundingClientRect()
+  const rect = scene.getBoundingClientRect()
   burst.style.left = e.clientX - rect.left + 'px'
   burst.style.top = e.clientY - rect.top + 'px'
 
   const hearts = ['\u2764\uFE0F', '\uD83D\uDC9B', '\uD83D\uDC96', '\uD83E\uDDE1', '\uD83D\uDC9C', '\uD83D\uDC97']
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {
     const h = document.createElement('div')
     h.className = 'mini-heart'
-    h.textContent = hearts[i]
-    const a = ((Math.PI * 2) / 6) * i + (Math.random() - 0.5)
-    const r = 30 + Math.random() * 25
+    h.textContent = hearts[i % hearts.length]
+    // Ángulo totalmente aleatorio (360 grados) para que se repartan por toda la pantalla
+    const a = Math.random() * Math.PI * 2
+    // Radio más grande y más variado
+    const r = 40 + Math.random() * 60
     h.style.setProperty('--tx', `${Math.cos(a) * r}px`)
-    h.style.setProperty('--ty', `${Math.sin(a) * r - 20}px`)
-    h.style.setProperty('--rot', `${(Math.random() - 0.5) * 60}deg`)
-    h.style.animationDelay = `${i * 0.05}s`
+    h.style.setProperty('--ty', `${Math.sin(a) * r - 30}px`)
+    h.style.setProperty('--rot', `${(Math.random() - 0.5) * 90}deg`)
+    h.style.animationDelay = `${i * 0.04}s`
     burst.appendChild(h)
   }
-  ch.appendChild(burst)
+  scene.appendChild(burst)
   setTimeout(() => burst.remove(), 1200)
 }
 
@@ -138,7 +145,7 @@ onUnmounted(() => {
     ref="characterRef" → conecta este div con la variable characterRef del script
     @click → llama a onCharacterClick cuando haces click (como addEventListener)
   -->
-  <div class="scene" :style="scaleStyle">
+  <div class="scene" :style="scaleStyle" ref="sceneRef">
     <div :class="characterClasses" ref="characterRef" @click="onCharacterClick">
       <!-- Orejas -->
       <div class="ear left"></div>
@@ -216,6 +223,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: visible;
 }
 
 .ground-shadow {
