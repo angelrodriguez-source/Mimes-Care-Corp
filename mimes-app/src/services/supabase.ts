@@ -15,7 +15,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'https://igcvucyhcfyupmzstoqg.supabase.co'
-const SUPABASE_ANON_KEY = 'sb_publishable_04-zv-mSMQ84uOJFowu65g_Nv41jZ12'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnY3Z1Y3loY2Z5dXBtenN0b3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDc1MTcsImV4cCI6MjA5MDk4MzUxN30.dpC179HbuVLvSE_vs9DaED6eI3g0GDkllZoxg74N4YM'
 
 // createClient() devuelve un objeto con métodos para:
 //   .auth     → registro, login, logout, sesión actual
