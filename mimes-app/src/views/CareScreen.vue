@@ -1,20 +1,29 @@
 <script setup lang="ts">
 /**
- * CareScreen.vue — Pantalla de cuidado de un Mime.
+ * CareScreen.vue — Pantalla de cuidado rediseñada.
  *
- * Estructura (de arriba a abajo):
- *   1. Cabecera: nombre del Mime + Puntos Mimes del usuario
- *   2. Mime visual: el componente <MimeCharacter> con humor reactivo
- *   3. Stats: 6 barras de estadísticas
- *   4. Acciones: 6 botones de cuidado
- *
- * Por ahora funciona con datos locales (ref/reactive).
- * Más adelante lo conectaremos a Supabase.
+ * Layout:
+ *   ┌──────────────────────────┐
+ *   │  ← Mimo          100 PM │  ← cabecera semitransparente
+ *   │                          │
+ *   │  🍖                      │  ← menú acciones (izquierda)
+ *   │  🛁      ┌──────┐       │
+ *   │  🎮      │ MIME │       │  ← habitación con el Mime
+ *   │  💕      └──────┘       │
+ *   │  😴       ═══════       │  ← sombra suelo
+ *   │  👔                      │
+ *   │                          │
+ *   │         [Stats ▲]        │  ← botón para abrir panel stats
+ *   ├──────────────────────────┤
+ *   │  ▼ Stats panel           │  ← se desliza desde abajo
+ *   │  🍖 Hambre    ████░░ 70 │
+ *   │  🛁 Higiene   ████░░ 70 │
+ *   │  ...                     │
+ *   └──────────────────────────┘
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import StatBar from '../components/StatBar.vue'
-import ActionButton from '../components/ActionButton.vue'
 import {
   type MimeStats,
   type Personality,
@@ -29,21 +38,20 @@ import {
 } from '../models/MimeModel'
 
 // --- DATOS REACTIVOS ---
-// ref() crea variables que, al cambiar, actualizan automáticamente la UI.
-// Por ahora son datos de prueba locales. Más adelante vendrán de Supabase.
-
 const mimeName = ref('Mimo')
 const personality = ref<Personality>('aventurero')
 const colorTheme = ref<ColorTheme>('celeste')
 const stats = ref<MimeStats>(createInitialStats())
-const puntosMimes = ref(100) // puntos del usuario
+const puntosMimes = ref(100)
 
-// computed: se recalcula solo cuando cambia stats.value
 const mood = computed<Mood>(() => deriveMood(stats.value))
 
-// --- CONFIGURACIÓN DE LAS BARRAS ---
-// Mapeo de cada stat a su icono y etiqueta para la UI.
-// Esto conecta el modelo de datos con la presentación visual.
+// --- UI STATE ---
+// showStats controla si el panel inferior está visible o no.
+// Al cambiar, la clase CSS .open se añade/quita y el CSS transition lo anima.
+const showStats = ref(false)
+
+// --- STATS CONFIG ---
 const statConfig: { key: keyof MimeStats; label: string; icon: string }[] = [
   { key: 'hambre', label: 'Hambre', icon: '🍖' },
   { key: 'higiene', label: 'Higiene', icon: '🛁' },
@@ -53,7 +61,7 @@ const statConfig: { key: keyof MimeStats; label: string; icon: string }[] = [
   { key: 'apariencia', label: 'Apariencia', icon: '✨' },
 ]
 
-// --- CONFIGURACIÓN DE LOS BOTONES ---
+// --- ACTIONS CONFIG ---
 const actionConfig: { action: CareAction; label: string; icon: string }[] = [
   { action: 'alimentar', label: 'Alimentar', icon: '🍖' },
   { action: 'limpiar', label: 'Limpiar', icon: '🛁' },
@@ -64,32 +72,18 @@ const actionConfig: { action: CareAction; label: string; icon: string }[] = [
 ]
 
 // --- ACCIONES ---
-
-/**
- * Ejecuta una acción de cuidado:
- *   1. Comprueba si hay puntos suficientes
- *   2. Resta los puntos
- *   3. Aplica el efecto a los stats (usando la función pura de MimeModel)
- *
- * applyCareAction() devuelve stats NUEVOS sin mutar los originales.
- * Al asignarlos a stats.value, Vue detecta el cambio y actualiza las barras.
- */
 function handleAction(action: CareAction) {
   const cost = ACTION_COSTS[action]
   if (puntosMimes.value < cost) return
-
   puntosMimes.value -= cost
   stats.value = applyCareAction(stats.value, action)
 }
 
-// --- DECAY POR TIEMPO ---
-// Cada 30 segundos, aplicamos un mini-decay para que se vea en la demo.
-// En producción, el decay real lo hará Supabase con un cron cada hora.
+// --- DECAY ---
 let decayInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   decayInterval = setInterval(() => {
-    // 0.5 horas de decay cada 30s (acelerado para la demo)
     stats.value = applyDecay(stats.value, personality.value, 0.5)
   }, 30000)
 })
@@ -98,7 +92,7 @@ onUnmounted(() => {
   if (decayInterval) clearInterval(decayInterval)
 })
 
-// --- SELECTOR DE PERSONALIDAD (para probar) ---
+// --- SELECTOR DE PERSONALIDAD (temporal para probar) ---
 const personalities: { value: Personality; theme: ColorTheme; label: string }[] = [
   { value: 'aventurero', theme: 'celeste', label: 'Aventurero' },
   { value: 'tranquilo', theme: 'lila', label: 'Tranquilo' },
@@ -114,17 +108,18 @@ function switchPersonality(p: Personality, t: ColorTheme) {
 
 <template>
   <div class="care-screen">
-    <!-- CABECERA -->
+
+    <!-- === CABECERA (semitransparente, flota sobre la habitación) === -->
     <header class="care-header">
       <button class="back-btn" @click="$router.push('/')">&#8592;</button>
       <h1 class="mime-name">{{ mimeName }}</h1>
       <div class="puntos">
         <span class="puntos-icon">&#9829;</span>
-        <span class="puntos-value">{{ puntosMimes }} PM</span>
+        <span class="puntos-value">{{ puntosMimes }}</span>
       </div>
     </header>
 
-    <!-- SELECTOR DE PERSONALIDAD (temporal, para probar) -->
+    <!-- Selector personalidad (temporal) -->
     <div class="personality-selector">
       <button
         v-for="p in personalities"
@@ -137,64 +132,94 @@ function switchPersonality(p: Personality, t: ColorTheme) {
       </button>
     </div>
 
-    <!-- MIME VISUAL -->
-    <div class="mime-area">
-      <MimeCharacter
-        :personality="personality"
-        :color-theme="colorTheme"
-        :mood="mood"
-      />
+    <!-- === HABITACIÓN (el escenario principal) === -->
+    <div class="room">
+      <!-- Pared de fondo con degradado -->
+      <div class="room-wall"></div>
+
+      <!-- Suelo -->
+      <div class="room-floor"></div>
+
+      <!-- Mime en el centro de la habitación -->
+      <div class="mime-area">
+        <MimeCharacter
+          :personality="personality"
+          :color-theme="colorTheme"
+          :mood="mood"
+        />
+      </div>
+
+      <!-- Humor actual -->
+      <div class="mood-badge">{{ mood || 'normal' }}</div>
     </div>
 
-    <!-- HUMOR ACTUAL -->
-    <div class="mood-indicator">
-      {{ mood || 'normal' }}
-    </div>
-
-    <!-- STATS -->
-    <div class="stats-panel">
-      <StatBar
-        v-for="s in statConfig"
-        :key="s.key"
-        :label="s.label"
-        :value="stats[s.key]"
-        :icon="s.icon"
-      />
-    </div>
-
-    <!-- ACCIONES DE CUIDADO -->
-    <div class="actions-panel">
-      <ActionButton
+    <!-- === MENÚ ACCIONES (lateral izquierdo) === -->
+    <div class="actions-menu">
+      <button
         v-for="a in actionConfig"
         :key="a.action"
-        :label="a.label"
-        :icon="a.icon"
-        :cost="ACTION_COSTS[a.action]"
+        class="action-fab"
+        :class="{ disabled: puntosMimes < ACTION_COSTS[a.action] }"
         :disabled="puntosMimes < ACTION_COSTS[a.action]"
-        @action="handleAction(a.action)"
-      />
+        :title="a.label"
+        @click="handleAction(a.action)"
+      >
+        <span class="fab-icon">{{ a.icon }}</span>
+        <span class="fab-cost">{{ ACTION_COSTS[a.action] }}</span>
+      </button>
     </div>
+
+    <!-- === BOTÓN PARA ABRIR STATS === -->
+    <button class="stats-toggle" @click="showStats = !showStats">
+      <span class="stats-toggle-label">Stats</span>
+      <span class="stats-toggle-arrow" :class="{ open: showStats }">&#9650;</span>
+    </button>
+
+    <!-- === PANEL DE STATS (se desliza desde abajo) === -->
+    <div class="stats-drawer" :class="{ open: showStats }">
+      <div class="stats-drawer-content">
+        <StatBar
+          v-for="s in statConfig"
+          :key="s.key"
+          :label="s.label"
+          :value="stats[s.key]"
+          :icon="s.icon"
+        />
+      </div>
+    </div>
+
+    <!-- Overlay para cerrar stats al tocar fuera -->
+    <div
+      v-if="showStats"
+      class="stats-overlay"
+      @click="showStats = false"
+    ></div>
   </div>
 </template>
 
 <style scoped>
+/* === LAYOUT GENERAL === */
 .care-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  padding: 12px 16px 24px;
-  max-width: 420px;
-  margin: 0 auto;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  /* Sin scroll — todo cabe en la pantalla */
 }
 
-/* Cabecera */
+/* === CABECERA === */
 .care-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  width: 100%;
-  gap: 12px;
-  margin-bottom: 8px;
+  padding: 12px 16px;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .back-btn {
@@ -209,7 +234,7 @@ function switchPersonality(p: Personality, t: ColorTheme) {
 
 .mime-name {
   flex: 1;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #333;
 }
@@ -226,7 +251,7 @@ function switchPersonality(p: Personality, t: ColorTheme) {
 
 .puntos-icon {
   color: #ff7043;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .puntos-value {
@@ -235,23 +260,28 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   color: #e65100;
 }
 
-/* Selector de personalidad (temporal) */
+/* Selector personalidad (temporal) */
 .personality-selector {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 6px;
-  margin-bottom: 8px;
+  z-index: 30;
 }
 
 .personality-btn {
-  padding: 4px 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 16px;
-  background: white;
-  font-size: 12px;
+  padding: 3px 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   font-family: 'Baloo 2', cursive;
-  transition: all 0.2s;
+  color: #555;
+  backdrop-filter: blur(4px);
 }
 
 .personality-btn.active {
@@ -260,39 +290,203 @@ function switchPersonality(p: Personality, t: ColorTheme) {
   border-color: #5c6bc0;
 }
 
-/* Mime visual */
-.mime-area {
-  margin: 4px 0;
+/* === HABITACIÓN === */
+.room {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Humor */
-.mood-indicator {
-  font-size: 13px;
+/* Pared: degradado vertical que simula una pared iluminada desde arriba */
+.room-wall {
+  flex: 1;
+  background: linear-gradient(
+    180deg,
+    #e8eaf6 0%,       /* arriba: luz suave azulada */
+    #c5cae9 40%,       /* medio */
+    #b39ddb 100%       /* abajo: sombra más oscura cerca del suelo */
+  );
+}
+
+/* Suelo: un color más oscuro con perspectiva sutil */
+.room-floor {
+  height: 35%;
+  background: linear-gradient(
+    180deg,
+    #a1887f 0%,        /* borde suelo-pared */
+    #8d6e63 30%,       /* madera media */
+    #795548 100%       /* lejos */
+  );
+  border-top: 3px solid #6d4c41;
+}
+
+/* Mime centrado en la habitación */
+.mime-area {
+  position: absolute;
+  bottom: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+/* Badge de humor */
+.mood-badge {
+  position: absolute;
+  bottom: calc(30% + 210px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 700;
   color: #5c6bc0;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 12px;
+  z-index: 11;
+  backdrop-filter: blur(4px);
 }
 
-/* Panel de stats */
-.stats-panel {
-  width: 100%;
+/* === MENÚ DE ACCIONES (lateral izquierdo) === */
+.actions-menu {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: white;
-  padding: 14px 16px;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin-bottom: 16px;
+  z-index: 20;
 }
 
-/* Panel de acciones */
-.actions-panel {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  width: 100%;
+.action-fab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  backdrop-filter: blur(4px);
+}
+
+.action-fab:active:not(.disabled) {
+  transform: scale(0.88);
+  background: #e8eaf6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.action-fab.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fab-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.fab-cost {
+  font-size: 9px;
+  font-weight: 700;
+  color: #e65100;
+  margin-top: -2px;
+}
+
+/* === BOTÓN TOGGLE STATS === */
+.stats-toggle {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  z-index: 25;
+  font-family: 'Baloo 2', cursive;
+  backdrop-filter: blur(4px);
+}
+
+.stats-toggle-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #5c6bc0;
+}
+
+.stats-toggle-arrow {
+  font-size: 10px;
+  color: #5c6bc0;
+  transition: transform 0.3s ease;
+}
+
+.stats-toggle-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* === PANEL STATS (drawer desde abajo) === */
+.stats-drawer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 40;
+  /* Empieza fuera de pantalla (abajo) */
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stats-drawer.open {
+  /* Se desliza hacia arriba */
+  transform: translateY(0);
+}
+
+.stats-drawer-content {
+  padding: 20px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Barra decorativa de "handle" arriba del drawer */
+.stats-drawer::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+}
+
+/* Overlay semitransparente detrás del drawer */
+.stats-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 35;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>
