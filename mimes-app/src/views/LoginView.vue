@@ -133,10 +133,18 @@ function toggleMode() {
 <style scoped>
 .login-screen {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   padding: 24px 16px;
+}
+
+.login-screen .explore-link {
+  position: fixed;
+  bottom: 24px;
+  left: 0;
+  right: 0;
 }
 
 .login-card {
