@@ -9,6 +9,13 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      // Lazy loading: CareScreen solo se carga cuando el usuario navega a /care.
+      // Esto hace que la carga inicial de la app sea más rápida.
+      path: '/care',
+      name: 'care',
+      component: () => import('../views/CareScreen.vue'),
+    },
   ],
 })
 

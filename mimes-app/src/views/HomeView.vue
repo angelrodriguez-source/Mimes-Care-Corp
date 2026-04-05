@@ -101,6 +101,11 @@ const moods = [
     </div>
 
     <p class="hint">Toca un Mime para interactuar · Cambia el humor arriba</p>
+
+    <!-- Botón para ir a la pantalla de cuidado -->
+    <router-link to="/care" class="care-link">
+      Probar pantalla de cuidado &#8594;
+    </router-link>
   </div>
 </template>
 
@@ -200,5 +205,22 @@ const moods = [
   color: #bdbdbd;
   font-size: 12px;
   margin-top: 14px;
+}
+
+.care-link {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: #5c6bc0;
+  color: white;
+  border-radius: 24px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.care-link:active {
+  background: #3f51b5;
 }
 </style>
