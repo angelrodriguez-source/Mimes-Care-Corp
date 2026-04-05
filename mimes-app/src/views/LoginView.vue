@@ -41,7 +41,7 @@ async function handleSubmit() {
       if (loginErr) {
         error.value = 'Cuenta creada. Revisa tu email para confirmarla.'
       } else {
-        router.push('/home')
+        router.push('/dashboard')
       }
     }
   } else {
@@ -49,7 +49,7 @@ async function handleSubmit() {
     if (err) {
       error.value = 'Email o contraseña incorrectos'
     } else {
-      router.push('/home')
+      router.push('/dashboard')
     }
   }
 

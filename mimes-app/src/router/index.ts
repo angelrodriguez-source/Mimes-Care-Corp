@@ -10,12 +10,12 @@ const router = createRouter({
       component: () => import('../views/LoginView.vue'),
     },
     {
-      path: '/home',
-      name: 'home',
-      component: () => import('../views/HomeView.vue'),
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/DashboardView.vue'),
     },
     {
-      path: '/care',
+      path: '/care/:id',
       name: 'care',
       component: () => import('../views/CareScreen.vue'),
     },
@@ -28,28 +28,25 @@ const router = createRouter({
   ],
 })
 
-/**
- * Navigation guard — se ejecuta ANTES de cada navegación.
- *
- * Lógica:
- *   - Rutas con meta.public → acceso libre (explore)
- *   - Si vas a / (login) y ya estás logueado → te manda a /home
- *   - Si vas a ruta protegida y NO estás logueado → te manda a / (login)
- */
+// Rutas que no requieren login
+const publicRoutes = ['login', 'explore']
+
 router.beforeEach((to) => {
   const userStore = useUserStore()
 
-  // Rutas públicas: acceso libre
-  if (to.meta.public) return true
+  // Rutas publicas: acceso libre
+  if (to.meta.public || publicRoutes.includes(to.name as string)) return true
 
-  // Mientras carga la sesión inicial, no bloqueamos
+  // Mientras carga la sesion inicial, no bloqueamos
   if (userStore.loading) return true
 
+  // Si va a login y ya esta logueado → dashboard
   if (to.name === 'login' && userStore.isLoggedIn) {
-    return { name: 'home' }
+    return { name: 'dashboard' }
   }
 
-  if (to.name !== 'login' && !userStore.isLoggedIn) {
+  // Si va a ruta protegida y NO esta logueado → login
+  if (!publicRoutes.includes(to.name as string) && !userStore.isLoggedIn) {
     return { name: 'login' }
   }
 

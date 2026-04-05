@@ -8,7 +8,7 @@
  * Uso:
  *   <MimeCharacter personality="aventurero" color-theme="celeste" mood="feliz" :scale="1" />
  */
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 
 // --- PROPS ---
 // defineProps() le dice a Vue qué "atributos" acepta este componente.
@@ -83,6 +83,71 @@ function onTouchMove(e: TouchEvent) {
   trackEyes({ clientX: t.clientX, clientY: t.clientY })
 }
 
+// --- ZZZ ANIMATION (when sleeping) ---
+// Generates floating Z letters above the Mime
+function startZzz() {
+  const ch = characterRef.value
+  if (!ch) return
+  // Remove existing zzz container
+  ch.querySelector('.zzz-container')?.remove()
+
+  const container = document.createElement('div')
+  container.className = 'zzz-container'
+  for (let i = 0; i < 3; i++) {
+    const z = document.createElement('div')
+    z.className = 'zzz-letter'
+    z.textContent = 'Z'
+    z.style.animationDelay = `${i * 0.8}s`
+    z.style.left = `${50 + i * 12}%`
+    z.style.fontSize = `${14 + i * 4}px`
+    container.appendChild(z)
+  }
+  ch.appendChild(container)
+}
+
+function stopZzz() {
+  characterRef.value?.querySelector('.zzz-container')?.remove()
+}
+
+// Watch mood changes for zzZ
+watch(() => props.mood, (newMood) => {
+  if (newMood === 'dormido') {
+    startZzz()
+  } else {
+    stopZzz()
+  }
+})
+
+// --- KISS BURST (on carino action) ---
+function showKissBurst() {
+  const ch = characterRef.value
+  if (!ch) return
+
+  const burst = document.createElement('div')
+  burst.className = 'heart-burst'
+  burst.style.left = '50%'
+  burst.style.top = '30%'
+
+  const kisses = ['\uD83D\uDC8B', '\uD83D\uDC95', '\uD83D\uDC96', '\u2764\uFE0F']
+  for (let i = 0; i < 6; i++) {
+    const k = document.createElement('div')
+    k.className = 'mini-heart'
+    k.textContent = kisses[i % kisses.length]
+    const a = Math.random() * Math.PI * 2
+    const r = 30 + Math.random() * 50
+    k.style.setProperty('--tx', `${Math.cos(a) * r}px`)
+    k.style.setProperty('--ty', `${Math.sin(a) * r - 40}px`)
+    k.style.setProperty('--rot', `${(Math.random() - 0.5) * 60}deg`)
+    k.style.animationDelay = `${i * 0.05}s`
+    burst.appendChild(k)
+  }
+  ch.appendChild(burst)
+  setTimeout(() => burst.remove(), 1200)
+}
+
+// Expose methods for parent components
+defineExpose({ showKissBurst })
+
 // --- HEART BURST (click interaction) ---
 function onCharacterClick(e: MouseEvent) {
   const ch = characterRef.value
@@ -120,6 +185,8 @@ function onCharacterClick(e: MouseEvent) {
 onMounted(() => {
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('touchmove', onTouchMove as EventListener)
+  // Start zzZ if already sleeping
+  if (props.mood === 'dormido') startZzz()
 })
 
 onUnmounted(() => {
@@ -1129,6 +1196,42 @@ onUnmounted(() => {
   font-size: 14px;
   animation: heart-fly 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   opacity: 0;
+}
+
+/* === ZZZ ANIMATION === */
+.zzz-container {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.zzz-letter {
+  position: absolute;
+  color: #7986cb;
+  font-weight: 700;
+  font-family: 'Baloo 2', cursive;
+  opacity: 0;
+  animation: zzz-float 2.4s ease-in-out infinite;
+}
+
+@keyframes zzz-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5) rotate(-10deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(1.2) rotate(15deg);
+  }
 }
 
 @keyframes heart-fly {
