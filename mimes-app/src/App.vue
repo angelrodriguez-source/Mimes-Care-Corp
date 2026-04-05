@@ -13,5 +13,16 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <RouterView />
+  <div>
+    <p style="text-align: center; padding: 20px; font-size: 24px; font-weight: bold; color: #333;">
+      Prueba
+    </p>
+    <RouterView />
+  </div>
 </template>
+
+<style>
+html, body {
+  background: #e8f5e9 !important;
+}
+</style>
