@@ -1,111 +1,158 @@
 <script setup lang="ts">
 /**
- * HomeView.vue — Vista temporal para probar los 3 Mimes.
+ * HomeView.vue — Mis Mimes
  *
- * Importamos el componente MimeCharacter y lo usamos 3 veces,
- * una por cada personalidad, con su color asociado.
+ * Carga los Mimes del usuario desde Supabase y los muestra.
+ * Si no hay usuario logueado (ruta /explore), muestra los de demo.
  *
- * También añadimos un selector de humor para probar las expresiones,
- * igual que en mime-preview.html.
+ * onMounted() es un "lifecycle hook" de Vue: se ejecuta UNA VEZ
+ * cuando el componente aparece en pantalla. Perfecto para cargar datos.
  */
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
+import { supabase } from '../services/supabase'
+import { useUserStore } from '../stores/userStore'
+import { deriveMood } from '../models/MimeModel'
+import type { Personality, ColorTheme, MimeStats } from '../models/MimeModel'
 
-// ref() crea una variable reactiva. Cuando cambie su valor (.value),
-// Vue actualiza automáticamente todo lo que dependa de ella en el template.
-// Aquí la usamos para el humor seleccionado.
-const selectedMood = ref<'feliz' | 'euforico' | 'triste' | 'dormido' | 'hambriento' | ''>('')
+// Tipo para los datos que vienen de Supabase
+interface MimeFromDB {
+  id: string
+  nombre: string
+  personalidad: Personality
+  color_theme: ColorTheme
+  hambre: number
+  higiene: number
+  diversion: number
+  carino: number
+  energia: number
+  apariencia: number
+  afinidad: number
+}
 
-// Lista de humores disponibles para los botones
-const moods = [
-  { value: '', label: 'Normal' },
-  { value: 'feliz', label: 'Feliz' },
-  { value: 'euforico', label: 'Euforico' },
-  { value: 'triste', label: 'Triste' },
-  { value: 'dormido', label: 'Dormido' },
-  { value: 'hambriento', label: 'Hambriento' },
-] as const
+const route = useRoute()
+const userStore = useUserStore()
+
+// Estado
+const mimes = ref<MimeFromDB[]>([])
+const loading = ref(true)
+const error = ref('')
+
+// ¿Estamos en modo explorar (sin login)?
+const isExploreMode = computed(() => route.name === 'explore')
+
+// Colores para las etiquetas según personalidad
+const labelColors: Record<Personality, string> = {
+  aventurero: '#1565c0',
+  tranquilo: '#6a1b9a',
+  picaro: '#e65100',
+}
+
+// Calcular el mood de un Mime a partir de sus stats
+function getMood(mime: MimeFromDB) {
+  const stats: MimeStats = {
+    hambre: mime.hambre,
+    higiene: mime.higiene,
+    diversion: mime.diversion,
+    carino: mime.carino,
+    energia: mime.energia,
+    apariencia: mime.apariencia,
+  }
+  return deriveMood(stats)
+}
+
+// Carga los Mimes del usuario desde Supabase
+async function loadMimes() {
+  loading.value = true
+  error.value = ''
+
+  const { data, error: dbError } = await supabase
+    .from('mimes')
+    .select('*')
+    .order('created_at')
+
+  if (dbError) {
+    error.value = `Error cargando Mimes: ${dbError.message}`
+  } else if (data) {
+    mimes.value = data
+  }
+
+  loading.value = false
+}
+
+onMounted(() => {
+  // Solo cargar de Supabase si está logueado (no en modo explore)
+  if (!isExploreMode.value && userStore.isLoggedIn) {
+    loadMimes()
+  } else {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
   <div class="home">
     <h1 class="page-title">Mimes Care Corp</h1>
-    <p class="page-subtitle">Preview de personalidades</p>
+    <p class="page-subtitle">
+      {{ isExploreMode ? 'Preview de personalidades' : 'Mis Mimes' }}
+    </p>
 
-    <!--
-      Aquí usamos el componente <MimeCharacter> 3 veces.
-      Fíjate cómo pasamos las props:
-        - personality="aventurero" → string fija
-        - color-theme="celeste" → en el template HTML se escribe en kebab-case (con guión),
-          Vue lo convierte automáticamente a camelCase (colorTheme) en el script
-        - :mood="selectedMood" → los dos puntos (:) significan "binding dinámico",
-          es decir, el valor viene de una variable de JavaScript, no es un string fijo
-    -->
-    <div class="mimes-row">
-      <div class="mime-wrapper">
-        <MimeCharacter
-          personality="aventurero"
-          color-theme="celeste"
-          :mood="selectedMood"
-        />
-        <div class="mime-label" style="color: #1565c0">
-          Aventurero
-          <span class="mime-sublabel">Pelo revuelto</span>
+    <!-- Estado: cargando -->
+    <p v-if="loading" class="status-text">Cargando tus Mimes...</p>
+
+    <!-- Estado: error -->
+    <p v-else-if="error" class="status-text error-text">{{ error }}</p>
+
+    <!-- Modo EXPLORE: Mimes de demo (hardcoded) -->
+    <template v-else-if="isExploreMode">
+      <div class="mimes-row">
+        <div class="mime-wrapper">
+          <MimeCharacter personality="aventurero" color-theme="celeste" />
+          <div class="mime-label" style="color: #1565c0">Aventurero</div>
+        </div>
+        <div class="mime-wrapper">
+          <MimeCharacter personality="tranquilo" color-theme="lila" />
+          <div class="mime-label" style="color: #6a1b9a">Tranquilo</div>
+        </div>
+        <div class="mime-wrapper">
+          <MimeCharacter personality="picaro" color-theme="melocoton" />
+          <div class="mime-label" style="color: #e65100">Picaro</div>
+        </div>
+      </div>
+      <p class="hint">Toca un Mime para interactuar</p>
+      <router-link to="/" class="care-link">
+        Iniciar sesion &#8594;
+      </router-link>
+    </template>
+
+    <!-- Modo LOGUEADO: Mimes reales de Supabase -->
+    <template v-else-if="mimes.length > 0">
+      <div class="mimes-row">
+        <div v-for="mime in mimes" :key="mime.id" class="mime-wrapper">
+          <MimeCharacter
+            :personality="mime.personalidad"
+            :color-theme="mime.color_theme"
+            :mood="getMood(mime)"
+          />
+          <div class="mime-label" :style="{ color: labelColors[mime.personalidad] }">
+            {{ mime.nombre }}
+            <span class="mime-sublabel">{{ getMood(mime) || 'Normal' }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="mime-wrapper">
-        <MimeCharacter
-          personality="tranquilo"
-          color-theme="lila"
-          :mood="selectedMood"
-        />
-        <div class="mime-label" style="color: #6a1b9a">
-          Tranquilo
-          <span class="mime-sublabel">Pelo peinado</span>
-        </div>
-      </div>
+      <p class="hint">Toca un Mime para interactuar</p>
 
-      <div class="mime-wrapper">
-        <MimeCharacter
-          personality="picaro"
-          color-theme="melocoton"
-          :mood="selectedMood"
-        />
-        <div class="mime-label" style="color: #e65100">
-          Picaro
-          <span class="mime-sublabel">Pelo con estilo</span>
-        </div>
-      </div>
-    </div>
+      <router-link to="/care" class="care-link">
+        Pantalla de cuidado &#8594;
+      </router-link>
+    </template>
 
-    <!--
-      Selector de humor.
-      v-for: repite el <button> para cada elemento del array "moods".
-      :class="{ active: selectedMood === m.value }": añade la clase "active"
-        solo si este botón corresponde al humor seleccionado.
-      @click="selectedMood = m.value": al hacer click, cambia selectedMood.
-        Como selectedMood es un ref(), Vue actualiza automáticamente las props
-        :mood de los 3 MimeCharacter arriba.
-    -->
-    <div class="mood-selector">
-      <button
-        v-for="m in moods"
-        :key="m.value"
-        class="mood-btn"
-        :class="{ active: selectedMood === m.value }"
-        @click="selectedMood = m.value"
-      >
-        {{ m.label }}
-      </button>
-    </div>
-
-    <p class="hint">Toca un Mime para interactuar · Cambia el humor arriba</p>
-
-    <!-- Botón para ir a la pantalla de cuidado -->
-    <router-link to="/care" class="care-link">
-      Probar pantalla de cuidado &#8594;
-    </router-link>
+    <!-- Sin Mimes -->
+    <template v-else>
+      <p class="status-text">No tienes Mimes todavia. Algo fallo al crear tu cuenta.</p>
+    </template>
   </div>
 </template>
 
