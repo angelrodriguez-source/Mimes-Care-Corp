@@ -23,6 +23,7 @@ CREATE OR REPLACE FUNCTION claim_mime(p_code TEXT)
 RETURNS JSON AS $$
 DECLARE
     v_mime RECORD;
+    v_already_caring BOOLEAN;
 BEGIN
     -- Buscar el Mime por codigo
     SELECT id, dueno_id, cuidador_id, nombre
@@ -43,6 +44,17 @@ BEGIN
     -- Ya tiene cuidador
     IF v_mime.cuidador_id IS NOT NULL THEN
         RETURN json_build_object('error', 'Este Mime ya tiene un cuidador');
+    END IF;
+
+    -- Restriccion: solo 1 Mime por dueno
+    -- Comprobar si ya cuidas algun Mime de este mismo dueno
+    SELECT EXISTS(
+        SELECT 1 FROM public.mimes
+        WHERE dueno_id = v_mime.dueno_id AND cuidador_id = auth.uid()
+    ) INTO v_already_caring;
+
+    IF v_already_caring THEN
+        RETURN json_build_object('error', 'Ya cuidas un Mime de este usuario. Solo puedes cuidar 1 por persona.');
     END IF;
 
     -- Asignar cuidador y limpiar codigo
