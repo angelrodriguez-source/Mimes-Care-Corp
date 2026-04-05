@@ -14,11 +14,15 @@
  */
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = 'https://igcvucyhcfyupmzstoqg.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnY3Z1Y3loY2Z5dXBtenN0b3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDc1MTcsImV4cCI6MjA5MDk4MzUxN30.dpC179HbuVLvSE_vs9DaED6eI3g0GDkllZoxg74N4YM'
+// Las credenciales se leen de variables de entorno (archivo .env.local).
+// Si no existen, se usa el fallback hardcoded para desarrollo.
+// La anon key es SEGURA para frontend: solo permite lo que RLS autorice.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ??
+  'https://igcvucyhcfyupmzstoqg.supabase.co'
 
-// createClient() devuelve un objeto con métodos para:
-//   .auth     → registro, login, logout, sesión actual
-//   .from()   → leer/escribir en tablas de la base de datos
-//   .channel()→ escuchar cambios en tiempo real
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnY3Z1Y3loY2Z5dXBtenN0b3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDc1MTcsImV4cCI6MjA5MDk4MzUxN30.dpC179HbuVLvSE_vs9DaED6eI3g0GDkllZoxg74N4YM'
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)

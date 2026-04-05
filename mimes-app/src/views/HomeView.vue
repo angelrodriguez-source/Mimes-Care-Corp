@@ -11,78 +11,39 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
-import { supabase } from '../services/supabase'
 import { useUserStore } from '../stores/userStore'
 import { deriveMood } from '../models/MimeModel'
-import type { Personality, ColorTheme, MimeStats } from '../models/MimeModel'
-
-// Tipo para los datos que vienen de Supabase
-interface MimeFromDB {
-  id: string
-  nombre: string
-  personalidad: Personality
-  color_theme: ColorTheme
-  hambre: number
-  higiene: number
-  diversion: number
-  carino: number
-  energia: number
-  apariencia: number
-  afinidad: number
-}
+import { toStats } from '../utils/helpers'
+import { PERSONALITY_COLORS } from '../constants/gameConstants'
+import { loadAllMimes, type MimeFromDB } from '../services/mimeService'
 
 const route = useRoute()
 const userStore = useUserStore()
 
-// Estado
 const mimes = ref<MimeFromDB[]>([])
 const loading = ref(true)
 const error = ref('')
-
-// ¿Estamos en modo explorar (sin login)?
 const isExploreMode = computed(() => route.name === 'explore')
 
-// Colores para las etiquetas según personalidad
-const labelColors: Record<Personality, string> = {
-  aventurero: '#1565c0',
-  tranquilo: '#6a1b9a',
-  picaro: '#e65100',
-}
-
-// Calcular el mood de un Mime a partir de sus stats
 function getMood(mime: MimeFromDB) {
-  const stats: MimeStats = {
-    hambre: mime.hambre,
-    higiene: mime.higiene,
-    diversion: mime.diversion,
-    carino: mime.carino,
-    energia: mime.energia,
-    apariencia: mime.apariencia,
-  }
-  return deriveMood(stats)
+  return deriveMood(toStats(mime))
 }
 
-// Carga los Mimes del usuario desde Supabase
 async function loadMimes() {
   loading.value = true
   error.value = ''
 
-  const { data, error: dbError } = await supabase
-    .from('mimes')
-    .select('*')
-    .order('created_at')
-
-  if (dbError) {
-    error.value = `Error cargando Mimes: ${dbError.message}`
-  } else if (data) {
-    mimes.value = data
+  const result = await loadAllMimes()
+  if (result.error) {
+    error.value = `Error cargando Mimes: ${result.error.message}`
+  } else {
+    mimes.value = result.mimes
   }
 
   loading.value = false
 }
 
 onMounted(() => {
-  // Solo cargar de Supabase si está logueado (no en modo explore)
   if (!isExploreMode.value && userStore.isLoggedIn) {
     loadMimes()
   } else {
@@ -135,7 +96,7 @@ onMounted(() => {
             :color-theme="mime.color_theme"
             :mood="getMood(mime)"
           />
-          <div class="mime-label" :style="{ color: labelColors[mime.personalidad] }">
+          <div class="mime-label" :style="{ color: PERSONALITY_COLORS[mime.personalidad] }">
             {{ mime.nombre }}
             <span class="mime-sublabel">{{ getMood(mime) || 'Normal' }}</span>
           </div>

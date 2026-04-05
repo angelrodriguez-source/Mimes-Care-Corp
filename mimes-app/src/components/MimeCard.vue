@@ -9,6 +9,7 @@ import { computed } from 'vue'
 import MimeCharacter from './MimeCharacter.vue'
 import { deriveMood, getStatsAverage } from '../models/MimeModel'
 import type { Personality, ColorTheme, MimeStats } from '../models/MimeModel'
+import { getMoodLabel, getHealthColor, PERSONALITY_LABELS } from '../constants/gameConstants'
 
 const props = defineProps<{
   id: string
@@ -19,7 +20,7 @@ const props = defineProps<{
   afinidad: number
   cuidadorName?: string | null
   duenoName?: string | null
-  mode: 'own' | 'caring' // own = tu Mime, caring = Mime que cuidas
+  mode: 'own' | 'caring'
 }>()
 
 defineEmits<{
@@ -30,24 +31,8 @@ defineEmits<{
 
 const mood = computed(() => deriveMood(props.stats))
 const avgStats = computed(() => Math.round(getStatsAverage(props.stats)))
-
-const moodLabel = computed(() => {
-  const labels: Record<string, string> = {
-    euforico: 'Euforico', feliz: 'Feliz', '': 'Normal',
-    triste: 'Triste', dormido: 'Dormido', hambriento: 'Hambriento',
-  }
-  return labels[mood.value] ?? 'Normal'
-})
-
-const healthColor = computed(() => {
-  if (avgStats.value >= 60) return '#4caf50'
-  if (avgStats.value >= 30) return '#ff9800'
-  return '#f44336'
-})
-
-const personalityLabel: Record<Personality, string> = {
-  aventurero: 'Aventurero', tranquilo: 'Tranquilo', picaro: 'Picaro'
-}
+const moodLabel = computed(() => getMoodLabel(mood.value))
+const healthColor = computed(() => getHealthColor(avgStats.value))
 </script>
 
 <template>
@@ -65,7 +50,7 @@ const personalityLabel: Record<Personality, string> = {
     <!-- Info -->
     <div class="card-info">
       <h3 class="card-name">{{ nombre }}</h3>
-      <span class="card-personality">{{ personalityLabel[personalidad] }}</span>
+      <span class="card-personality">{{ PERSONALITY_LABELS[personalidad] }}</span>
 
       <!-- Health bar -->
       <div class="card-health">

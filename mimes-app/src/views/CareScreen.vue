@@ -5,14 +5,29 @@
  * Carga un Mime por ID desde la URL, permite cuidarlo con acciones
  * que se guardan en la base de datos. El Mime se mueve por la habitacion.
  */
-import { ref, computed, onMounted, onUnmounted, useTemplateRef, shallowRef } from 'vue'
+import { ref, computed, onMounted, useTemplateRef, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import StatBar from '../components/StatBar.vue'
 import { MiniGameShell, ACTION_GAMES, GAME_CONFIGS } from '../minigames'
 import type { MiniGameResult, MiniGameConfig } from '../minigames'
-import { supabase } from '../services/supabase'
 import { useUserStore } from '../stores/userStore'
+import { useCharacterMovement } from '../composables/useCharacterMovement'
+import {
+  fetchMimeById,
+  resetMime,
+  persistCareActionResult,
+  updateUserPoints,
+} from '../services/mimeService'
+import { toStats } from '../utils/helpers'
+import {
+  STAT_CONFIG,
+  ACTION_CONFIG,
+  getMoodLabel,
+  INITIAL_PUNTOS,
+  FEEDBACK_DURATION_MS,
+  REST_PAUSE_DURATION_MS,
+} from '../constants/gameConstants'
 import {
   type MimeStats,
   type Personality,
@@ -23,6 +38,7 @@ import {
   applyCareAction,
   updateAffinity,
   getStatsAverage,
+  createInitialStats,
   ACTION_COSTS,
 } from '../models/MimeModel'
 
@@ -36,22 +52,16 @@ const mimeId = ref('')
 const mimeName = ref('Cargando...')
 const personality = ref<Personality>('aventurero')
 const colorTheme = ref<ColorTheme>('celeste')
-const stats = ref<MimeStats>({ hambre: 70, higiene: 70, diversion: 70, carino: 70, energia: 70, apariencia: 70 })
+const stats = ref<MimeStats>(createInitialStats())
 const puntosMimes = ref(0)
 const afinidad = ref(0)
 const loading = ref(true)
 const error = ref('')
 
+// --- COMPUTED ---
 const mood = computed<Mood>(() => deriveMood(stats.value))
 const statsAvg = computed(() => Math.round(getStatsAverage(stats.value)))
-
-const moodLabel = computed(() => {
-  const labels: Record<string, string> = {
-    euforico: 'Euforico', feliz: 'Feliz', '': 'Normal',
-    triste: 'Triste', dormido: 'Dormido', hambriento: 'Hambriento',
-  }
-  return labels[mood.value] ?? 'Normal'
-})
+const moodLabel = computed(() => getMoodLabel(mood.value))
 
 // --- UI STATE ---
 const showStats = ref(false)
@@ -62,57 +72,9 @@ const activeGame = shallowRef<ReturnType<typeof Object.values<typeof ACTION_GAME
 const activeGameConfig = ref<MiniGameConfig | null>(null)
 const pendingAction = ref<CareAction | null>(null)
 
-// --- MIME MOVEMENT ---
-const mimeX = ref(50) // posicion X en porcentaje (0-100)
-const mimeDirection = ref(1) // 1 = derecha, -1 = izquierda
-const isWalking = ref(false)
-let walkInterval: ReturnType<typeof setInterval> | null = null
-
-function startWalking() {
-  if (walkInterval) return
-  walkInterval = setInterval(() => {
-    // 30% chance de cambiar de direccion
-    if (Math.random() < 0.03) {
-      mimeDirection.value *= -1
-    }
-    // 60% chance de caminar, 40% de quedarse quieto
-    if (Math.random() < 0.6) {
-      isWalking.value = true
-      const step = 0.5 * mimeDirection.value
-      const newX = mimeX.value + step
-      // Mantener dentro de la habitacion (20% - 80%)
-      if (newX < 20) { mimeDirection.value = 1; mimeX.value = 20 }
-      else if (newX > 80) { mimeDirection.value = -1; mimeX.value = 80 }
-      else { mimeX.value = newX }
-    } else {
-      isWalking.value = false
-    }
-  }, 100)
-}
-
-function stopWalking() {
-  if (walkInterval) { clearInterval(walkInterval); walkInterval = null }
-  isWalking.value = false
-}
-
-// --- STATS CONFIG ---
-const statConfig: { key: keyof MimeStats; label: string; icon: string }[] = [
-  { key: 'hambre', label: 'Hambre', icon: '🍖' },
-  { key: 'higiene', label: 'Higiene', icon: '🛁' },
-  { key: 'diversion', label: 'Diversion', icon: '🎮' },
-  { key: 'carino', label: 'Carino', icon: '💕' },
-  { key: 'energia', label: 'Energia', icon: '⚡' },
-  { key: 'apariencia', label: 'Apariencia', icon: '✨' },
-]
-
-const actionConfig: { action: CareAction; label: string; icon: string }[] = [
-  { action: 'alimentar', label: 'Alimentar', icon: '🍖' },
-  { action: 'limpiar', label: 'Limpiar', icon: '🛁' },
-  { action: 'jugar', label: 'Jugar', icon: '🎮' },
-  { action: 'carino', label: 'Carino', icon: '💕' },
-  { action: 'descansar', label: 'Descansar', icon: '😴' },
-  { action: 'vestir', label: 'Vestir', icon: '👔' },
-]
+// --- MIME MOVEMENT (composable) ---
+const { mimeX, mimeDirection, isWalking, startWalking, stopWalking, pauseWalking } =
+  useCharacterMovement()
 
 // --- CARGAR MIME ---
 async function loadMime() {
@@ -120,11 +82,7 @@ async function loadMime() {
   const id = route.params.id as string
   mimeId.value = id
 
-  const { data: mime, error: err } = await supabase
-    .from('mimes')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const { mime, error: err } = await fetchMimeById(id)
 
   if (err || !mime) {
     error.value = 'No se pudo cargar este Mime'
@@ -136,12 +94,7 @@ async function loadMime() {
   personality.value = mime.personalidad
   colorTheme.value = mime.color_theme
   afinidad.value = mime.afinidad
-  stats.value = {
-    hambre: mime.hambre, higiene: mime.higiene, diversion: mime.diversion,
-    carino: mime.carino, energia: mime.energia, apariencia: mime.apariencia,
-  }
-
-  // Cargar puntos del usuario
+  stats.value = toStats(mime)
   puntosMimes.value = userStore.profile?.puntos_mimes ?? 0
 
   loading.value = false
@@ -153,11 +106,8 @@ function handleAction(action: CareAction) {
   const cost = ACTION_COSTS[action]
   if (puntosMimes.value < cost) return
 
-  // Cobrar PM al empezar (se pierden gane o pierda)
   puntosMimes.value -= cost
   pendingAction.value = action
-
-  // Lanzar mini-juego
   activeGame.value = ACTION_GAMES[action]
   activeGameConfig.value = GAME_CONFIGS[action]
 }
@@ -173,91 +123,52 @@ async function onMiniGameDone(result: MiniGameResult) {
   pendingAction.value = null
 
   if (result.success) {
-    // Ganó: aplicar stats
-    const newStats = applyCareAction(stats.value, action)
-    stats.value = newStats
-    afinidad.value = updateAffinity(afinidad.value, newStats)
-
-    // Feedback visual
-    actionFeedback.value = actionConfig.find(a => a.action === action)?.icon ?? ''
-    setTimeout(() => actionFeedback.value = '', 800)
-
-    // Kiss burst on carino
-    if (action === 'carino') {
-      mimeCharRef.value?.showKissBurst()
-    }
-
-    // Descansar: detener movimiento temporalmente
-    if (action === 'descansar') {
-      stopWalking()
-      setTimeout(() => startWalking(), 5000)
-    }
-
-    // Guardar en Supabase (en background)
-    await Promise.all([
-      supabase
-        .from('mimes')
-        .update({
-          hambre: newStats.hambre,
-          higiene: newStats.higiene,
-          diversion: newStats.diversion,
-          carino: newStats.carino,
-          energia: newStats.energia,
-          apariencia: newStats.apariencia,
-          afinidad: afinidad.value,
-        })
-        .eq('id', mimeId.value),
-
-      supabase
-        .from('care_actions')
-        .insert({
-          mime_id: mimeId.value,
-          cuidador_id: userStore.user!.id,
-          action_type: action,
-          puntos_cost: cost,
-        }),
-
-      supabase
-        .from('profiles')
-        .update({ puntos_mimes: puntosMimes.value })
-        .eq('id', userStore.user!.id),
-    ])
+    applySuccessEffects(action)
+    await persistCareActionResult(
+      mimeId.value,
+      userStore.user!.id,
+      action,
+      cost,
+      stats.value,
+      afinidad.value,
+      puntosMimes.value,
+    )
   } else {
-    // Perdió: solo guardar los PM gastados
-    await supabase
-      .from('profiles')
-      .update({ puntos_mimes: puntosMimes.value })
-      .eq('id', userStore.user!.id)
+    await updateUserPoints(userStore.user!.id, puntosMimes.value)
   }
 
   userStore.fetchProfile()
+}
+
+/** Aplica los efectos de una accion exitosa en la UI */
+function applySuccessEffects(action: CareAction) {
+  stats.value = applyCareAction(stats.value, action)
+  afinidad.value = updateAffinity(afinidad.value, stats.value)
+
+  // Feedback visual
+  const icon = ACTION_CONFIG.find(a => a.action === action)?.icon ?? ''
+  actionFeedback.value = icon
+  setTimeout(() => (actionFeedback.value = ''), FEEDBACK_DURATION_MS)
+
+  // Efectos especiales por accion
+  if (action === 'carino') mimeCharRef.value?.showKissBurst()
+  if (action === 'descansar') pauseWalking(REST_PAUSE_DURATION_MS)
 }
 
 function goBack() {
   router.push('/dashboard')
 }
 
-// Reset para pruebas: restaura stats del Mime y devuelve PM
 async function handleReset() {
-  stats.value = { hambre: 70, higiene: 70, diversion: 70, carino: 70, energia: 70, apariencia: 70 }
+  stats.value = createInitialStats()
   afinidad.value = 0
-  puntosMimes.value = 100
+  puntosMimes.value = INITIAL_PUNTOS
 
-  await Promise.all([
-    supabase.from('mimes').update({
-      hambre: 70, higiene: 70, diversion: 70,
-      carino: 70, energia: 70, apariencia: 70, afinidad: 0,
-    }).eq('id', mimeId.value),
-    supabase.from('profiles').update({ puntos_mimes: 100 }).eq('id', userStore.user!.id),
-  ])
+  await resetMime(mimeId.value, userStore.user!.id)
   userStore.fetchProfile()
 }
 
 onMounted(loadMime)
-
-onUnmounted(() => {
-  stopWalking()
-})
 </script>
 
 <template>
@@ -333,7 +244,7 @@ onUnmounted(() => {
       <!-- MENU ACCIONES (lateral izquierdo) -->
       <div class="actions-menu">
         <button
-          v-for="a in actionConfig"
+          v-for="a in ACTION_CONFIG"
           :key="a.action"
           class="action-fab"
           :class="{ disabled: puntosMimes < ACTION_COSTS[a.action] }"
@@ -351,7 +262,7 @@ onUnmounted(() => {
         <div class="stats-drawer-handle"></div>
         <div class="stats-drawer-content">
           <StatBar
-            v-for="s in statConfig"
+            v-for="s in STAT_CONFIG"
             :key="s.key"
             :label="s.label"
             :value="stats[s.key]"
