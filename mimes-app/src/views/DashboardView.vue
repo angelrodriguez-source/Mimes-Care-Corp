@@ -167,6 +167,34 @@ async function copyCode(code: string) {
   }
 }
 
+// Reset para pruebas: resetea stats de todos tus Mimes y recupera puntos
+async function handleReset() {
+  const userId = userStore.user?.id
+  if (!userId) return
+
+  // Resetear stats de todos los Mimes del usuario (propios)
+  await supabase
+    .from('mimes')
+    .update({
+      hambre: 70, higiene: 70, diversion: 70,
+      carino: 70, energia: 70, apariencia: 70,
+      afinidad: 0, cuidador_id: null, share_code: null,
+    })
+    .eq('dueno_id', userId)
+
+  // Recuperar puntos a 100
+  await supabase
+    .from('profiles')
+    .update({ puntos_mimes: 100 })
+    .eq('id', userId)
+
+  // Refrescar datos
+  await userStore.fetchProfile()
+  await loadData()
+  claimMessage.value = 'Reset completado!'
+  setTimeout(() => claimMessage.value = '', 2000)
+}
+
 onMounted(loadData)
 </script>
 
@@ -260,6 +288,12 @@ onMounted(loadData)
           </button>
         </div>
         <p v-if="claimMessage" class="claim-msg">{{ claimMessage }}</p>
+      </section>
+      <!-- RESET (solo para pruebas) -->
+      <section class="section">
+        <button class="reset-btn" @click="handleReset">
+          Reset (pruebas): restaurar stats y puntos
+        </button>
       </section>
     </template>
 
@@ -461,6 +495,24 @@ onMounted(loadData)
   justify-content: center;
   padding: 60px;
   color: #999;
+}
+
+/* RESET BUTTON */
+.reset-btn {
+  width: 100%;
+  padding: 12px;
+  background: #ffebee;
+  color: #c62828;
+  border: 1.5px dashed #ef9a9a;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+}
+
+.reset-btn:active {
+  background: #ffcdd2;
 }
 
 /* SHARE MODAL */
