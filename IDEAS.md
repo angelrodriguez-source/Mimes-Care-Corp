@@ -16,6 +16,10 @@
 
 - Animaciones idle distintas por personalidad (el Aventurero salta, el Tranquilo bosteza, el Pícaro guiña)
 - Que el Mime reaccione visualmente a cada acción (ej. corazones al dar cariño, burbujas al limpiar)
+- Cuando está dormido que salgan Zetas flotando (zzZ animadas subiendo)
+- Al dar "Descansar" el Mime se duerme un rato (cierra ojos, se queda quieto, salen zetas)
+- Que el Mime se mueva por la habitación (caminar de lado a lado, ir a los objetos)
+- Que el Mime dé besos (animación de beso al interactuar o al dar cariño)
 - Accesorios/ropa para vestir al Mime
 - Nivel de experiencia visible en el Mime
 - Sonidos/efectos al interactuar
