@@ -1,5 +1,4 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import { useUserStore } from '../stores/userStore'
 
 const router = createRouter({
@@ -7,8 +6,13 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+    },
+    {
+      path: '/home',
       name: 'home',
-      component: HomeView,
+      component: () => import('../views/HomeView.vue'),
     },
     {
       path: '/care',
@@ -16,9 +20,10 @@ const router = createRouter({
       component: () => import('../views/CareScreen.vue'),
     },
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('../views/LoginView.vue'),
+      path: '/explore',
+      name: 'explore',
+      component: () => import('../views/HomeView.vue'),
+      meta: { public: true },
     },
   ],
 })
@@ -27,12 +32,15 @@ const router = createRouter({
  * Navigation guard — se ejecuta ANTES de cada navegación.
  *
  * Lógica:
- *   - Si vas a /login y ya estás logueado → te manda a /
- *   - Si vas a cualquier otra ruta y NO estás logueado → te manda a /login
- *   - En cualquier otro caso → te deja pasar
+ *   - Rutas con meta.public → acceso libre (explore)
+ *   - Si vas a / (login) y ya estás logueado → te manda a /home
+ *   - Si vas a ruta protegida y NO estás logueado → te manda a / (login)
  */
 router.beforeEach((to) => {
   const userStore = useUserStore()
+
+  // Rutas públicas: acceso libre
+  if (to.meta.public) return true
 
   // Mientras carga la sesión inicial, no bloqueamos
   if (userStore.loading) return true

@@ -41,7 +41,7 @@ async function handleSubmit() {
       if (loginErr) {
         error.value = 'Cuenta creada. Revisa tu email para confirmarla.'
       } else {
-        router.push('/')
+        router.push('/home')
       }
     }
   } else {
@@ -49,7 +49,7 @@ async function handleSubmit() {
     if (err) {
       error.value = 'Email o contraseña incorrectos'
     } else {
-      router.push('/')
+      router.push('/home')
     }
   }
 
@@ -123,6 +123,10 @@ function toggleMode() {
         </button>
       </p>
     </div>
+
+    <router-link to="/explore" class="explore-link">
+      Explore Mimes 🎭
+    </router-link>
   </div>
 </template>
 
@@ -236,5 +240,21 @@ function toggleMode() {
   font-family: 'Baloo 2', cursive;
   cursor: pointer;
   font-size: 13px;
+}
+
+.explore-link {
+  display: block;
+  text-align: center;
+  margin-top: 24px;
+  color: #5c6bc0;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.explore-link:active {
+  opacity: 1;
 }
 </style>
