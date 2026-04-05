@@ -237,6 +237,22 @@ function goBack() {
   router.push('/dashboard')
 }
 
+// Reset para pruebas: restaura stats del Mime y devuelve PM
+async function handleReset() {
+  stats.value = { hambre: 70, higiene: 70, diversion: 70, carino: 70, energia: 70, apariencia: 70 }
+  afinidad.value = 0
+  puntosMimes.value = 100
+
+  await Promise.all([
+    supabase.from('mimes').update({
+      hambre: 70, higiene: 70, diversion: 70,
+      carino: 70, energia: 70, apariencia: 70, afinidad: 0,
+    }).eq('id', mimeId.value),
+    supabase.from('profiles').update({ puntos_mimes: 100 }).eq('id', userStore.user!.id),
+  ])
+  userStore.fetchProfile()
+}
+
 onMounted(loadMime)
 
 onUnmounted(() => {
@@ -262,6 +278,7 @@ onUnmounted(() => {
       <header class="care-header">
         <button class="back-btn" @click="goBack">&#8592;</button>
         <h1 class="mime-name">{{ mimeName }}</h1>
+        <button class="reset-care-btn" @click="handleReset">Reset</button>
         <div class="puntos">
           <span class="puntos-icon">&#9829;</span>
           <span class="puntos-value">{{ puntosMimes }}</span>
@@ -442,6 +459,21 @@ onUnmounted(() => {
   border-radius: 20px;
   border: 1.5px solid #ffe0b2;
 }
+
+.reset-care-btn {
+  padding: 4px 10px;
+  background: #ffebee;
+  color: #c62828;
+  border: 1px dashed #ef9a9a;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.reset-care-btn:active { background: #ffcdd2; }
 
 .puntos-icon { color: #ff7043; font-size: 14px; }
 .puntos-value { font-size: 14px; font-weight: 700; color: #e65100; }
