@@ -5,10 +5,12 @@
  * Carga un Mime por ID desde la URL, permite cuidarlo con acciones
  * que se guardan en la base de datos. El Mime se mueve por la habitacion.
  */
-import { ref, computed, onMounted, onUnmounted, useTemplateRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, useTemplateRef, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import StatBar from '../components/StatBar.vue'
+import { MiniGameShell, ACTION_GAMES, GAME_CONFIGS } from '../minigames'
+import type { MiniGameResult, MiniGameConfig } from '../minigames'
 import { supabase } from '../services/supabase'
 import { useUserStore } from '../stores/userStore'
 import {
@@ -54,6 +56,11 @@ const moodLabel = computed(() => {
 // --- UI STATE ---
 const showStats = ref(false)
 const actionFeedback = ref('')
+
+// --- MINIGAME STATE ---
+const activeGame = shallowRef<ReturnType<typeof Object.values<typeof ACTION_GAMES>> | null>(null)
+const activeGameConfig = ref<MiniGameConfig | null>(null)
+const pendingAction = ref<CareAction | null>(null)
 
 // --- MIME MOVEMENT ---
 const mimeX = ref(50) // posicion X en porcentaje (0-100)
@@ -141,66 +148,88 @@ async function loadMime() {
   startWalking()
 }
 
-// --- EJECUTAR ACCION ---
-async function handleAction(action: CareAction) {
+// --- EJECUTAR ACCION (lanza mini-juego) ---
+function handleAction(action: CareAction) {
   const cost = ACTION_COSTS[action]
   if (puntosMimes.value < cost) return
 
-  // Aplicar localmente (respuesta inmediata)
-  const newStats = applyCareAction(stats.value, action)
-  stats.value = newStats
+  // Cobrar PM al empezar (se pierden gane o pierda)
   puntosMimes.value -= cost
-  afinidad.value = updateAffinity(afinidad.value, newStats)
+  pendingAction.value = action
 
-  // Feedback visual
-  actionFeedback.value = actionConfig.find(a => a.action === action)?.icon ?? ''
-  setTimeout(() => actionFeedback.value = '', 800)
+  // Lanzar mini-juego
+  activeGame.value = ACTION_GAMES[action]
+  activeGameConfig.value = GAME_CONFIGS[action]
+}
 
-  // Kiss burst on carino
-  if (action === 'carino') {
-    mimeCharRef.value?.showKissBurst()
-  }
+// --- RESULTADO DEL MINI-JUEGO ---
+async function onMiniGameDone(result: MiniGameResult) {
+  const action = pendingAction.value!
+  const cost = ACTION_COSTS[action]
 
-  // Descansar: detener movimiento temporalmente
-  if (action === 'descansar') {
-    stopWalking()
-    setTimeout(() => startWalking(), 5000)
-  }
+  // Cerrar mini-juego
+  activeGame.value = null
+  activeGameConfig.value = null
+  pendingAction.value = null
 
-  // Guardar en Supabase (en background)
-  await Promise.all([
-    // Actualizar stats del Mime
-    supabase
-      .from('mimes')
-      .update({
-        hambre: newStats.hambre,
-        higiene: newStats.higiene,
-        diversion: newStats.diversion,
-        carino: newStats.carino,
-        energia: newStats.energia,
-        apariencia: newStats.apariencia,
-        afinidad: afinidad.value,
-      })
-      .eq('id', mimeId.value),
+  if (result.success) {
+    // Ganó: aplicar stats
+    const newStats = applyCareAction(stats.value, action)
+    stats.value = newStats
+    afinidad.value = updateAffinity(afinidad.value, newStats)
 
-    // Registrar accion en el log
-    supabase
-      .from('care_actions')
-      .insert({
-        mime_id: mimeId.value,
-        cuidador_id: userStore.user!.id,
-        action_type: action,
-        puntos_cost: cost,
-      }),
+    // Feedback visual
+    actionFeedback.value = actionConfig.find(a => a.action === action)?.icon ?? ''
+    setTimeout(() => actionFeedback.value = '', 800)
 
-    // Actualizar puntos del usuario
-    supabase
+    // Kiss burst on carino
+    if (action === 'carino') {
+      mimeCharRef.value?.showKissBurst()
+    }
+
+    // Descansar: detener movimiento temporalmente
+    if (action === 'descansar') {
+      stopWalking()
+      setTimeout(() => startWalking(), 5000)
+    }
+
+    // Guardar en Supabase (en background)
+    await Promise.all([
+      supabase
+        .from('mimes')
+        .update({
+          hambre: newStats.hambre,
+          higiene: newStats.higiene,
+          diversion: newStats.diversion,
+          carino: newStats.carino,
+          energia: newStats.energia,
+          apariencia: newStats.apariencia,
+          afinidad: afinidad.value,
+        })
+        .eq('id', mimeId.value),
+
+      supabase
+        .from('care_actions')
+        .insert({
+          mime_id: mimeId.value,
+          cuidador_id: userStore.user!.id,
+          action_type: action,
+          puntos_cost: cost,
+        }),
+
+      supabase
+        .from('profiles')
+        .update({ puntos_mimes: puntosMimes.value })
+        .eq('id', userStore.user!.id),
+    ])
+  } else {
+    // Perdió: solo guardar los PM gastados
+    await supabase
       .from('profiles')
       .update({ puntos_mimes: puntosMimes.value })
-      .eq('id', userStore.user!.id),
-  ])
+      .eq('id', userStore.user!.id)
+  }
 
-  // Refrescar profile en el store
   userStore.fetchProfile()
 }
 
@@ -321,6 +350,21 @@ onUnmounted(() => {
         @click="showStats = false"
       ></div>
     </template>
+
+    <!-- MINI-JUEGO OVERLAY -->
+    <MiniGameShell
+      v-if="activeGameConfig"
+      :config="activeGameConfig"
+      @done="onMiniGameDone"
+      v-slot="{ active, onComplete }"
+    >
+      <component
+        :is="activeGame!"
+        :active="active"
+        :on-complete="onComplete"
+        :color-theme="colorTheme"
+      />
+    </MiniGameShell>
   </div>
 </template>
 
