@@ -57,10 +57,15 @@ const moodLabel = computed(() => {
 const showStats = ref(false)
 const actionFeedback = ref('')
 
+// --- DIFFICULTY PICKER ---
+const showDifficultyPicker = ref(false)
+const pickerAction = ref<CareAction | null>(null)
+
 // --- MINIGAME STATE ---
 const activeGame = shallowRef<ReturnType<typeof Object.values<typeof ACTION_GAMES>> | null>(null)
 const activeGameConfig = ref<MiniGameConfig | null>(null)
 const pendingAction = ref<CareAction | null>(null)
+const pendingDifficulty = ref<'easy' | 'advanced'>('easy')
 
 // --- MIME MOVEMENT ---
 const mimeX = ref(50) // posicion X en porcentaje (0-100)
@@ -148,18 +153,37 @@ async function loadMime() {
   startWalking()
 }
 
-// --- EJECUTAR ACCION (lanza mini-juego) ---
+// --- EJECUTAR ACCION (muestra selector de dificultad) ---
 function handleAction(action: CareAction) {
   const cost = ACTION_COSTS[action]
   if (puntosMimes.value < cost) return
 
+  // Mostrar selector de dificultad
+  pickerAction.value = action
+  showDifficultyPicker.value = true
+}
+
+function selectDifficulty(difficulty: 'easy' | 'advanced') {
+  const action = pickerAction.value!
+  const cost = ACTION_COSTS[action]
+
+  // Cerrar picker
+  showDifficultyPicker.value = false
+  pickerAction.value = null
+
   // Cobrar PM al empezar (se pierden gane o pierda)
   puntosMimes.value -= cost
   pendingAction.value = action
+  pendingDifficulty.value = difficulty
 
-  // Lanzar mini-juego
+  // Lanzar mini-juego (por ahora ambos usan el mismo juego "facil")
   activeGame.value = ACTION_GAMES[action]
   activeGameConfig.value = GAME_CONFIGS[action]
+}
+
+function closePicker() {
+  showDifficultyPicker.value = false
+  pickerAction.value = null
 }
 
 // --- RESULTADO DEL MINI-JUEGO ---
@@ -367,6 +391,32 @@ onUnmounted(() => {
         @click="showStats = false"
       ></div>
     </template>
+
+    <!-- SELECTOR DE DIFICULTAD -->
+    <Teleport to="body">
+      <div v-if="showDifficultyPicker" class="picker-overlay" @click.self="closePicker">
+        <div class="picker-card">
+          <h3 class="picker-title">
+            {{ actionConfig.find(a => a.action === pickerAction)?.icon }}
+            {{ actionConfig.find(a => a.action === pickerAction)?.label }}
+          </h3>
+          <p class="picker-subtitle">Elige dificultad</p>
+          <div class="picker-options">
+            <button class="picker-btn easy" @click="selectDifficulty('easy')">
+              <span class="picker-btn-icon">&#11088;</span>
+              <span class="picker-btn-label">Facil</span>
+              <span class="picker-btn-desc">Minijuego clasico</span>
+            </button>
+            <button class="picker-btn advanced" @click="selectDifficulty('advanced')">
+              <span class="picker-btn-icon">&#128293;</span>
+              <span class="picker-btn-label">Avanzado</span>
+              <span class="picker-btn-desc">Proximamente</span>
+            </button>
+          </div>
+          <button class="picker-cancel" @click="closePicker">Cancelar</button>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- MINI-JUEGO OVERLAY -->
     <MiniGameShell
@@ -655,5 +705,121 @@ onUnmounted(() => {
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+</style>
+
+<!-- Picker styles unscoped (Teleport to body) -->
+<style>
+.picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.2s ease;
+  font-family: 'Baloo 2', cursive;
+}
+
+.picker-card {
+  background: white;
+  border-radius: 24px;
+  padding: 28px 24px 20px;
+  width: 300px;
+  max-width: 90vw;
+  text-align: center;
+  animation: picker-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes picker-pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.picker-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.picker-subtitle {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+.picker-options {
+  display: flex;
+  gap: 12px;
+}
+
+.picker-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 8px;
+  border: 2.5px solid #e0e0e0;
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Baloo 2', cursive;
+}
+
+.picker-btn:active {
+  transform: scale(0.95);
+}
+
+.picker-btn.easy {
+  border-color: #66bb6a;
+  background: #e8f5e9;
+}
+
+.picker-btn.easy:active {
+  background: #c8e6c9;
+}
+
+.picker-btn.advanced {
+  border-color: #ff7043;
+  background: #fff3e0;
+}
+
+.picker-btn.advanced:active {
+  background: #ffe0b2;
+}
+
+.picker-btn-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.picker-btn-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+.picker-btn-desc {
+  font-size: 11px;
+  color: #999;
+}
+
+.picker-cancel {
+  margin-top: 16px;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+}
+
+.picker-cancel:active {
+  color: #666;
 }
 </style>
