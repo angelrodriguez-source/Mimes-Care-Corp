@@ -311,8 +311,8 @@ onMounted(loadMime)
       <div v-if="showDifficultyPicker" class="picker-overlay" @click.self="closePicker">
         <div class="picker-card">
           <h3 class="picker-title">
-            {{ actionConfig.find(a => a.action === pickerAction)?.icon }}
-            {{ actionConfig.find(a => a.action === pickerAction)?.label }}
+            {{ ACTION_CONFIG.find(a => a.action === pickerAction)?.icon }}
+            {{ ACTION_CONFIG.find(a => a.action === pickerAction)?.label }}
           </h3>
           <p class="picker-subtitle">Elige dificultad</p>
           <div class="picker-options">
