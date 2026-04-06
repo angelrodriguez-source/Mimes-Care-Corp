@@ -8,7 +8,7 @@
  *
  * Contrapartida a los demás juegos: requiere paciencia.
  */
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -16,6 +16,17 @@ const props = defineProps<{
 }>()
 
 const failed = ref(false)
+
+// Bug fix: precalcular posiciones de estrellas (antes usaba Math.random() en template)
+const starPositions = ref<{ left: string; top: string; delay: string }[]>([])
+
+onMounted(() => {
+  starPositions.value = Array.from({ length: 8 }, () => ({
+    left: (10 + Math.random() * 80) + '%',
+    top: (5 + Math.random() * 40) + '%',
+    delay: (Math.random() * 2) + 's',
+  }))
+})
 
 function handleTouch() {
   if (!props.active || failed.value) return
@@ -42,10 +53,10 @@ function handleTouch() {
       </div>
       <p class="rest-instruction">Shhh... no toques la pantalla</p>
       <div class="stars">
-        <span v-for="i in 8" :key="i" class="star" :style="{
-          left: (10 + Math.random() * 80) + '%',
-          top: (5 + Math.random() * 40) + '%',
-          animationDelay: (Math.random() * 2) + 's',
+        <span v-for="(pos, i) in starPositions" :key="i" class="star" :style="{
+          left: pos.left,
+          top: pos.top,
+          animationDelay: pos.delay,
         }">✨</span>
       </div>
     </div>

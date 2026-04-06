@@ -66,7 +66,7 @@ function startGame() {
     timeLeft.value -= tick
     if (timeLeft.value <= 0) {
       timeLeft.value = 0
-      endGame(false)
+      endGame(!!props.config.timeoutIsWin)
     }
   }, tick)
 }

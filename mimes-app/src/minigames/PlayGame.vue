@@ -6,7 +6,7 @@
  * El jugador debe tocarlo 8 veces en 5 segundos.
  * Cada vez que lo toca, se mueve a otro sitio.
  */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -39,11 +39,15 @@ function tapTarget() {
 
 onMounted(() => {
   moveTarget()
-  // El target se mueve solo cada 1.2s si no lo tocan
-  moveTimer = setInterval(() => {
-    if (props.active) moveTarget()
-  }, 1200)
 })
+
+watch(() => props.active, (val) => {
+  if (val) {
+    moveTimer = setInterval(() => {
+      moveTarget()
+    }, 1200)
+  }
+}, { immediate: true })
 
 onUnmounted(() => {
   if (moveTimer) clearInterval(moveTimer)

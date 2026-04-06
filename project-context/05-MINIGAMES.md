@@ -66,7 +66,7 @@ Todos reciben las mismas props via scoped slot: `active` y `onComplete`. Todos u
 - Caen con velocidad variable (0.8-1.4), movimiento cada 30ms
 - Tocar un item lo atrapa (escala a 0, desaparece)
 - **Objetivo**: Atrapar 5 items
-- **Problema conocido**: Items empiezan a spawnear durante countdown (setInterval en onMounted, no espera a `active`)
+- ~~Problema anterior~~: Items spawneaban durante countdown. Resuelto: usa `watch(active)` en vez de `onMounted`
 
 ### CleanGame.vue — Limpiar
 **Mecanica**: Limpia manchas pasando el dedo/raton.
@@ -102,7 +102,7 @@ Todos reciben las mismas props via scoped slot: `active` y `onComplete`. Todos u
 - Escena nocturna: fondo oscuro, luna (🌙) con glow, emoji 😴 con respiracion, zzZ flotantes, estrellas (✨) con twinkle
 - Si tocas: muestra 😱 con shake, fallo inmediato
 - **Objetivo**: No tocar durante los 5 segundos completos
-- **Unico juego donde el timer llegar a 0 = VICTORIA** (el shell lo marca como derrota, pero si no tocas, nunca llamas onComplete(false), y el shell da timeout que es false... **Nota**: en realidad este juego tiene un bug conceptual — cuando el timer acaba, el shell llama `endGame(false)` automaticamente. Deberia ser al reves para RestGame.
+- **Unico juego donde el timer llegar a 0 = VICTORIA**. Resuelto con `timeoutIsWin: true` en la config de `descansar` — el shell usa ese flag para llamar `endGame(true)` en vez de `endGame(false)`
 
 ### DressGame.vue — Vestir
 **Mecanica**: Toca solo la ropa del color correcto.

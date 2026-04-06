@@ -10,20 +10,16 @@
 
 ## Bugs conocidos
 
-### RestGame tiene logica invertida
-- **Archivo**: `src/minigames/RestGame.vue`
-- **Problema**: El mini-juego consiste en NO tocar la pantalla. Pero MiniGameShell llama `endGame(false)` cuando el timer llega a 0 (= timeout = derrota). En RestGame, que el timer llegue a 0 sin tocar deberia ser VICTORIA
-- **Solucion**: RestGame necesita llamar `onComplete(true)` justo antes de que el timer acabe, o MiniGameShell necesita una prop `invertResult` para RestGame
+### ~~RestGame tiene logica invertida~~ RESUELTO (2026-04-06)
+- Se anadio `timeoutIsWin` a `MiniGameConfig` en `types.ts`
+- `descansar` tiene `timeoutIsWin: true`
+- `MiniGameShell` usa `!!config.timeoutIsWin` en vez de `false` fijo cuando el timer llega a 0
 
-### Mini-juegos arrancan antes de la countdown
-- **Archivos**: FeedGame, LoveGame, PlayGame
-- **Problema**: Los `setInterval` de spawn/movimiento se lanzan en `onMounted()`, que ocurre durante la fase de countdown (antes de que `active` sea true). Los items empiezan a aparecer/moverse antes de que el jugador pueda interactuar
-- **Solucion**: Usar `watch(active, ...)` para iniciar los intervalos solo cuando active=true
+### ~~Mini-juegos arrancan antes de la countdown~~ RESUELTO (2026-04-06)
+- FeedGame, LoveGame, PlayGame: cambiado `onMounted` por `watch(active)` para iniciar intervalos solo cuando `active=true`
 
-### Estrellas de RestGame con Math.random() en template
-- **Archivo**: `src/minigames/RestGame.vue` linea 48
-- **Problema**: `Math.random()` inline en `:style` se re-ejecuta en cada render, reposicionando las estrellas
-- **Solucion**: Precalcular posiciones en `onMounted` o `computed`
+### ~~Estrellas de RestGame con Math.random() en template~~ RESUELTO (2026-04-06)
+- Posiciones precalculadas en `onMounted` y guardadas en ref `starPositions`
 
 ## Codigo muerto / Limpieza
 

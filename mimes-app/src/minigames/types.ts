@@ -25,6 +25,8 @@ export interface MiniGameConfig {
   instruction: string
   /** Duración en ms */
   duration: number
+  /** Si true, que el timer llegue a 0 cuenta como victoria (ej: RestGame) */
+  timeoutIsWin?: boolean
 }
 
 /** Mapeo acción → configuración del mini-juego */
@@ -58,6 +60,7 @@ export const GAME_CONFIGS: Record<CareAction, MiniGameConfig> = {
     icon: '😴',
     instruction: 'No toques la pantalla!',
     duration: 5000,
+    timeoutIsWin: true,
   },
   vestir: {
     title: 'Vestir',

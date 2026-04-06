@@ -5,7 +5,7 @@
  * Mecánica: caen alimentos desde arriba. El jugador los
  * toca para atraparlos. Debe atrapar 5 en 5 segundos.
  */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -64,10 +64,12 @@ function catchFood(id: number) {
   }
 }
 
-onMounted(() => {
-  spawnTimer = setInterval(spawnFood, 400)
-  moveTimer = setInterval(moveItems, 30)
-})
+watch(() => props.active, (val) => {
+  if (val) {
+    spawnTimer = setInterval(spawnFood, 400)
+    moveTimer = setInterval(moveItems, 30)
+  }
+}, { immediate: true })
 
 onUnmounted(() => {
   if (spawnTimer) clearInterval(spawnTimer)

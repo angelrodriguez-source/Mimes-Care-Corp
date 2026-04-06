@@ -6,7 +6,7 @@
  * El jugador debe tocarlos para recogerlos.
  * Debe recoger 6 antes de que se acabe el tiempo.
  */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -67,10 +67,12 @@ function collectHeart(id: number) {
   }
 }
 
-onMounted(() => {
-  spawnTimer = setInterval(spawnHeart, 500)
-  moveTimer = setInterval(moveHearts, 30)
-})
+watch(() => props.active, (val) => {
+  if (val) {
+    spawnTimer = setInterval(spawnHeart, 500)
+    moveTimer = setInterval(moveHearts, 30)
+  }
+}, { immediate: true })
 
 onUnmounted(() => {
   if (spawnTimer) clearInterval(spawnTimer)
