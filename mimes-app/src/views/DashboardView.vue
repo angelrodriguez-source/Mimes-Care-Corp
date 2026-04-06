@@ -11,31 +11,16 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import MimeCard from '../components/MimeCard.vue'
-import { supabase } from '../services/supabase'
 import { useUserStore } from '../stores/userStore'
-import type { Personality, ColorTheme, MimeStats } from '../models/MimeModel'
-
-interface MimeFromDB {
-  id: string
-  nombre: string
-  personalidad: Personality
-  color_theme: ColorTheme
-  hambre: number
-  higiene: number
-  diversion: number
-  carino: number
-  energia: number
-  apariencia: number
-  afinidad: number
-  dueno_id: string
-  cuidador_id: string | null
-  share_code: string | null
-}
-
-interface MimeWithNames extends MimeFromDB {
-  dueno_name?: string
-  cuidador_name?: string
-}
+import { toStats, copyToClipboard } from '../utils/helpers'
+import {
+  loadDashboardData,
+  generateShareCode,
+  claimMime,
+  releaseMime,
+  resetAllMimes,
+  type MimeWithNames,
+} from '../services/mimeService'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -48,82 +33,29 @@ const claimLoading = ref(false)
 const claimMessage = ref('')
 const shareModal = ref<{ mimeId: string; code: string; nombre: string } | null>(null)
 
-function toStats(m: MimeFromDB): MimeStats {
-  return {
-    hambre: m.hambre, higiene: m.higiene, diversion: m.diversion,
-    carino: m.carino, energia: m.energia, apariencia: m.apariencia,
-  }
-}
-
 async function loadData() {
   loading.value = true
   const userId = userStore.user?.id
+  if (!userId) { loading.value = false; return }
 
-  // Cargar Mimes propios
-  const { data: own } = await supabase
-    .from('mimes')
-    .select('*')
-    .eq('dueno_id', userId)
-    .order('created_at')
-
-  // Cargar Mimes que cuido
-  const { data: caring } = await supabase
-    .from('mimes')
-    .select('*')
-    .eq('cuidador_id', userId)
-    .order('created_at')
-
-  // Recoger IDs de usuarios para buscar nombres
-  const userIds = new Set<string>()
-  own?.forEach(m => { if (m.cuidador_id) userIds.add(m.cuidador_id) })
-  caring?.forEach(m => { userIds.add(m.dueno_id) })
-
-  // Buscar nombres de perfiles
-  const profileMap: Record<string, string> = {}
-  if (userIds.size > 0) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, display_name')
-      .in('id', Array.from(userIds))
-
-    profiles?.forEach(p => { profileMap[p.id] = p.display_name })
-  }
-
-  // Asignar nombres
-  myMimes.value = (own ?? []).map(m => ({
-    ...m,
-    cuidador_name: m.cuidador_id ? profileMap[m.cuidador_id] : undefined,
-  }))
-
-  caringMimes.value = (caring ?? []).map(m => ({
-    ...m,
-    dueno_name: profileMap[m.dueno_id] || 'Desconocido',
-  }))
-
+  const data = await loadDashboardData(userId)
+  myMimes.value = data.myMimes
+  caringMimes.value = data.caringMimes
   loading.value = false
 }
 
-// Compartir un Mime
 async function handleShare(mimeId: string, nombre: string) {
-  const { data } = await supabase.rpc('generate_share_code', { p_mime_id: mimeId })
-
-  if (data?.error) {
-    claimMessage.value = data.error
-    return
-  }
-
-  if (data?.code) {
-    shareModal.value = { mimeId, code: data.code, nombre }
-  }
+  const { data } = await generateShareCode(mimeId)
+  if (data?.error) { claimMessage.value = data.error; return }
+  if (data?.code) shareModal.value = { mimeId, code: data.code, nombre }
 }
 
-// Adoptar con codigo
 async function handleClaim() {
   if (!claimCode.value.trim()) return
   claimLoading.value = true
   claimMessage.value = ''
 
-  const { data } = await supabase.rpc('claim_mime', { p_code: claimCode.value.trim().toUpperCase() })
+  const { data } = await claimMime(claimCode.value)
 
   if (data?.error) {
     claimMessage.value = data.error
@@ -136,63 +68,35 @@ async function handleClaim() {
   claimLoading.value = false
 }
 
-// Soltar un Mime
 async function handleRelease(mimeId: string) {
-  const { data } = await supabase.rpc('release_mime', { p_mime_id: mimeId })
-  if (data?.success) {
-    await loadData()
-  }
+  const { data } = await releaseMime(mimeId)
+  if (data?.success) await loadData()
 }
 
-// Ir a cuidar
 function goToCare(mimeId: string) {
   router.push(`/care/${mimeId}`)
 }
 
-// Logout
 async function handleLogout() {
   await userStore.signOut()
   router.push('/')
 }
 
-// Copiar codigo al clipboard
 async function copyCode(code: string) {
-  try {
-    await navigator.clipboard.writeText(code)
-    claimMessage.value = 'Codigo copiado!'
-    setTimeout(() => claimMessage.value = '', 2000)
-  } catch {
-    // Fallback for mobile
-    claimMessage.value = `Codigo: ${code}`
-  }
+  const ok = await copyToClipboard(code)
+  claimMessage.value = ok ? 'Codigo copiado!' : `Codigo: ${code}`
+  if (ok) setTimeout(() => (claimMessage.value = ''), 2000)
 }
 
-// Reset para pruebas: resetea stats de todos tus Mimes y recupera puntos
 async function handleReset() {
   const userId = userStore.user?.id
   if (!userId) return
 
-  // Resetear stats de todos los Mimes del usuario (propios)
-  await supabase
-    .from('mimes')
-    .update({
-      hambre: 70, higiene: 70, diversion: 70,
-      carino: 70, energia: 70, apariencia: 70,
-      afinidad: 0, cuidador_id: null, share_code: null,
-    })
-    .eq('dueno_id', userId)
-
-  // Recuperar puntos a 100
-  await supabase
-    .from('profiles')
-    .update({ puntos_mimes: 100 })
-    .eq('id', userId)
-
-  // Refrescar datos
+  await resetAllMimes(userId)
   await userStore.fetchProfile()
   await loadData()
   claimMessage.value = 'Reset completado!'
-  setTimeout(() => claimMessage.value = '', 2000)
+  setTimeout(() => (claimMessage.value = ''), 2000)
 }
 
 onMounted(loadData)

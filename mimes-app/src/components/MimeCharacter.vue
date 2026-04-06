@@ -9,50 +9,33 @@
  *   <MimeCharacter personality="aventurero" color-theme="celeste" mood="feliz" :scale="1" />
  */
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { useHeartBurst } from '../composables/useHeartBurst'
 
-// --- PROPS ---
-// defineProps() le dice a Vue qué "atributos" acepta este componente.
-// Cuando alguien escriba <MimeCharacter personality="aventurero" />,
-// Vue pasa "aventurero" como valor de props.personality.
 const props = defineProps<{
-  // Tipo de personalidad: determina el estilo de pelo y animaciones
   personality: 'aventurero' | 'tranquilo' | 'picaro'
-  // Tema de color: define las CSS variables (--body-color, etc.)
   colorTheme: 'celeste' | 'lila' | 'melocoton'
-  // Estado de ánimo: cambia la expresión de la boca y los ojos
   mood?: 'feliz' | 'euforico' | 'triste' | 'dormido' | 'hambriento' | ''
-  // Factor de escala (1 = 150x180px, el tamaño original)
   scale?: number
 }>()
 
+// --- HAIR TYPE MAP ---
+const HAIR_MAP: Record<string, string> = { aventurero: 'punk', tranquilo: 'curly', picaro: 'quiff' }
+
 // --- COMPUTED ---
-// computed() crea valores que se recalculan automáticamente cuando las props cambian.
-// Es como una fórmula de Excel: si cambias la celda de entrada, el resultado se actualiza solo.
+const hairType = computed(() => HAIR_MAP[props.personality])
 
-// Mapeo personalidad → tipo de pelo
-const hairType = computed(() => {
-  const map = { aventurero: 'punk', tranquilo: 'curly', picaro: 'quiff' }
-  return map[props.personality]
-})
-
-// Clases CSS que se ponen en el div .character
-// Ejemplo resultado: "character aventurero mime-celeste mood-feliz"
 const characterClasses = computed(() => {
   const classes = ['character', props.personality, `mime-${props.colorTheme}`]
   if (props.mood) classes.push(`mood-${props.mood}`)
   return classes
 })
 
-// Estilo inline para la escala (transform: scale)
 const scaleStyle = computed(() => {
   if (!props.scale || props.scale === 1) return {}
   return { transform: `scale(${props.scale})` }
 })
 
 // --- EYE TRACKING ---
-// ref() crea una "referencia reactiva". characterRef apunta al div .character del DOM.
-// Es como hacer document.querySelector('.character') pero Vue lo conecta automáticamente
-// gracias al atributo ref="characterRef" en el template.
 const characterRef = ref<HTMLElement | null>(null)
 
 function trackEyes(e: { clientX: number; clientY: number }) {
@@ -65,41 +48,42 @@ function trackEyes(e: { clientX: number; clientY: number }) {
   const dx = e.clientX - cx
   const dy = e.clientY - cy
   const dist = Math.sqrt(dx * dx + dy * dy)
-  const max = 5
-  const mx = (dx / dist) * Math.min(dist * 0.02, max)
-  const my = (dy / dist) * Math.min(dist * 0.02, max)
+  const maxOffset = 5
+  const mx = (dx / dist) * Math.min(dist * 0.02, maxOffset)
+  const my = (dy / dist) * Math.min(dist * 0.02, maxOffset)
 
   ch.querySelectorAll<HTMLElement>('.pupil').forEach((p) => {
     p.style.transform = `translate(calc(-50% + ${mx}px), ${my}px)`
   })
 }
 
-function onMouseMove(e: MouseEvent) {
-  trackEyes(e)
-}
-
+function onMouseMove(e: MouseEvent) { trackEyes(e) }
 function onTouchMove(e: TouchEvent) {
   const t = e.touches[0]
   trackEyes({ clientX: t.clientX, clientY: t.clientY })
 }
 
-// --- ZZZ ANIMATION (when sleeping) ---
-// Generates floating Z letters above the Mime
+// --- ZZZ ANIMATION ---
+const ZZZ_CONFIG = [
+  { delay: '0s', left: '50%', size: '14px' },
+  { delay: '0.8s', left: '62%', size: '18px' },
+  { delay: '1.6s', left: '74%', size: '22px' },
+]
+
 function startZzz() {
   const ch = characterRef.value
   if (!ch) return
-  // Remove existing zzz container
   ch.querySelector('.zzz-container')?.remove()
 
   const container = document.createElement('div')
   container.className = 'zzz-container'
-  for (let i = 0; i < 3; i++) {
+  for (const cfg of ZZZ_CONFIG) {
     const z = document.createElement('div')
     z.className = 'zzz-letter'
     z.textContent = 'Z'
-    z.style.animationDelay = `${i * 0.8}s`
-    z.style.left = `${50 + i * 12}%`
-    z.style.fontSize = `${14 + i * 4}px`
+    z.style.animationDelay = cfg.delay
+    z.style.left = cfg.left
+    z.style.fontSize = cfg.size
     container.appendChild(z)
   }
   ch.appendChild(container)
@@ -109,83 +93,24 @@ function stopZzz() {
   characterRef.value?.querySelector('.zzz-container')?.remove()
 }
 
-// Watch mood changes for zzZ
 watch(() => props.mood, (newMood) => {
-  if (newMood === 'dormido') {
-    startZzz()
-  } else {
-    stopZzz()
-  }
+  if (newMood === 'dormido') startZzz()
+  else stopZzz()
 })
 
-// --- KISS BURST (on carino action) ---
-function showKissBurst() {
-  const ch = characterRef.value
-  if (!ch) return
+// --- HEART BURST (composable) ---
+const { showKissBurst, showClickBurst } = useHeartBurst(characterRef)
 
-  const burst = document.createElement('div')
-  burst.className = 'heart-burst'
-  burst.style.left = '50%'
-  burst.style.top = '30%'
-
-  const kisses = ['\uD83D\uDC8B', '\uD83D\uDC95', '\uD83D\uDC96', '\u2764\uFE0F']
-  for (let i = 0; i < 6; i++) {
-    const k = document.createElement('div')
-    k.className = 'mini-heart'
-    k.textContent = kisses[i % kisses.length]
-    const a = Math.random() * Math.PI * 2
-    const r = 30 + Math.random() * 50
-    k.style.setProperty('--tx', `${Math.cos(a) * r}px`)
-    k.style.setProperty('--ty', `${Math.sin(a) * r - 40}px`)
-    k.style.setProperty('--rot', `${(Math.random() - 0.5) * 60}deg`)
-    k.style.animationDelay = `${i * 0.05}s`
-    burst.appendChild(k)
-  }
-  ch.appendChild(burst)
-  setTimeout(() => burst.remove(), 1200)
-}
-
-// Expose methods for parent components
 defineExpose({ showKissBurst })
 
-// --- HEART BURST (click interaction) ---
 function onCharacterClick(e: MouseEvent) {
-  const ch = characterRef.value
-  if (!ch) return
-
-  const burst = document.createElement('div')
-  burst.className = 'heart-burst'
-  const rect = ch.getBoundingClientRect()
-  burst.style.left = e.clientX - rect.left + 'px'
-  burst.style.top = e.clientY - rect.top + 'px'
-
-  const hearts = ['\u2764\uFE0F', '\uD83D\uDC9B', '\uD83D\uDC96', '\uD83E\uDDE1', '\uD83D\uDC9C', '\uD83D\uDC97']
-  for (let i = 0; i < 8; i++) {
-    const h = document.createElement('div')
-    h.className = 'mini-heart'
-    h.textContent = hearts[i % hearts.length]
-    // Ángulo totalmente aleatorio (360 grados)
-    const a = Math.random() * Math.PI * 2
-    // Radio grande y variado
-    const r = 40 + Math.random() * 60
-    h.style.setProperty('--tx', `${Math.cos(a) * r}px`)
-    h.style.setProperty('--ty', `${Math.sin(a) * r - 30}px`)
-    h.style.setProperty('--rot', `${(Math.random() - 0.5) * 90}deg`)
-    h.style.animationDelay = `${i * 0.04}s`
-    burst.appendChild(h)
-  }
-  ch.appendChild(burst)
-  setTimeout(() => burst.remove(), 1200)
+  showClickBurst(e)
 }
 
 // --- LIFECYCLE ---
-// onMounted se ejecuta cuando el componente se "monta" en el DOM (aparece en pantalla).
-// Aquí registramos los event listeners para el eye tracking.
-// onUnmounted los quita cuando el componente desaparece (para no dejar listeners huérfanos).
 onMounted(() => {
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('touchmove', onTouchMove as EventListener)
-  // Start zzZ if already sleeping
   if (props.mood === 'dormido') startZzz()
 })
 
