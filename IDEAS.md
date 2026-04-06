@@ -39,6 +39,20 @@
 - Recompensas diarias por login
 - Minijuegos para ganar puntos extra
 
+## Sistema de cesión y crecimiento
+
+- Los Mimes se ceden por **7 días** (una semana)
+- Al término de la cesión, el cuidador recibe **100 × afinidad conseguida** en Puntos Mimes
+  - Esta es la forma principal de ganar PM para seguir cuidando Mimes
+- Durante la semana el Mime **crece visualmente**:
+  - Día 1: 40% de tamaño
+  - Día 2: 50%
+  - Día 3: 60%
+  - Día 4: 70%
+  - Día 5: 80%
+  - Día 6–7: 100%
+- **Decay por hora**: cada hora que pasa, los stats van bajando progresivamente
+
 ## Técnico
 
 - Modo offline con sincronización posterior
@@ -48,4 +62,4 @@
 
 ---
 
-*Última actualización: 2026-04-05*
+*Última actualización: 2026-04-06*
