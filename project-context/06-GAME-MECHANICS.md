@@ -1,0 +1,157 @@
+# 06 - Mecanicas del Juego
+
+## Concepto Core
+
+**No cuidas tus propios Mimes.** Cuidas los de otros, y otros cuidan los tuyos. Esto crea interdependencia social real.
+
+Cada usuario tiene 3 Mimes. Necesita encontrar 3 cuidadores (1 por Mime). Un cuidador solo puede cuidar 1 Mime de cada dueno, forzando una red amplia.
+
+## Los 6 Stats
+
+Cada Mime tiene 6 estadisticas de 0 a 100. Empiezan en 70.
+
+| Stat | Accion que lo sube | Efecto principal | Efecto secundario |
+|------|-------------------|-----------------|-------------------|
+| Hambre | Alimentar | +25 | energia +3, carino +3 |
+| Higiene | Limpiar | +20 | apariencia +2, carino +2 |
+| Diversion | Jugar | +22 | energia +4, carino +4 |
+| Carino | Carino | +20 | diversion +5, energia +5 |
+| Energia | Descansar | +30 | higiene +2, carino +2 |
+| Apariencia | Vestir | +18 | apariencia +1, carino +1 |
+
+**Archivo**: `src/models/MimeModel.ts` — constantes `ACTION_EFFECTS`, `ACTION_PRIMARY_STAT`, `ACTION_SECONDARY_STATS`
+
+## Personalidades y Decay
+
+Los stats decaen con el tiempo. Ritmo base: **2 puntos por hora** por stat. La personalidad modifica este ritmo con multiplicadores:
+
+### Aventurero
+"Necesita mucha accion. Se aburre rapido."
+| Stat | Multiplicador | Significado |
+|------|--------------|-------------|
+| Hambre | 1.3 | Decae rapido (come mucho) |
+| Higiene | 0.7 | Decae lento (no le importa) |
+| Diversion | **1.4** | Decae MUY rapido (el mas alto) |
+| Carino | 1.0 | Normal |
+| Energia | 1.3 | Decae rapido (hiperactive) |
+| Apariencia | 0.6 | Decae muy lento |
+
+### Tranquilo
+"Necesita afecto y rutina. Facil de mantener."
+| Stat | Multiplicador | Significado |
+|------|--------------|-------------|
+| Hambre | 0.7 | Decae lento |
+| Higiene | 1.3 | Decae rapido (limpio) |
+| Diversion | 0.7 | Decae lento |
+| Carino | **1.4** | Decae MUY rapido (necesita mucho amor) |
+| Energia | 0.7 | Decae lento |
+| Apariencia | 1.3 | Decae rapido (presumido) |
+
+### Picaro
+"Vanidoso y jugueton. El mas dificil de cuidar."
+| Stat | Multiplicador | Significado |
+|------|--------------|-------------|
+| Hambre | 0.8 | Decae lento |
+| Higiene | 1.0 | Normal |
+| Diversion | 1.3 | Decae rapido |
+| Carino | 1.2 | Decae rapido |
+| Energia | 0.8 | Decae lento |
+| Apariencia | **1.5** | Decae MUY rapido (el mas presumido) |
+
+**Nota**: El decay NO se aplica actualmente en tiempo real. La funcion `applyDecay()` existe en `MimeModel.ts` pero no hay cron job ni edge function que la ejecute. Es una feature pendiente.
+
+## Mood (Estado de Animo)
+
+Se calcula automaticamente a partir de los stats. Funcion: `deriveMood(stats)`.
+
+**Reglas especiales** (prioridad):
+- Energia < 20 -> `dormido` (esta agotado)
+- Hambre < 20 -> `hambriento` (no piensa en otra cosa)
+
+**Si no aplica ninguna especial**, se usa la media de los 6 stats:
+
+| Media >= | Mood | Visual |
+|----------|------|--------|
+| 80 | euforico | Boca super abierta, animacion rapida, blush maximo |
+| 55 | feliz | Boca ancha, lengua, animacion suave |
+| 30 | '' (normal) | Boca :3 estandar |
+| 0 | triste | Boca invertida (frown), blush minimo |
+
+## Economia: Puntos Mimes (PM)
+
+### Coste por accion
+| Accion | Coste PM |
+|--------|----------|
+| Carino | 3 |
+| Descansar | 3 |
+| Limpiar | 4 |
+| Alimentar | 5 |
+| Jugar | 6 |
+| Vestir | 8 |
+
+**Archivo**: `src/models/MimeModel.ts` — `ACTION_COSTS`
+
+### Como se gastan
+- Cada accion de cuidado cuesta PM
+- **Los PM se cobran al iniciar el mini-juego**, ganes o pierdas
+- Si ganas: los stats mejoran + los PM ya se gastaron
+- Si pierdes: solo pierdes los PM (sin mejora de stats)
+
+### Como se ganan (actual)
+- Valor inicial al registrarse: **100 PM**
+- **No hay mecanismo de generacion actualmente**. Solo el boton de reset (pruebas) restaura a 100
+
+### Como se ganaran (pendiente, segun GAME_DESIGN.md)
+- **Fuente principal**: Tus Mimes bien cuidados generan PM (los cuida otro)
+- **Fuente secundaria**: Tareas minimas (anuncios, etc.) — pocos PM
+- **El ciclo virtuoso**: Cuidas bien los de otros -> ellos tienen PM -> cuidan bien los tuyos -> tu tienes PM
+
+## Afinidad
+
+La afinidad (0-100%) mide la calidad del vinculo entre dueno y cuidador.
+
+### Calculo
+```
+nueva_afinidad = afinidad_actual * 0.9 + promedio_stats * 0.1
+```
+Sube lentamente. Si stats = 80 y afinidad = 50: nueva = 50*0.9 + 80*0.1 = 53. Cambia poco a poco, no de golpe.
+
+**Archivo**: `src/models/MimeModel.ts` — `updateAffinity(current, stats, weight=0.1)`
+
+### Consecuencias
+| Rango | Estado |
+|-------|--------|
+| 75-100% | Mime feliz, vinculo fuerte |
+| 50-74% | Bien pero podria mejorar |
+| 25-49% | Triste, vinculo debilitandose |
+| 10-24% | Muy triste, riesgo de abandono |
+| **< 10%** | **Mime abandona al cuidador y vuelve a su dueno** |
+
+**Nota**: La logica `shouldAbandon(afinidad)` existe en MimeModel.ts pero **no se ejecuta automaticamente**. Es una feature pendiente.
+
+## Flujo Social Completo
+
+```
+1. Angel se registra -> recibe 3 Mimes (aventurero, tranquilo, picaro) + 100 PM
+2. Laura se registra -> recibe 3 Mimes + 100 PM
+3. Angel comparte su Mime "Aventurero":
+   a. Dashboard -> Compartir -> genera codigo "A3F2B1"
+   b. Angel le dice el codigo a Laura
+4. Laura adopta:
+   a. Dashboard -> Adoptar -> introduce "A3F2B1"
+   b. claim_mime() valida: no es suyo, no tiene cuidador, no cuida ya otro de Angel
+   c. Laura ahora es cuidadora del Aventurero de Angel
+5. Laura cuida el Mime:
+   a. Dashboard -> "Mimes a mi cargo" -> "Cuidar"
+   b. CareScreen -> acciones (alimentar, jugar, etc.)
+   c. Cada accion: gasta PM, juega mini-juego, si gana mejora stats
+6. Angel ve su Mime cuidado:
+   a. Dashboard -> "Mis Mimes" -> ve stats actualizados, nombre del cuidador
+```
+
+## Reset de Pruebas
+
+Hay dos botones de reset (TEMPORALES, borrar antes de produccion):
+
+1. **DashboardView**: "Reset (pruebas)" -> resetea TODOS tus mimes (stats a 70, afinidad a 0, quita cuidadores) + PM a 100
+2. **CareScreen**: "Reset" en cabecera -> resetea ESE mime (stats a 70, afinidad a 0) + PM a 100
