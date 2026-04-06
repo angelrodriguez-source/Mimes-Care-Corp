@@ -24,10 +24,18 @@
 - Nivel de experiencia visible en el Mime
 - Sonidos/efectos al interactuar
 
+## Personalización
+
+- Permitir al dueño ponerle nombre personalizado a cada Mime (actualmente se asigna automáticamente)
+- El nombre aparecería en el dashboard, en CareScreen y cuando el cuidador lo adopta
+
 ## Social
 
 - Chat entre usuarios a través del Mime (el Mime como mensajero)
 - Notificaciones push cuando el Mime necesita cuidado
+- Vista de conexiones: ver con qué usuarios estás o has estado conectado (historial de cuidadores/dueños)
+- Puntos de afinidad por usuario: la suma de afinidades de todos los Mimes tuyos que ese usuario ha cuidado (cesiones terminadas). Refleja la calidad del vínculo acumulado entre dos personas
+- Rotación obligatoria: al terminar la semana de cesión, no puedes dar el mismo Mime a la misma persona dos veces seguidas. Para volver a ceder un Mime a un usuario, ese usuario tiene que haber cuidado tus 3 Mimes (fuerza variedad y compromiso)
 - Ranking de mejores cuidadores
 - Eventos especiales (Navidad, cumpleaños del Mime, etc.)
 - Poder visitar la habitación del Mime que cuidas
@@ -53,6 +61,21 @@
   - Día 6–7: 100%
 - **Decay por hora**: cada hora que pasa, los stats van bajando progresivamente
 
+## Mini-juegos por personalidad
+
+- Cada Mime tiene mini-juegos distintos según su personalidad
+- El Aventurero podría tener juegos más dinámicos y de acción
+- El Tranquilo podría tener juegos más pausados y de precisión
+- El Pícaro podría tener juegos más tramposos o con mecánicas sorpresa
+- Esto da variedad al gameplay y refuerza la identidad de cada personalidad
+
+## Algoritmo de afinidad
+
+- Crear un algoritmo más elaborado para calcular la afinidad del Mime cuidado
+- Actualmente es una media ponderada simple (90% afinidad actual + 10% media stats)
+- Podría tener en cuenta: frecuencia de cuidado, constancia (cuidar todos los días vs rachas), variedad de acciones (no solo alimentar), tiempo de respuesta cuando los stats bajan
+- La afinidad debería reflejar la calidad real del cuidado, no solo la cantidad
+
 ## Técnico
 
 - Modo offline con sincronización posterior
@@ -63,3 +86,4 @@
 ---
 
 *Última actualización: 2026-04-06*
+
