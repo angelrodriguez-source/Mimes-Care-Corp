@@ -50,9 +50,9 @@
 ## Features pendientes (de GAME_DESIGN.md y ARCHITECTURE.md)
 
 ### Prioritarias
-- [ ] **Decay de stats por tiempo**: La funcion existe (`applyDecay()`) pero no hay cron job. Necesita Edge Function o Supabase cron
+- [x] **Decay de stats por tiempo**: Implementado como lazy decay — se calcula al cargar el Mime en Dashboard y CareScreen. Usa `applyLazyDecay()` en mimeService que calcula horas desde `last_decay_at` y persiste el resultado (2026-04-06)
 - [ ] **Generacion de PM**: Actualmente no hay forma de ganar PM. Necesita: PM por tus mimes bien cuidados (fuente principal)
-- [ ] **Abandono automatico**: `shouldAbandon()` existe pero no se ejecuta. Si afinidad < 10%, el Mime deberia volver al dueno
+- [x] **Abandono automatico**: `checkAbandon()` en mimeService — se ejecuta al cargar el Dashboard. Si afinidad < 10%, limpia `cuidador_id` y el Mime vuelve al dueno (2026-04-06)
 
 ### Plataforma
 - [ ] **Configurar Capacitor** (iOS + Android)
@@ -82,7 +82,7 @@
 |------|--------|-------|
 | Fase 0: Scaffolding | **Completada** | Vue 3 + TS + Vite, MimeCharacter portado, Supabase creado |
 | Fase 1: Loop local | **Completada** | MimeModel, CareScreen, StatBar, mini-juegos, movimiento |
-| Fase 2: Backend + Auth | **Parcial** | Auth OK, schema OK, RLS OK. Falta: cron decay, PM generation |
+| Fase 2: Backend + Auth | **Parcial** | Auth OK, schema OK, RLS OK, lazy decay OK, abandono auto OK. Falta: PM generation |
 | Fase 3: Core Social | **Parcial** | Compartir OK (via codigo), vista mimes a cargo OK. Falta: QR, realtime, abandono auto |
 | Fase 4: Mensajeria | No iniciada | |
 | Fase 5: Lanzamiento | No iniciada | |

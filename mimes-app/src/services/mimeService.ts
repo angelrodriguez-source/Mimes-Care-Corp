@@ -5,8 +5,8 @@
  * Los componentes llaman a estas funciones en vez de usar supabase directamente.
  */
 import { supabase } from './supabase'
-import { createInitialStats } from '../models/MimeModel'
-import { statsToDbFields } from '../utils/helpers'
+import { createInitialStats, applyDecay, shouldAbandon } from '../models/MimeModel'
+import { statsToDbFields, toStats } from '../utils/helpers'
 import { INITIAL_PUNTOS } from '../constants/gameConstants'
 import type { MimeStats, Personality, ColorTheme, CareAction } from '../models/MimeModel'
 
@@ -27,6 +27,7 @@ export interface MimeFromDB {
   dueno_id: string
   cuidador_id: string | null
   share_code: string | null
+  last_decay_at?: string
   created_at?: string
 }
 
@@ -186,6 +187,49 @@ export async function loadAllMimes() {
     .order('created_at')
 
   return { mimes: (data ?? []) as MimeFromDB[], error }
+}
+
+// --- LAZY DECAY: calcula y aplica el decay acumulado al cargar un Mime ---
+
+export async function applyLazyDecay(mime: MimeFromDB): Promise<MimeFromDB> {
+  const now = new Date()
+  const lastDecay = new Date(mime.last_decay_at ?? mime.created_at ?? now)
+  const elapsedMs = now.getTime() - lastDecay.getTime()
+  const elapsedHours = elapsedMs / (1000 * 60 * 60)
+
+  // Solo aplicar si ha pasado al menos 1 minuto
+  if (elapsedHours < 1 / 60) return mime
+
+  const oldStats = toStats(mime)
+  const newStats = applyDecay(oldStats, mime.personalidad, elapsedHours)
+
+  // Solo persistir si los stats cambiaron
+  const changed = Object.keys(newStats).some(
+    k => newStats[k as keyof MimeStats] !== oldStats[k as keyof MimeStats]
+  )
+
+  if (!changed) return mime
+
+  await supabase
+    .from('mimes')
+    .update({ ...statsToDbFields(newStats), last_decay_at: now.toISOString() })
+    .eq('id', mime.id)
+
+  return { ...mime, ...statsToDbFields(newStats), last_decay_at: now.toISOString() }
+}
+
+// --- ABANDONO AUTOMATICO: si afinidad < 10%, el Mime vuelve al dueño ---
+
+export async function checkAbandon(mime: MimeFromDB): Promise<{ abandoned: boolean }> {
+  if (!mime.cuidador_id) return { abandoned: false }
+  if (!shouldAbandon(mime.afinidad)) return { abandoned: false }
+
+  await supabase
+    .from('mimes')
+    .update({ cuidador_id: null, share_code: null, afinidad: 0 })
+    .eq('id', mime.id)
+
+  return { abandoned: true }
 }
 
 // --- PERSISTIR RESULTADO DE MINI-JUEGO ---

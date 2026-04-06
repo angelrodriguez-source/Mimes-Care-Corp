@@ -19,6 +19,8 @@ import {
   claimMime,
   releaseMime,
   resetAllMimes,
+  applyLazyDecay,
+  checkAbandon,
   type MimeWithNames,
 } from '../services/mimeService'
 
@@ -39,8 +41,25 @@ async function loadData() {
   if (!userId) { loading.value = false; return }
 
   const data = await loadDashboardData(userId)
-  myMimes.value = data.myMimes
-  caringMimes.value = data.caringMimes
+
+  // Aplicar lazy decay a todos los Mimes y checkear abandono
+  const decayedOwn = await Promise.all(data.myMimes.map(m => applyLazyDecay(m)))
+  const decayedCaring = await Promise.all(data.caringMimes.map(m => applyLazyDecay(m)))
+
+  // Checkear abandono en Mimes propios que tienen cuidador
+  for (const mime of decayedOwn) {
+    if (mime.cuidador_id) {
+      const { abandoned } = await checkAbandon(mime)
+      if (abandoned) {
+        mime.cuidador_id = null
+        mime.cuidador_name = undefined
+        mime.afinidad = 0
+      }
+    }
+  }
+
+  myMimes.value = decayedOwn
+  caringMimes.value = decayedCaring
   loading.value = false
 }
 

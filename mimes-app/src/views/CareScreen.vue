@@ -18,6 +18,7 @@ import {
   resetMime,
   persistCareActionResult,
   updateUserPoints,
+  applyLazyDecay,
 } from '../services/mimeService'
 import { toStats } from '../utils/helpers'
 import {
@@ -95,11 +96,14 @@ async function loadMime() {
     return
   }
 
-  mimeName.value = mime.nombre
-  personality.value = mime.personalidad
-  colorTheme.value = mime.color_theme
-  afinidad.value = mime.afinidad
-  stats.value = toStats(mime)
+  // Aplicar lazy decay antes de mostrar
+  const decayed = await applyLazyDecay(mime)
+
+  mimeName.value = decayed.nombre
+  personality.value = decayed.personalidad
+  colorTheme.value = decayed.color_theme
+  afinidad.value = decayed.afinidad
+  stats.value = toStats(decayed)
   puntosMimes.value = userStore.profile?.puntos_mimes ?? 0
 
   loading.value = false

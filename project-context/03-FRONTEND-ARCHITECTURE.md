@@ -115,6 +115,8 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `claimMime(code)` | RPC para adoptar |
 | `releaseMime(mimeId)` | RPC para soltar |
 | `loadAllMimes()` | Carga todos los mimes (para HomeView) |
+| `applyLazyDecay(mime)` | Calcula decay acumulado desde last_decay_at y persiste en Supabase |
+| `checkAbandon(mime)` | Si afinidad < 10% y tiene cuidador, lo suelta (cuidador_id = null) |
 | `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM) |
 
 **Tipos exportados**: `MimeFromDB`, `MimeWithNames` — interfaces que mapean las columnas de la tabla.

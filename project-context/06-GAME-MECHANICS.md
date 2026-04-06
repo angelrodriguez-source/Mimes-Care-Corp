@@ -58,7 +58,7 @@ Los stats decaen con el tiempo. Ritmo base: **2 puntos por hora** por stat. La p
 | Energia | 0.8 | Decae lento |
 | Apariencia | **1.5** | Decae MUY rapido (el mas presumido) |
 
-**Nota**: El decay NO se aplica actualmente en tiempo real. La funcion `applyDecay()` existe en `MimeModel.ts` pero no hay cron job ni edge function que la ejecute. Es una feature pendiente.
+**Implementacion**: El decay se aplica de forma **lazy** — al cargar un Mime (Dashboard o CareScreen), se calcula cuantas horas han pasado desde `last_decay_at`, se aplica `applyDecay()` y se persiste el resultado en Supabase. No hay cron job; el calculo ocurre on-demand.
 
 ## Mood (Estado de Animo)
 
@@ -127,7 +127,7 @@ Sube lentamente. Si stats = 80 y afinidad = 50: nueva = 50*0.9 + 80*0.1 = 53. Ca
 | 10-24% | Muy triste, riesgo de abandono |
 | **< 10%** | **Mime abandona al cuidador y vuelve a su dueno** |
 
-**Nota**: La logica `shouldAbandon(afinidad)` existe en MimeModel.ts pero **no se ejecuta automaticamente**. Es una feature pendiente.
+**Implementacion**: `checkAbandon()` en mimeService se ejecuta al cargar el Dashboard. Si afinidad < 10% y hay cuidador, limpia `cuidador_id`, `share_code` y resetea afinidad a 0.
 
 ## Flujo Social Completo
 
