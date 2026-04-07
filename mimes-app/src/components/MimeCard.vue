@@ -27,6 +27,7 @@ defineEmits<{
   share: []
   care: []
   release: []
+  rename: []
 }>()
 
 const mood = computed(() => deriveMood(props.stats))
@@ -49,7 +50,10 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
 
     <!-- Info -->
     <div class="card-info">
-      <h3 class="card-name">{{ nombre }}</h3>
+      <div class="card-name-row">
+        <h3 class="card-name">{{ nombre }}</h3>
+        <button v-if="mode === 'own'" class="rename-btn" @click.stop="$emit('rename')">&#9998;</button>
+      </div>
       <span class="card-personality">{{ PERSONALITY_LABELS[personalidad] }}</span>
 
       <!-- Health bar -->
@@ -132,6 +136,12 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
   min-width: 0;
 }
 
+.card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .card-name {
   font-size: 16px;
   font-weight: 700;
@@ -139,6 +149,17 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
   margin: 0;
   line-height: 1.2;
 }
+
+.rename-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  color: #999;
+  line-height: 1;
+}
+.rename-btn:active { color: #5c6bc0; }
 
 .card-personality {
   font-size: 11px;

@@ -232,6 +232,15 @@ export async function checkAbandon(mime: MimeFromDB): Promise<{ abandoned: boole
   return { abandoned: true }
 }
 
+// --- RENOMBRAR MIME ---
+
+export async function renameMime(mimeId: string, nombre: string) {
+  return supabase
+    .from('mimes')
+    .update({ nombre })
+    .eq('id', mimeId)
+}
+
 // --- PERSISTIR RESULTADO DE MINI-JUEGO ---
 
 export async function persistCareActionResult(

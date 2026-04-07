@@ -19,6 +19,7 @@ import {
   claimMime,
   releaseMime,
   resetAllMimes,
+  renameMime,
   applyLazyDecay,
   checkAbandon,
   type MimeWithNames,
@@ -34,6 +35,8 @@ const claimCode = ref('')
 const claimLoading = ref(false)
 const claimMessage = ref('')
 const shareModal = ref<{ mimeId: string; code: string; nombre: string } | null>(null)
+const renameModal = ref<{ mimeId: string; nombre: string } | null>(null)
+const renameInput = ref('')
 
 async function loadData() {
   loading.value = true
@@ -118,6 +121,19 @@ async function handleReset() {
   setTimeout(() => (claimMessage.value = ''), 2000)
 }
 
+function openRename(mimeId: string, nombre: string) {
+  renameModal.value = { mimeId, nombre }
+  renameInput.value = nombre
+}
+
+async function handleRename() {
+  if (!renameModal.value || !renameInput.value.trim()) return
+  const newName = renameInput.value.trim()
+  await renameMime(renameModal.value.mimeId, newName)
+  renameModal.value = null
+  await loadData()
+}
+
 onMounted(loadData)
 </script>
 
@@ -160,6 +176,7 @@ onMounted(loadData)
             :cuidador-name="mime.cuidador_name || null"
             mode="own"
             @share="handleShare(mime.id, mime.nombre)"
+            @rename="openRename(mime.id, mime.nombre)"
           />
         </div>
       </section>
@@ -231,6 +248,26 @@ onMounted(loadData)
         </div>
         <p class="modal-hint">El codigo es de un solo uso. Cuando alguien lo introduzca, se convertira en el cuidador de tu Mime.</p>
         <button class="modal-close" @click="shareModal = null">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- RENAME MODAL -->
+    <div v-if="renameModal" class="modal-overlay" @click.self="renameModal = null">
+      <div class="modal-card">
+        <h3>Renombrar Mime</h3>
+        <p class="modal-desc">Elige un nuevo nombre para tu Mime:</p>
+        <input
+          v-model="renameInput"
+          class="rename-input"
+          type="text"
+          maxlength="20"
+          placeholder="Nombre..."
+          @keyup.enter="handleRename"
+        />
+        <div class="rename-actions">
+          <button class="modal-close" @click="renameModal = null">Cancelar</button>
+          <button class="claim-btn" :disabled="!renameInput.trim()" @click="handleRename">Guardar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -522,5 +559,25 @@ onMounted(loadData)
 
 .modal-close:active {
   background: #3f51b5;
+}
+
+.rename-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: 'Baloo 2', cursive;
+  text-align: center;
+  outline: none;
+  margin: 12px 0;
+  box-sizing: border-box;
+}
+.rename-input:focus { border-color: #5c6bc0; }
+
+.rename-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 </style>
