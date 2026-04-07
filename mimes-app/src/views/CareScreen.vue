@@ -58,6 +58,7 @@ const puntosMimes = ref(0)
 const afinidad = ref(0)
 const loading = ref(true)
 const error = ref('')
+const mimeScale = ref(0.4) // Crecimiento: 0.4 (día 1) → 1.0 (día 6-7)
 
 // --- COMPUTED ---
 const mood = computed<Mood>(() => deriveMood(stats.value))
@@ -221,6 +222,9 @@ onMounted(loadMime)
         <button class="back-btn" @click="goBack">&#8592;</button>
         <h1 class="mime-name">{{ mimeName }}</h1>
         <button class="reset-care-btn" @click="handleReset">Reset</button>
+        <button class="growth-debug-btn" @click="mimeScale = Math.max(0.4, +(mimeScale - 0.1).toFixed(1))">-</button>
+        <span class="growth-label">{{ Math.round(mimeScale * 100) }}%</span>
+        <button class="growth-debug-btn" @click="mimeScale = Math.min(1.0, +(mimeScale + 0.1).toFixed(1))">+</button>
         <div class="puntos">
           <span class="puntos-icon">&#9829;</span>
           <span class="puntos-value">{{ puntosMimes }}</span>
@@ -246,6 +250,7 @@ onMounted(loadMime)
             :personality="personality"
             :color-theme="colorTheme"
             :mood="mood"
+            :scale="mimeScale"
           />
         </div>
 
@@ -442,6 +447,26 @@ onMounted(loadMime)
 }
 
 .reset-care-btn:active { background: #ffcdd2; }
+
+.growth-debug-btn {
+  padding: 2px 8px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px dashed #90caf9;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+}
+.growth-debug-btn:active { background: #bbdefb; }
+.growth-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1565c0;
+  margin: 0 2px;
+  font-family: 'Baloo 2', cursive;
+}
 
 .puntos-icon { color: #ff7043; font-size: 14px; }
 .puntos-value { font-size: 14px; font-weight: 700; color: #e65100; }
