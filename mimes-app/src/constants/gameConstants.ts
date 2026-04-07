@@ -100,7 +100,7 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
       { id: 'mochila', emoji: '🎒', label: 'Mochila', x: 60, y: 30, size: 38 },
       { id: 'cama', emoji: '🛏️', label: 'Cama', x: 82, y: 32, size: 140, action: 'descansar' },
       // Pared
-      { id: 'mapa', emoji: '🗺️', label: 'Mapa', x: 30, y: 88, size: 44 },
+      { id: 'mapa', emoji: '🗺️', label: 'Mapa', x: 30, y: 40, size: 44 },
     ],
   },
   tranquilo: {
@@ -114,7 +114,7 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
       { id: 'planta', emoji: '🪴', label: 'Planta', x: 60, y: 30, size: 42 },
       { id: 'cama', emoji: '🛋️', label: 'Sofa', x: 82, y: 32, size: 140, action: 'descansar' },
       // Pared
-      { id: 'cuadro', emoji: '🖼️', label: 'Cuadro', x: 50, y: 88, size: 46 },
+      { id: 'cuadro', emoji: '🖼️', label: 'Cuadro', x: 50, y: 40, size: 46 },
     ],
   },
   picaro: {
@@ -128,7 +128,7 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
       { id: 'cofre', emoji: '🎁', label: 'Cofre', x: 60, y: 30, size: 42 },
       { id: 'cama', emoji: '🛏️', label: 'Cama', x: 82, y: 32, size: 140, action: 'descansar' },
       // Pared
-      { id: 'espejo', emoji: '🪞', label: 'Espejo', x: 30, y: 88, size: 46, action: 'vestir' },
+      { id: 'espejo', emoji: '🪞', label: 'Espejo', x: 30, y: 40, size: 46, action: 'vestir' },
     ],
   },
 }
