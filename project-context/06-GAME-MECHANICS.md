@@ -97,14 +97,11 @@ Se calcula automaticamente a partir de los stats. Funcion: `deriveMood(stats)`.
 - Si ganas: los stats mejoran + los PM ya se gastaron
 - Si pierdes: solo pierdes los PM (sin mejora de stats)
 
-### Como se ganan (actual)
+### Como se ganan
 - Valor inicial al registrarse: **100 PM**
-- **No hay mecanismo de generacion actualmente**. Solo el boton de reset (pruebas) restaura a 100
-
-### Como se ganaran (pendiente, segun GAME_DESIGN.md)
-- **Fuente principal**: Tus Mimes bien cuidados generan PM (los cuida otro)
-- **Fuente secundaria**: Tareas minimas (anuncios, etc.) — pocos PM
-- **El ciclo virtuoso**: Cuidas bien los de otros -> ellos tienen PM -> cuidan bien los tuyos -> tu tienes PM
+- **Recompensa por cesion**: Al terminar una cesion de 7 dias, el cuidador recibe **afinidad × 100 PM** (ej: afinidad 75% = 75 PM)
+- **Fuente secundaria** (pendiente): Tareas minimas (anuncios, etc.) — pocos PM
+- **El ciclo virtuoso**: Cuidas bien los de otros -> ganas PM al terminar cesion -> tienes PM para cuidar otros
 
 ## Afinidad
 
@@ -148,6 +145,73 @@ Sube lentamente. Si stats = 80 y afinidad = 50: nueva = 50*0.9 + 80*0.1 = 53. Ca
 6. Angel ve su Mime cuidado:
    a. Dashboard -> "Mis Mimes" -> ve stats actualizados, nombre del cuidador
 ```
+
+## Sistema de Cesion (7 dias)
+
+Mecanica central: los Mimes se ceden por **7 dias**. Al terminar, el cuidador recibe PM proporcionales a la afinidad conseguida.
+
+### Flujo
+1. Dueno comparte Mime con codigo -> cuidador lo adopta con `claim_mime`
+2. `cesion_start = NOW()` se guarda en la DB
+3. Durante 7 dias el cuidador cuida el Mime
+4. Al cargar el Dashboard, `checkCesionExpiry()` comprueba si pasaron 7 dias
+5. Si expirado: Mime vuelve al dueno + cuidador recibe `afinidad/100 * PM_PER_AFFINITY` PM
+
+### Recompensa
+- Formula: `Math.round((afinidad / 100) * 100)` PM
+- Ejemplo: afinidad 75% = 75 PM, afinidad 30% = 30 PM
+- Constantes: `CESION_DURATION_DAYS = 7`, `PM_PER_AFFINITY = 100`
+
+### Crecimiento visual
+El Mime crece durante la cesion:
+- Dia 1: 40% de tamano
+- Dia 2: 50%
+- Dia 3: 60%
+- Dia 4: 70%
+- Dia 5: 80%
+- Dia 6-7: 100%
+- Formula: `scale = min(1.0, 0.3 + dia * 0.1)`
+
+**Implementacion**: `getCesionDay()` en mimeService calcula el dia, CareScreen usa el resultado para `mimeScale`. Botones debug +/- en cabecera para preview.
+
+### UI
+- MimeCard muestra dias restantes con icono de reloj
+- Dashboard notifica al cuidador cuando su cesion termina y cuantos PM gano
+
+## Habitaciones Tematicas
+
+Cada personalidad tiene su propia habitacion con colores y objetos distintos.
+
+### Configuracion
+Definida en `ROOM_THEMES` en `gameConstants.ts`. Cada tema incluye:
+- Gradiente de pared (3 colores)
+- Gradiente de suelo (3 colores) + borde
+- Array de objetos con posicion (x%, y%), tamano, emoji y accion opcional
+
+### Temas
+| Personalidad | Pared | Objetos suelo | Objetos pared |
+|-------------|-------|---------------|---------------|
+| Aventurero | Verde | Comida, Pelota, Mochila, Cama (grande) | Mapa |
+| Tranquilo | Lila | Te, Libros, Planta, Sofa (grande) | Cuadro |
+| Picaro | Naranja | Pizza, Dados, Cofre, Cama (grande) | Espejo (con accion vestir) |
+
+### Ciclo dia/noche
+Composable `useDayNight` detecta la hora real del usuario:
+- Amanecer (6-10h): tinte naranja suave
+- Dia (10-18h): sin overlay
+- Atardecer (18-21h): tinte rojizo
+- Noche (21-6h): overlay azul oscuro + estrellas
+
+### Objetos interactivos
+Los objetos con `action` disparan la accion de cuidado al tocarlos (plato -> alimentar, pelota -> jugar, cama -> descansar, espejo -> vestir).
+
+## Renombrar Mimes
+
+El dueno puede renombrar sus Mimes desde el dashboard.
+
+- Boton de lapiz junto al nombre en MimeCard (solo mode=own)
+- Modal con input (max 20 chars) + Guardar/Cancelar
+- `renameMime()` en mimeService actualiza el campo `nombre` en Supabase
 
 ## Reset de Pruebas
 

@@ -117,9 +117,13 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `loadAllMimes()` | Carga todos los mimes (para HomeView) |
 | `applyLazyDecay(mime)` | Calcula decay acumulado desde last_decay_at y persiste en Supabase |
 | `checkAbandon(mime)` | Si afinidad < 10% y tiene cuidador, lo suelta (cuidador_id = null) |
+| `checkCesionExpiry(mime)` | Si pasaron 7 dias desde cesion_start: devuelve Mime al dueno + da PM al cuidador |
+| `getCesionDaysLeft(cesionStart)` | Dias restantes de cesion (null si no hay cesion activa) |
+| `getCesionDay(cesionStart)` | Dia actual de cesion (1-7), usado para calcular escala de crecimiento |
+| `renameMime(mimeId, nombre)` | Actualiza nombre del Mime en Supabase |
 | `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM) |
 
-**Tipos exportados**: `MimeFromDB`, `MimeWithNames` — interfaces que mapean las columnas de la tabla.
+**Tipos exportados**: `MimeFromDB` (incluye `cesion_start`), `MimeWithNames`, `CesionResult` — interfaces que mapean las columnas de la tabla.
 
 ## Composables (`src/composables/`)
 
@@ -147,6 +151,18 @@ Animacion de explosion de emojis (corazones, besos).
 
 Crea elementos DOM dinamicos con animacion CSS (`heart-fly`). Se auto-eliminan tras 1200ms.
 
+### `useDayNight.ts`
+Ciclo dia/noche segun hora real del usuario. Actualiza cada minuto.
+
+| Retorna | Tipo | Descripcion |
+|---------|------|-------------|
+| `phase` | computed('dawn'\|'day'\|'dusk'\|'night') | Fase actual del dia |
+| `hour` | ref(number) | Hora actual (0-23) |
+| `nightOverlay` | computed(number) | Opacidad del overlay nocturno (0 = dia, 0.35 = noche) |
+| `skyTint` | computed(string) | Color rgba para mezclar con la pared |
+
+Fases: dawn (6-10h), day (10-18h), dusk (18-21h), night (21-6h).
+
 ## Constantes (`src/constants/gameConstants.ts`)
 
 Centraliza etiquetas, colores y configuraciones usadas en multiples componentes:
@@ -161,8 +177,12 @@ Centraliza etiquetas, colores y configuraciones usadas en multiples componentes:
 | `STAT_CONFIG` | Array de { key, label, icon } para barras de stats |
 | `ACTION_CONFIG` | Array de { action, label, icon } para botones de accion |
 | `INITIAL_PUNTOS = 100` | PM iniciales / de reset |
+| `CESION_DURATION_DAYS = 7` | Duracion de una cesion en dias |
+| `PM_PER_AFFINITY = 100` | Multiplicador: PM = afinidad * este valor |
 | `FEEDBACK_DURATION_MS = 800` | Duracion del emoji flotante |
 | `REST_PAUSE_DURATION_MS = 5000` | Pausa de caminar al descansar |
+| `ROOM_THEMES` | Record<Personality, RoomTheme> — tema de habitacion por personalidad (colores pared/suelo, objetos) |
+| `RoomObject` / `RoomTheme` | Interfaces para configuracion de habitaciones |
 
 ## Utils (`src/utils/helpers.ts`)
 

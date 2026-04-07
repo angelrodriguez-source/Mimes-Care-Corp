@@ -9,9 +9,9 @@ Este directorio contiene la documentacion completa del estado actual del proyect
 | [01-OVERVIEW.md](01-OVERVIEW.md) | Vision, stack, URLs, estructura de carpetas, ramas git, configuracion |
 | [02-DATABASE.md](02-DATABASE.md) | Tablas, columnas, RLS, funciones RPC, trigger de registro, migraciones SQL |
 | [03-FRONTEND-ARCHITECTURE.md](03-FRONTEND-ARCHITECTURE.md) | Entry point, routing, Pinia store, MimeModel (tipos/constantes/funciones), servicios, composables, constantes, utils, estilos |
-| [04-COMPONENTS.md](04-COMPONENTS.md) | Jerarquia de componentes, 4 vistas (Login, Home, Dashboard, CareScreen), 4 componentes (MimeCharacter, MimeCard, StatBar, ActionButton) |
+| [04-COMPONENTS.md](04-COMPONENTS.md) | Jerarquia de componentes, 4 vistas (Login, Home, Dashboard, CareScreen), 6 componentes (MimeCharacter, MimeCard, StatBar, ActionButton, MimeRoom, RoomObject) |
 | [05-MINIGAMES.md](05-MINIGAMES.md) | Arquitectura shell+slot, 6 juegos (Feed, Clean, Play, Love, Rest, Dress), sistema de dificultad, flujo completo |
-| [06-GAME-MECHANICS.md](06-GAME-MECHANICS.md) | 6 stats, personalidades, decay, mood, economia PM, afinidad, flujo social |
+| [06-GAME-MECHANICS.md](06-GAME-MECHANICS.md) | 6 stats, personalidades, decay, mood, economia PM, afinidad, flujo social, cesion 7 dias, habitaciones, renombrar |
 | [07-DEPLOYMENT.md](07-DEPLOYMENT.md) | GitHub Pages, build, ramas, configuracion Supabase, problemas historicos |
 | [08-PENDING-WORK.md](08-PENDING-WORK.md) | Bugs conocidos, codigo muerto, mejoras tecnicas, features pendientes, progreso del roadmap |
 
@@ -29,4 +29,4 @@ Este directorio contiene la documentacion completa del estado actual del proyect
 
 ## Ultima actualizacion
 
-2026-04-06
+2026-04-07

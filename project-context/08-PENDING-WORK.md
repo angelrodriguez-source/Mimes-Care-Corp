@@ -29,6 +29,7 @@
 | CSS `.mood-selector`, `.mood-btn` | `src/views/HomeView.vue` lineas 221-249 | Eliminar (residuo de version anterior) |
 | Botones de Reset | DashboardView + CareScreen | **Borrar antes de produccion** |
 | Rama `claude/refactor-code-modularity-Id0rq` | Git | Ya mergeada, eliminar |
+| Botones debug crecimiento (+/-) | CareScreen cabecera | **Borrar antes de produccion** |
 
 ## Mejoras tecnicas pendientes
 
@@ -51,7 +52,7 @@
 
 ### Prioritarias
 - [x] **Decay de stats por tiempo**: Implementado como lazy decay — se calcula al cargar el Mime en Dashboard y CareScreen. Usa `applyLazyDecay()` en mimeService que calcula horas desde `last_decay_at` y persiste el resultado (2026-04-06)
-- [ ] **Generacion de PM**: Actualmente no hay forma de ganar PM. Necesita: PM por tus mimes bien cuidados (fuente principal)
+- [x] **Generacion de PM**: Implementado via sistema de cesion — al terminar 7 dias, cuidador recibe afinidad * 100 PM (2026-04-07)
 - [x] **Abandono automatico**: `checkAbandon()` en mimeService — se ejecuta al cargar el Dashboard. Si afinidad < 10%, limpia `cuidador_id` y el Mime vuelve al dueno (2026-04-06)
 
 ### Plataforma
@@ -65,8 +66,11 @@
 - [ ] **Supabase Realtime** — en vista "Mis Mimes" para ver cambios en vivo
 
 ### Visual
-- [ ] **Objetos interactivos** en la habitacion (cama, plato, juguete)
-- [ ] **Dia/noche** segun hora real
+- [x] **Objetos interactivos** en la habitacion — MimeRoom + RoomObject con objetos por personalidad (2026-04-07)
+- [x] **Dia/noche** segun hora real — useDayNight composable con 4 fases (2026-04-07)
+- [x] **Habitaciones tematicas** por personalidad — aventurero=verde, tranquilo=lila, picaro=naranja (2026-04-07)
+- [x] **Crecimiento visual** del Mime segun dia de cesion — 40% dia 1 a 100% dia 6-7 (2026-04-07)
+- [x] **Renombrar Mimes** — boton editar en MimeCard, modal en Dashboard (2026-04-07)
 - [ ] **Decoracion personalizable**
 - [ ] **Accesorios/ropa** para vestir al Mime
 - [ ] **Sonidos/efectos** al interactuar
@@ -82,7 +86,7 @@
 |------|--------|-------|
 | Fase 0: Scaffolding | **Completada** | Vue 3 + TS + Vite, MimeCharacter portado, Supabase creado |
 | Fase 1: Loop local | **Completada** | MimeModel, CareScreen, StatBar, mini-juegos, movimiento |
-| Fase 2: Backend + Auth | **Parcial** | Auth OK, schema OK, RLS OK, lazy decay OK, abandono auto OK. Falta: PM generation |
-| Fase 3: Core Social | **Parcial** | Compartir OK (via codigo), vista mimes a cargo OK. Falta: QR, realtime, abandono auto |
+| Fase 2: Backend + Auth | **Completada** | Auth OK, schema OK, RLS OK, lazy decay OK, abandono auto OK, PM via cesion OK |
+| Fase 3: Core Social | **Parcial** | Compartir OK, vista mimes a cargo OK, cesion 7 dias OK. Falta: QR, realtime |
 | Fase 4: Mensajeria | No iniciada | |
 | Fase 5: Lanzamiento | No iniciada | |

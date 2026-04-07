@@ -10,6 +10,8 @@ App.vue
 │   └── MimeCard.vue (x N)    — Tarjeta de Mime en dashboard
 │       └── MimeCharacter.vue  — Avatar del Mime (escala 0.45)
 └── CareScreen.vue             — Pantalla de cuidado
+    ├── MimeRoom.vue           — Habitacion tematica (pared, suelo, objetos, dia/noche)
+    │   └── RoomObject.vue (x N) — Objeto interactivo/decorativo
     ├── MimeCharacter.vue      — Mime en la habitacion
     ├── StatBar.vue (x6)       — Barras de stats
     └── MiniGameShell.vue      — Overlay de mini-juego
@@ -56,11 +58,15 @@ Hub principal despues de login. Usa `mimeService.loadDashboardData()` para carga
 
 **Modal de compartir**: Muestra codigo generado con boton "Copiar". Se cierra pulsando fuera o "Cerrar".
 
+**Modal de renombrar**: Input con nombre actual, max 20 chars, Guardar/Cancelar. Solo para Mimes propios.
+
 **Funciones principales**:
 - `handleShare(mimeId, nombre)` -> `generateShareCode()` RPC -> muestra modal
 - `handleClaim()` -> `claimMime()` RPC -> recarga datos
 - `handleRelease(mimeId)` -> `releaseMime()` RPC -> recarga datos
 - `handleReset()` -> `resetAllMimes()` -> recarga todo
+- `openRename(mimeId, nombre)` -> abre modal -> `renameMime()` -> recarga datos
+- **Cesion check**: al cargar, `checkCesionExpiry()` se ejecuta para Mimes propios y a cargo. Si expirada, devuelve Mime + da PM al cuidador
 
 ### CareScreen.vue
 **Ruta**: `/care/:id` | **Archivo**: `src/views/CareScreen.vue`
@@ -68,8 +74,9 @@ Hub principal despues de login. Usa `mimeService.loadDashboardData()` para carga
 Pantalla principal de gameplay. Carga un Mime por su UUID desde la URL.
 
 **Estructura visual**:
-- **Habitacion**: Pared con gradiente (#e8eaf6 -> #b39ddb) + suelo marron (#795548). Mime se mueve horizontalmente (20%-80%)
-- **Cabecera** (z-index 30): Boton back, nombre del Mime, boton Reset, badge de PM
+- **Habitacion**: Componente `MimeRoom.vue` con tema por personalidad (aventurero=verde, tranquilo=lila, picaro=naranja). Incluye objetos interactivos y ciclo dia/noche. Mime se mueve horizontalmente (20%-80%)
+- **Crecimiento**: `mimeScale` se calcula segun dia de cesion (dia 1=40%, dia 7=100%). Botones debug +/- 10% para preview
+- **Cabecera** (z-index 30): Boton back, nombre del Mime, boton Reset, botones debug crecimiento, badge de PM
 - **Menu acciones** (izquierda, z-index 20): 6 FABs circulares con icono + coste. Deshabilitados si no hay PM suficiente
 - **Resumen de estado** (derecha, z-index 25): Afinidad, mood, media de stats. Click abre drawer
 - **Stats drawer** (derecha, z-index 40): Panel deslizante con 6 StatBar
@@ -152,11 +159,11 @@ Componente visual principal. Renderiza el Mime completo con CSS puro (sin imagen
 
 Tarjeta compacta para el dashboard.
 
-**Props**: id, nombre, personalidad, colorTheme, stats, afinidad, cuidadorName?, duenoName?, mode ('own' | 'caring')
+**Props**: id, nombre, personalidad, colorTheme, stats, afinidad, cuidadorName?, duenoName?, daysLeft?, mode ('own' | 'caring')
 
-**Emits**: share, care, release
+**Emits**: share, care, release, rename
 
-**Muestra**: Mini MimeCharacter (escala 0.45), nombre, personalidad, barra de salud, mood, info cuidador/dueno, afinidad, botones de accion segun modo.
+**Muestra**: Mini MimeCharacter (escala 0.45), nombre con boton de editar (lapiz, solo mode=own), personalidad, barra de salud, mood, info cuidador/dueno, afinidad, dias restantes de cesion (icono reloj), botones de accion segun modo.
 
 **Borde izquierdo coloreado** segun colorTheme (celeste=#1565c0, lila=#6a1b9a, melocoton=#e65100).
 
@@ -175,3 +182,34 @@ Barra visual de una estadistica.
 **NOTA**: Este componente EXISTE pero NO SE USA actualmente. CareScreen usa botones FAB directos en su template. Candidato a eliminar o integrar.
 
 **Props**: label, icon, cost, disabled. **Emits**: action.
+
+### MimeRoom.vue
+**Archivo**: `src/components/MimeRoom.vue`
+
+Habitacion tematica modular. Renderiza pared, suelo, objetos y overlay dia/noche segun personalidad.
+
+**Props**: personality (Personality)
+
+**Emits**: objectInteract (action: CareAction) — cuando se toca un objeto interactivo
+
+**Usa**: `useDayNight` composable, `ROOM_THEMES` config, `RoomObject.vue` para cada objeto.
+
+**Slot default**: para el Mime y elementos como feedback emoji.
+
+**Temas por personalidad**:
+- Aventurero: pared verde (#e8f5e9 -> #66bb6a), objetos: comida, pelota, mochila, cama, mapa
+- Tranquilo: pared lila (#ede7f6 -> #b39ddb), objetos: te, libros, planta, sofa, cuadro
+- Picaro: pared naranja (#fff3e0 -> #ffcc80), objetos: pizza, dados, cofre, cama, espejo
+
+**Ciclo dia/noche**: overlay con tinte + oscuridad + indicador (estrellas/sol/atardecer).
+
+### RoomObject.vue
+**Archivo**: `src/components/RoomObject.vue`
+
+Objeto posicionado absolutamente dentro de MimeRoom.
+
+**Props**: emoji, label, x (% izquierda), y (% desde abajo), size (px), action? (CareAction)
+
+**Emits**: interact (action) — solo si tiene action asociada
+
+Si tiene action, es clickable y muestra tooltip con label al hover/tap.

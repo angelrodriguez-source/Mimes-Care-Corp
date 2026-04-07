@@ -40,6 +40,7 @@ Cada Mime con su dueno, cuidador, personalidad, color y 6 stats.
 | `afinidad` | REAL | 0 | 0-100, vinculo dueno-cuidador |
 | `share_code` | TEXT UNIQUE | null | Codigo de 6 chars para compartir (temporal) |
 | `last_decay_at` | TIMESTAMPTZ | now() | Ultima vez que se aplico decay |
+| `cesion_start` | TIMESTAMPTZ | null | Inicio de la cesion (cuando un cuidador adopta). null = sin cesion activa |
 | `created_at` | TIMESTAMPTZ | now() | |
 
 ### `connections`
@@ -117,12 +118,12 @@ Estas funciones se ejecutan con permisos elevados para operaciones cross-user qu
 ### `claim_mime(p_code TEXT) -> JSON`
 Adoptar un Mime usando un codigo de compartir.
 
-**Archivo**: `supabase/migration_v2_share.sql` (actualizado en v3)
+**Archivo**: `supabase/migration_v2_share.sql` (actualizado en v3 y v4)
 
 **Logica**:
 1. Busca mime por `share_code = p_code`
 2. Valida: no es tuyo, no tiene cuidador, no cuidas ya otro mime del mismo dueno
-3. Asigna `cuidador_id = auth.uid()`, limpia `share_code`
+3. Asigna `cuidador_id = auth.uid()`, `cesion_start = NOW()`, limpia `share_code`
 4. Retorna `{ success: true, mime_name }` o `{ error: "mensaje" }`
 
 **Restriccion clave**: Solo puedes cuidar 1 Mime de cada dueno. Esto fuerza una red social: necesitas 3 personas distintas para que cuiden tus 3 Mimes.
@@ -141,7 +142,7 @@ Genera un codigo aleatorio de 6 caracteres para compartir un Mime.
 El cuidador suelta un Mime (deja de cuidarlo).
 
 **Logica**:
-1. Actualiza `cuidador_id = NULL` donde `id = p_mime_id AND cuidador_id = auth.uid()`
+1. Actualiza `cuidador_id = NULL`, `cesion_start = NULL` donde `id = p_mime_id AND cuidador_id = auth.uid()`
 2. Retorna `{ success: true }` o `{ error }`
 
 ## Trigger: Registro automatico
@@ -160,3 +161,4 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 1. `supabase/schema.sql` — Schema base completo
 2. `supabase/migration_v2_share.sql` — Anade share_code + RPCs
 3. `supabase/migration_v3_one_per_owner.sql` — Actualiza claim_mime con restriccion 1-por-dueno
+4. `supabase/migration_v4_cesion.sql` — Anade cesion_start + actualiza claim_mime (pone cesion_start) y release_mime (limpia cesion_start)
