@@ -84,7 +84,17 @@
 - Vibración del móvil al interactuar (Haptic feedback via Capacitor)
 - Tutorial interactivo para nuevos usuarios
 
+## LLM local para personalidad de los Mimes
+
+- Incluir un modelo de lenguaje pequeño (on-device) que se descarga con la app
+- Cada Mime tendría conversaciones con personalidad propia según su tipo (Aventurero, Tranquilo, Pícaro)
+- El contexto a mantener es muy acotado: **1 semana × 3 Mimes por usuario** = solo los cuidados activos
+- Los datos de conversación/interacciones se guardan en la misma ventana de cesión (7 días)
+- Al devolver el Mime, el contexto de esa semana se descarta o se resume en un "recuerdo"
+- Ventaja: no depender de API externa, funciona offline, coste cero por inferencia
+- Opciones: modelos ligeros tipo Gemma, Phi, o similar cuantizados para móvil
+
 ---
 
-*Última actualización: 2026-04-06*
+*Última actualización: 2026-04-07*
 
