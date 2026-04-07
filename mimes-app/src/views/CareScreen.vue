@@ -8,6 +8,7 @@
 import { ref, computed, onMounted, useTemplateRef, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
+import MimeRoom from '../components/MimeRoom.vue'
 import StatBar from '../components/StatBar.vue'
 import { MiniGameShell, ACTION_GAMES, GAME_CONFIGS } from '../minigames'
 import type { MiniGameResult, MiniGameConfig } from '../minigames'
@@ -232,10 +233,10 @@ onMounted(loadMime)
       </header>
 
       <!-- HABITACION -->
-      <div class="room">
-        <div class="room-wall"></div>
-        <div class="room-floor"></div>
-
+      <MimeRoom
+        :personality="personality"
+        @object-interact="handleAction"
+      >
         <!-- Mime con movimiento -->
         <div
           class="mime-area"
@@ -258,7 +259,7 @@ onMounted(loadMime)
         <div v-if="actionFeedback" class="action-feedback">
           {{ actionFeedback }}
         </div>
-      </div>
+      </MimeRoom>
 
       <!-- RESUMEN DE ESTADO (vertical, lado derecho) -->
       <button class="status-summary" @click="showStats = !showStats">
@@ -471,26 +472,7 @@ onMounted(loadMime)
 .puntos-icon { color: #ff7043; font-size: 14px; }
 .puntos-value { font-size: 14px; font-weight: 700; color: #e65100; }
 
-/* === HABITACION === */
-.room {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.room-wall {
-  flex: 1;
-  background: linear-gradient(180deg, #e8eaf6 0%, #c5cae9 40%, #b39ddb 100%);
-}
-
-.room-floor {
-  height: 35%;
-  background: linear-gradient(180deg, #a1887f 0%, #8d6e63 30%, #795548 100%);
-  border-top: 3px solid #6d4c41;
-}
-
-/* Mime con movimiento */
+/* === MIME EN LA HABITACION === */
 .mime-area {
   position: absolute;
   bottom: 30%;
