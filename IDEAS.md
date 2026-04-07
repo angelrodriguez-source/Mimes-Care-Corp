@@ -23,6 +23,7 @@
 - Accesorios/ropa para vestir al Mime
 - Nivel de experiencia visible en el Mime
 - Sonidos/efectos al interactuar
+- Poder dar nombre personalizado a los Mimes
 
 ## Personalización
 
