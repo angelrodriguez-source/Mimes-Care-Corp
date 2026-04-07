@@ -94,11 +94,13 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
     floor: ['#a1887f', '#8d6e63', '#795548'],
     floorBorder: '#5d4037',
     objects: [
-      { id: 'cama', emoji: '🛏️', label: 'Cama', x: 85, y: 42, size: 36, action: 'descansar' },
-      { id: 'plato', emoji: '🍖', label: 'Comida', x: 12, y: 38, size: 30, action: 'alimentar' },
-      { id: 'pelota', emoji: '⚽', label: 'Pelota', x: 30, y: 34, size: 26, action: 'jugar' },
-      { id: 'mochila', emoji: '🎒', label: 'Mochila', x: 90, y: 70, size: 28 },
-      { id: 'mapa', emoji: '🗺️', label: 'Mapa', x: 15, y: 78, size: 32 },
+      // Suelo (y ~30-36 = justo sobre el borde suelo/pared)
+      { id: 'cama', emoji: '🛏️', label: 'Cama', x: 88, y: 32, size: 48, action: 'descansar' },
+      { id: 'plato', emoji: '🍖', label: 'Comida', x: 12, y: 30, size: 40, action: 'alimentar' },
+      { id: 'pelota', emoji: '⚽', label: 'Pelota', x: 30, y: 30, size: 36, action: 'jugar' },
+      { id: 'mochila', emoji: '🎒', label: 'Mochila', x: 92, y: 30, size: 38 },
+      // Pared (y ~68-80 = colgado en la pared)
+      { id: 'mapa', emoji: '🗺️', label: 'Mapa', x: 15, y: 75, size: 44 },
     ],
   },
   tranquilo: {
@@ -106,11 +108,13 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
     floor: ['#bcaaa4', '#a1887f', '#8d6e63'],
     floorBorder: '#6d4c41',
     objects: [
-      { id: 'cama', emoji: '🛋️', label: 'Sofa', x: 85, y: 42, size: 36, action: 'descansar' },
-      { id: 'plato', emoji: '🍵', label: 'Te', x: 12, y: 38, size: 28, action: 'alimentar' },
-      { id: 'libro', emoji: '📚', label: 'Libros', x: 28, y: 34, size: 28, action: 'jugar' },
-      { id: 'planta', emoji: '🪴', label: 'Planta', x: 92, y: 72, size: 30 },
-      { id: 'cuadro', emoji: '🖼️', label: 'Cuadro', x: 50, y: 82, size: 32 },
+      // Suelo
+      { id: 'cama', emoji: '🛋️', label: 'Sofa', x: 88, y: 32, size: 48, action: 'descansar' },
+      { id: 'plato', emoji: '🍵', label: 'Te', x: 12, y: 30, size: 38, action: 'alimentar' },
+      { id: 'libro', emoji: '📚', label: 'Libros', x: 28, y: 30, size: 38, action: 'jugar' },
+      { id: 'planta', emoji: '🪴', label: 'Planta', x: 92, y: 30, size: 40 },
+      // Pared
+      { id: 'cuadro', emoji: '🖼️', label: 'Cuadro', x: 50, y: 78, size: 46 },
     ],
   },
   picaro: {
@@ -118,11 +122,13 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
     floor: ['#d7ccc8', '#bcaaa4', '#a1887f'],
     floorBorder: '#8d6e63',
     objects: [
-      { id: 'cama', emoji: '🛏️', label: 'Cama', x: 85, y: 42, size: 36, action: 'descansar' },
-      { id: 'plato', emoji: '🍕', label: 'Pizza', x: 12, y: 38, size: 28, action: 'alimentar' },
-      { id: 'dado', emoji: '🎲', label: 'Dados', x: 30, y: 34, size: 26, action: 'jugar' },
-      { id: 'espejo', emoji: '🪞', label: 'Espejo', x: 10, y: 75, size: 30, action: 'vestir' },
-      { id: 'cofre', emoji: '🎁', label: 'Cofre', x: 90, y: 68, size: 28 },
+      // Suelo
+      { id: 'cama', emoji: '🛏️', label: 'Cama', x: 88, y: 32, size: 48, action: 'descansar' },
+      { id: 'plato', emoji: '🍕', label: 'Pizza', x: 12, y: 30, size: 40, action: 'alimentar' },
+      { id: 'dado', emoji: '🎲', label: 'Dados', x: 30, y: 30, size: 36, action: 'jugar' },
+      { id: 'cofre', emoji: '🎁', label: 'Cofre', x: 92, y: 30, size: 40 },
+      // Pared
+      { id: 'espejo', emoji: '🪞', label: 'Espejo', x: 10, y: 72, size: 46, action: 'vestir' },
     ],
   },
 }
