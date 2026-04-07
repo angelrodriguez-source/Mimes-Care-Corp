@@ -20,6 +20,7 @@ const props = defineProps<{
   afinidad: number
   cuidadorName?: string | null
   duenoName?: string | null
+  daysLeft?: number | null
   mode: 'own' | 'caring'
 }>()
 
@@ -82,6 +83,12 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
       <div class="card-affinity" v-if="afinidad > 0">
         <span class="affinity-heart">&#9829;</span>
         <span>{{ Math.round(afinidad) }}%</span>
+      </div>
+
+      <!-- Dias restantes de cesion -->
+      <div class="card-cesion" v-if="daysLeft != null && daysLeft > 0">
+        <span class="cesion-icon">&#9200;</span>
+        <span>{{ daysLeft }} dia{{ daysLeft !== 1 ? 's' : '' }}</span>
       </div>
     </div>
 
@@ -220,6 +227,20 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
 }
 
 .affinity-heart {
+  font-size: 10px;
+}
+
+.card-cesion {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5c6bc0;
+}
+
+.cesion-icon {
   font-size: 10px;
 }
 

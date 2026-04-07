@@ -64,6 +64,10 @@ export const ACTION_CONFIG: { action: CareAction; label: string; icon: string }[
 // --- PUNTOS INICIALES (para reset) ---
 export const INITIAL_PUNTOS = 100
 
+// --- CESION ---
+export const CESION_DURATION_DAYS = 7
+export const PM_PER_AFFINITY = 100 // PM = afinidad × este valor
+
 // --- FEEDBACK DURATION ---
 export const FEEDBACK_DURATION_MS = 800
 export const REST_PAUSE_DURATION_MS = 5000

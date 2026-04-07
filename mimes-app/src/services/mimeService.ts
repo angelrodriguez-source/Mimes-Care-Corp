@@ -7,7 +7,7 @@
 import { supabase } from './supabase'
 import { createInitialStats, applyDecay, shouldAbandon } from '../models/MimeModel'
 import { statsToDbFields, toStats } from '../utils/helpers'
-import { INITIAL_PUNTOS } from '../constants/gameConstants'
+import { INITIAL_PUNTOS, CESION_DURATION_DAYS, PM_PER_AFFINITY } from '../constants/gameConstants'
 import type { MimeStats, Personality, ColorTheme, CareAction } from '../models/MimeModel'
 
 // --- TIPOS ---
@@ -28,6 +28,7 @@ export interface MimeFromDB {
   cuidador_id: string | null
   share_code: string | null
   last_decay_at?: string
+  cesion_start?: string | null
   created_at?: string
 }
 
@@ -230,6 +231,77 @@ export async function checkAbandon(mime: MimeFromDB): Promise<{ abandoned: boole
     .eq('id', mime.id)
 
   return { abandoned: true }
+}
+
+// --- CESION: comprobar si han pasado 7 dias ---
+
+export interface CesionResult {
+  expired: boolean
+  reward?: number           // PM ganados por el cuidador
+  cuidadorId?: string       // para actualizar sus puntos
+}
+
+export async function checkCesionExpiry(mime: MimeFromDB): Promise<CesionResult> {
+  if (!mime.cuidador_id || !mime.cesion_start) return { expired: false }
+
+  const now = new Date()
+  const start = new Date(mime.cesion_start)
+  const elapsedDays = (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+
+  if (elapsedDays < CESION_DURATION_DAYS) return { expired: false }
+
+  // Cesion expirada: calcular recompensa
+  const reward = Math.round((mime.afinidad / 100) * PM_PER_AFFINITY)
+  const cuidadorId = mime.cuidador_id
+
+  // Buscar puntos actuales del cuidador
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('puntos_mimes')
+    .eq('id', cuidadorId)
+    .single()
+
+  const currentPuntos = profile?.puntos_mimes ?? 0
+
+  // Devolver Mime al dueno + dar PM al cuidador
+  await Promise.all([
+    supabase
+      .from('mimes')
+      .update({
+        cuidador_id: null,
+        share_code: null,
+        afinidad: 0,
+        cesion_start: null,
+      })
+      .eq('id', mime.id),
+    supabase
+      .from('profiles')
+      .update({ puntos_mimes: currentPuntos + reward })
+      .eq('id', cuidadorId),
+  ])
+
+  return { expired: true, reward, cuidadorId }
+}
+
+// --- DIAS RESTANTES DE CESION ---
+
+export function getCesionDaysLeft(cesionStart: string | null | undefined): number | null {
+  if (!cesionStart) return null
+  const start = new Date(cesionStart)
+  const now = new Date()
+  const elapsed = (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+  const remaining = Math.max(0, Math.ceil(CESION_DURATION_DAYS - elapsed))
+  return remaining
+}
+
+// --- DIA ACTUAL DE CESION (para crecimiento) ---
+
+export function getCesionDay(cesionStart: string | null | undefined): number {
+  if (!cesionStart) return 1
+  const start = new Date(cesionStart)
+  const now = new Date()
+  const elapsed = (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+  return Math.min(7, Math.max(1, Math.ceil(elapsed)))
 }
 
 // --- RENOMBRAR MIME ---

@@ -22,6 +22,8 @@ import {
   renameMime,
   applyLazyDecay,
   checkAbandon,
+  checkCesionExpiry,
+  getCesionDaysLeft,
   type MimeWithNames,
 } from '../services/mimeService'
 
@@ -49,9 +51,21 @@ async function loadData() {
   const decayedOwn = await Promise.all(data.myMimes.map(m => applyLazyDecay(m)))
   const decayedCaring = await Promise.all(data.caringMimes.map(m => applyLazyDecay(m)))
 
-  // Checkear abandono en Mimes propios que tienen cuidador
+  // Checkear cesion expirada y abandono en Mimes propios con cuidador
   for (const mime of decayedOwn) {
     if (mime.cuidador_id) {
+      // Primero: cesion de 7 dias expirada?
+      const { expired, reward } = await checkCesionExpiry(mime)
+      if (expired) {
+        mime.cuidador_id = null
+        mime.cuidador_name = undefined
+        mime.afinidad = 0
+        mime.cesion_start = null
+        claimMessage.value = `Cesion terminada! El cuidador recibio ${reward} PM`
+        setTimeout(() => (claimMessage.value = ''), 4000)
+        continue
+      }
+      // Segundo: abandono por afinidad baja
       const { abandoned } = await checkAbandon(mime)
       if (abandoned) {
         mime.cuidador_id = null
@@ -61,8 +75,21 @@ async function loadData() {
     }
   }
 
+  // Checkear cesion expirada en Mimes a cargo (el cuidador lo ve)
+  const activeCaring: MimeWithNames[] = []
+  for (const mime of decayedCaring) {
+    const { expired, reward } = await checkCesionExpiry(mime)
+    if (expired) {
+      claimMessage.value = `Tu cesion de ${mime.nombre} termino! Ganaste ${reward} PM`
+      await userStore.fetchProfile()
+      setTimeout(() => (claimMessage.value = ''), 4000)
+    } else {
+      activeCaring.push(mime)
+    }
+  }
+
   myMimes.value = decayedOwn
-  caringMimes.value = decayedCaring
+  caringMimes.value = activeCaring
   loading.value = false
 }
 
@@ -174,6 +201,7 @@ onMounted(loadData)
             :stats="toStats(mime)"
             :afinidad="mime.afinidad"
             :cuidador-name="mime.cuidador_name || null"
+            :days-left="getCesionDaysLeft(mime.cesion_start)"
             mode="own"
             @share="handleShare(mime.id, mime.nombre)"
             @rename="openRename(mime.id, mime.nombre)"
@@ -199,6 +227,7 @@ onMounted(loadData)
             :stats="toStats(mime)"
             :afinidad="mime.afinidad"
             :dueno-name="mime.dueno_name || null"
+            :days-left="getCesionDaysLeft(mime.cesion_start)"
             mode="caring"
             @care="goToCare(mime.id)"
             @release="handleRelease(mime.id)"

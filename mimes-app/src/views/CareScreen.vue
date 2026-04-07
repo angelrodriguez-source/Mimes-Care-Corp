@@ -20,6 +20,7 @@ import {
   persistCareActionResult,
   updateUserPoints,
   applyLazyDecay,
+  getCesionDay,
 } from '../services/mimeService'
 import { toStats } from '../utils/helpers'
 import {
@@ -107,6 +108,10 @@ async function loadMime() {
   afinidad.value = decayed.afinidad
   stats.value = toStats(decayed)
   puntosMimes.value = userStore.profile?.puntos_mimes ?? 0
+
+  // Crecimiento segun dia de cesion: dia 1=40%, dia 2=50%... dia 6-7=100%
+  const day = getCesionDay(decayed.cesion_start)
+  mimeScale.value = Math.min(1.0, 0.3 + day * 0.1)
 
   loading.value = false
   startWalking()
