@@ -94,7 +94,25 @@
 - Ventaja: no depender de API externa, funciona offline, coste cero por inferencia
 - Opciones: modelos ligeros tipo Gemma, Phi, o similar cuantizados para móvil
 
+## Familia y relaciones entre Mimes
+
+- Los Mimes pueden **encontrar pareja** con Mimes de otros usuarios
+- Si dos Mimes con alta afinidad coinciden (ej. ambos cuidados por el mismo usuario, o cuidador cruzado), pueden emparejarse
+- Las parejas pueden **tener hijos**: un nuevo Mime que hereda rasgos de ambos padres
+  - Personalidad: puede heredar la de uno de los padres o una mezcla
+  - Color theme: combinacion o aleatorio entre los dos
+  - Stats iniciales: ligeramente influenciados por los padres
+- **Lazos familiares** visibles: arbol genealogico simple en el perfil del Mime
+  - Padres, hermanos, hijos
+  - Bonus de afinidad si un cuidador cuida a Mimes de la misma familia
+- Condiciones para reproduccion:
+  - Ambos Mimes deben tener afinidad alta (ej. >80%)
+  - Ambos deben estar en buen estado (stats promedio >60%)
+  - Cooldown entre nacimientos (ej. 1 hijo por mes)
+- Los hijos empiezan como bebes (escala 30%) y crecen mas lento que en cesion normal
+- Posibilidad de que los hijos tengan personalidades nuevas o raras (mutaciones)
+
 ---
 
-*Última actualización: 2026-04-07*
+*Última actualización: 2026-04-08*
 
