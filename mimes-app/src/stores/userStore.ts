@@ -17,7 +17,12 @@ export const useUserStore = defineStore('user', () => {
   // El usuario de Supabase Auth (email, id, etc.) o null si no está logueado
   const user = ref<User | null>(null)
   // Datos del perfil del juego (nombre, puntos)
-  const profile = ref<{ display_name: string; puntos_mimes: number } | null>(null)
+  const profile = ref<{
+    display_name: string
+    puntos_mimes: number
+    last_daily_claim_date: string | null
+    daily_streak: number
+  } | null>(null)
   // Para mostrar spinners mientras carga
   const loading = ref(true)
 
@@ -69,7 +74,7 @@ export const useUserStore = defineStore('user', () => {
 
     const { data } = await supabase
       .from('profiles')
-      .select('display_name, puntos_mimes')
+      .select('display_name, puntos_mimes, last_daily_claim_date, daily_streak')
       .eq('id', user.value.id)
       .single()
 

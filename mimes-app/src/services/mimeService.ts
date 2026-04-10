@@ -330,3 +330,39 @@ export async function persistCareActionResult(
     updateUserPoints(userId, puntos),
   ])
 }
+
+// --- RECOMPENSA DIARIA POR LOGIN ---
+
+export interface DailyRewardResult {
+  already_claimed: boolean
+  streak: number
+  reward: number
+  puntos_mimes: number
+  error?: string
+}
+
+/**
+ * Reclama la recompensa diaria via RPC. Envia la fecha local del cliente
+ * (YYYY-MM-DD en TZ del navegador) para que la decision "hoy" no dependa
+ * de la TZ del servidor Postgres (UTC en Supabase).
+ *
+ * El RPC es atomico e idempotente: si el usuario ya reclamo hoy, devuelve
+ * already_claimed=true sin modificar puntos.
+ */
+export async function claimDailyReward(): Promise<DailyRewardResult> {
+  // 'sv-SE' devuelve YYYY-MM-DD en la TZ local del navegador
+  const clientDate = new Date().toLocaleDateString('sv-SE')
+  const { data, error } = await supabase.rpc('claim_daily_reward', {
+    p_client_date: clientDate,
+  })
+  if (error) {
+    return {
+      already_claimed: false,
+      streak: 0,
+      reward: 0,
+      puntos_mimes: 0,
+      error: error.message,
+    }
+  }
+  return data as DailyRewardResult
+}

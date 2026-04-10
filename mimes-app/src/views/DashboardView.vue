@@ -11,8 +11,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import MimeCard from '../components/MimeCard.vue'
+import DailyRewardModal from '../components/DailyRewardModal.vue'
 import { useUserStore } from '../stores/userStore'
 import { toStats, copyToClipboard } from '../utils/helpers'
+import { DAILY_REWARDS } from '../constants/gameConstants'
 import {
   loadDashboardData,
   generateShareCode,
@@ -24,6 +26,7 @@ import {
   checkAbandon,
   checkCesionExpiry,
   getCesionDaysLeft,
+  claimDailyReward,
   type MimeWithNames,
 } from '../services/mimeService'
 
@@ -39,6 +42,42 @@ const claimMessage = ref('')
 const shareModal = ref<{ mimeId: string; code: string; nombre: string } | null>(null)
 const renameModal = ref<{ mimeId: string; nombre: string } | null>(null)
 const renameInput = ref('')
+const dailyModal = ref<{
+  streakPreview: number
+  rewardPreview: number
+  phase: 'offer' | 'claimed'
+} | null>(null)
+const dailyLoading = ref(false)
+
+// Devuelve YYYY-MM-DD en la TZ local del navegador (truco 'sv-SE')
+function getLocalDateISO(): string {
+  return new Date().toLocaleDateString('sv-SE')
+}
+
+/**
+ * Calcula la racha y recompensa que le tocaria al usuario si reclamase ahora.
+ * Devuelve null si ya reclamo hoy.
+ */
+function computeNextDailyReward(
+  p: { last_daily_claim_date: string | null; daily_streak: number },
+): { streakPreview: number; rewardPreview: number } | null {
+  const today = getLocalDateISO()
+  if (p.last_daily_claim_date === today) return null
+
+  const y = new Date()
+  y.setDate(y.getDate() - 1)
+  const yesterday = y.toLocaleDateString('sv-SE')
+
+  const nextStreak = p.last_daily_claim_date === yesterday
+    ? Math.min(p.daily_streak + 1, 7)
+    : 1
+
+  // nextStreak esta en 1..7, asi que el indice 0..6 siempre es valido
+  return {
+    streakPreview: nextStreak,
+    rewardPreview: DAILY_REWARDS[nextStreak - 1]!,
+  }
+}
 
 async function loadData() {
   loading.value = true
@@ -161,7 +200,44 @@ async function handleRename() {
   await loadData()
 }
 
-onMounted(loadData)
+async function handleClaimDaily() {
+  if (!dailyModal.value) return
+  dailyLoading.value = true
+  const res = await claimDailyReward()
+  dailyLoading.value = false
+
+  if (res.error) {
+    console.error('claim_daily_reward:', res.error)
+    dailyModal.value = null
+    return
+  }
+
+  // Refrescar el perfil para que el badge del header muestre los nuevos PM
+  await userStore.fetchProfile()
+
+  if (res.already_claimed) {
+    dailyModal.value = null
+    return
+  }
+
+  // Fase celebracion con los valores confirmados por el servidor
+  dailyModal.value = {
+    streakPreview: res.streak,
+    rewardPreview: res.reward,
+    phase: 'claimed',
+  }
+}
+
+onMounted(async () => {
+  await loadData()
+  // Chequear recompensa diaria una vez cargados los datos
+  if (userStore.profile) {
+    const next = computeNextDailyReward(userStore.profile)
+    if (next) {
+      dailyModal.value = { ...next, phase: 'offer' }
+    }
+  }
+})
 </script>
 
 <template>
@@ -299,6 +375,17 @@ onMounted(loadData)
         </div>
       </div>
     </div>
+
+    <!-- DAILY REWARD MODAL -->
+    <DailyRewardModal
+      v-if="dailyModal"
+      :streak-preview="dailyModal.streakPreview"
+      :reward-preview="dailyModal.rewardPreview"
+      :phase="dailyModal.phase"
+      :loading="dailyLoading"
+      @claim="handleClaimDaily"
+      @close="dailyModal = null"
+    />
   </div>
 </template>
 
