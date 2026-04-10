@@ -67,6 +67,7 @@ npm run preview      # Preview del build local
    1. `supabase/schema.sql`
    2. `supabase/migration_v2_share.sql`
    3. `supabase/migration_v3_one_per_owner.sql`
+   4. `supabase/migration_v4_cesion.sql` (anade `cesion_start` + actualiza `claim_mime`/`release_mime`)
 
 3. **Auth > Settings**:
    - Email confirmations: activo
