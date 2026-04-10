@@ -94,7 +94,12 @@
 - Ventaja: no depender de API externa, funciona offline, coste cero por inferencia
 - Opciones: modelos ligeros tipo Gemma, Phi, o similar cuantizados para móvil
 
-## Familia y relaciones entre Mimes
+---
+
+## Baja prioridad / Ideas muy a futuro
+
+### Familia y relaciones entre Mimes
+*Idea ambiciosa, requiere mucho diseño de balance y nuevas tablas. Aparcada.*
 
 - Los Mimes pueden **encontrar pareja** con Mimes de otros usuarios
 - Si dos Mimes con alta afinidad coinciden (ej. ambos cuidados por el mismo usuario, o cuidador cruzado), pueden emparejarse
@@ -114,5 +119,5 @@
 
 ---
 
-*Última actualización: 2026-04-08*
+*Última actualización: 2026-04-10*
 
