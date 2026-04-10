@@ -54,7 +54,7 @@ function generateItems() {
   for (let i = 0; i < 5; i++) {
     allItems.push({
       id: i,
-      emoji: CLOTHES[Math.floor(Math.random() * CLOTHES.length)],
+      emoji: CLOTHES[Math.floor(Math.random() * CLOTHES.length)] ?? '👕',
       color: correctColor.hex,
       isCorrect: true,
       x: 10 + Math.random() * 75,
@@ -65,10 +65,10 @@ function generateItems() {
 
   // 7 incorrectas
   for (let i = 5; i < 12; i++) {
-    const wrongColor = WRONG_COLORS[Math.floor(Math.random() * WRONG_COLORS.length)]
+    const wrongColor = WRONG_COLORS[Math.floor(Math.random() * WRONG_COLORS.length)] ?? WRONG_COLORS[0]!
     allItems.push({
       id: i,
-      emoji: CLOTHES[Math.floor(Math.random() * CLOTHES.length)],
+      emoji: CLOTHES[Math.floor(Math.random() * CLOTHES.length)] ?? '👕',
       color: wrongColor.hex,
       isCorrect: false,
       x: 10 + Math.random() * 75,

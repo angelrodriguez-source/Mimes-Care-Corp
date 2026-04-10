@@ -48,7 +48,7 @@ function createBurst(
   for (let i = 0; i < count; i++) {
     const el = document.createElement('div')
     el.className = 'mini-heart'
-    el.textContent = emojis[i % emojis.length]
+    el.textContent = emojis[i % emojis.length] ?? ''
     const angle = Math.random() * Math.PI * 2
     const radius = minRadius + Math.random() * (maxRadius - minRadius)
     el.style.setProperty('--tx', `${Math.cos(angle) * radius}px`)

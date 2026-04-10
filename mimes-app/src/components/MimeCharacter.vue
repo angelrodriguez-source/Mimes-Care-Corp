@@ -60,6 +60,7 @@ function trackEyes(e: { clientX: number; clientY: number }) {
 function onMouseMove(e: MouseEvent) { trackEyes(e) }
 function onTouchMove(e: TouchEvent) {
   const t = e.touches[0]
+  if (!t) return
   trackEyes({ clientX: t.clientX, clientY: t.clientY })
 }
 

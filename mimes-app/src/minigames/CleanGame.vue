@@ -59,6 +59,7 @@ function cleanAt(clientX: number, clientY: number) {
 
 function onTouchMove(e: TouchEvent) {
   const t = e.touches[0]
+  if (!t) return
   cleanAt(t.clientX, t.clientY)
 }
 

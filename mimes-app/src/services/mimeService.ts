@@ -192,7 +192,7 @@ export async function loadAllMimes() {
 
 // --- LAZY DECAY: calcula y aplica el decay acumulado al cargar un Mime ---
 
-export async function applyLazyDecay(mime: MimeFromDB): Promise<MimeFromDB> {
+export async function applyLazyDecay<T extends MimeFromDB>(mime: T): Promise<T> {
   const now = new Date()
   const lastDecay = new Date(mime.last_decay_at ?? mime.created_at ?? now)
   const elapsedMs = now.getTime() - lastDecay.getTime()

@@ -36,7 +36,7 @@ function spawnFood() {
     id: nextId++,
     x: 10 + Math.random() * 80,
     y: -5,
-    emoji: FOODS[Math.floor(Math.random() * FOODS.length)],
+    emoji: FOODS[Math.floor(Math.random() * FOODS.length)] ?? '🍖',
     caught: false,
     speed: 0.8 + Math.random() * 0.6,
   })

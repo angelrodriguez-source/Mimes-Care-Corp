@@ -25,7 +25,7 @@ const EMOJIS = ['🎾', '⚽', '🏀', '🎯', '⭐']
 function moveTarget() {
   targetX.value = 15 + Math.random() * 70
   targetY.value = 15 + Math.random() * 70
-  targetEmoji.value = EMOJIS[Math.floor(Math.random() * EMOJIS.length)]
+  targetEmoji.value = EMOJIS[Math.floor(Math.random() * EMOJIS.length)] ?? '🎾'
 }
 
 function tapTarget() {

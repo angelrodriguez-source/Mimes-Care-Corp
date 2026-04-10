@@ -38,7 +38,7 @@ function spawnHeart() {
     id: nextId++,
     x: 10 + Math.random() * 80,
     y: 105,
-    emoji: HEARTS[Math.floor(Math.random() * HEARTS.length)],
+    emoji: HEARTS[Math.floor(Math.random() * HEARTS.length)] ?? '❤️',
     collected: false,
     speed: 0.4 + Math.random() * 0.4,
     wobble: Math.random() * 2 - 1,

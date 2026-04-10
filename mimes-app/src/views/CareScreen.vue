@@ -5,7 +5,7 @@
  * Carga un Mime por ID desde la URL, permite cuidarlo con acciones
  * que se guardan en la base de datos. El Mime se mueve por la habitacion.
  */
-import { ref, computed, onMounted, useTemplateRef, shallowRef } from 'vue'
+import { ref, computed, onMounted, useTemplateRef, shallowRef, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
@@ -76,7 +76,7 @@ const showDifficultyPicker = ref(false)
 const pickerAction = ref<CareAction | null>(null)
 
 // --- MINIGAME STATE ---
-const activeGame = shallowRef<ReturnType<typeof Object.values<typeof ACTION_GAMES>> | null>(null)
+const activeGame = shallowRef<Component | null>(null)
 const activeGameConfig = ref<MiniGameConfig | null>(null)
 const pendingAction = ref<CareAction | null>(null)
 const pendingDifficulty = ref<'easy' | 'advanced'>('easy')
