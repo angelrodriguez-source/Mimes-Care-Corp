@@ -7,8 +7,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vite.dev/config/
 export default defineConfig({
   // base: ruta donde se sirve la app en producción.
-  // GitHub Pages publica en https://usuario.github.io/Proyectos_1/
-  base: '/Proyectos_1/',
+  // GitHub Pages publica en https://usuario.github.io/Mimes-Care-Corp/
+  base: '/Mimes-Care-Corp/',
   plugins: [
     vue(),
     vueDevTools(),

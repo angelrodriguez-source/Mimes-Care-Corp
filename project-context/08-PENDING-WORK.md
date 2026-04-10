@@ -28,7 +28,6 @@
 | `ActionButton.vue` | `src/components/` | No se usa. Eliminar o integrar en CareScreen |
 | CSS `.mood-selector`, `.mood-btn` | `src/views/HomeView.vue` lineas 221-249 | Eliminar (residuo de version anterior) |
 | Botones de Reset | DashboardView + CareScreen | **Borrar antes de produccion** |
-| Rama `claude/refactor-code-modularity-Id0rq` | Git | Ya mergeada, eliminar |
 | Botones debug crecimiento (+/-) | CareScreen cabecera | **Borrar antes de produccion** |
 
 ## Mejoras tecnicas pendientes

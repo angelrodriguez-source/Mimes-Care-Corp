@@ -14,13 +14,13 @@ Guía rápida para arrancar una nueva sesión de Claude Code en este proyecto. S
 - Deploy: GitHub Pages (rama `gh-pages`)
 - Mobile (futuro): Capacitor
 
-**Dónde está el código**: `virtual-pet-game/mimes-app/src/`
+**Dónde está el código**: `mimes-app/src/`
 
 ---
 
 ## 2. Documentación — leer antes de tocar código
 
-Toda la documentación viva está en `virtual-pet-game/project-context/`. **Empieza siempre por ahí**:
+Toda la documentación viva está en `project-context/`. **Empieza siempre por ahí**:
 
 | Archivo | Para qué |
 |---------|----------|
@@ -44,22 +44,22 @@ Toda la documentación viva está en `virtual-pet-game/project-context/`. **Empi
 
 ## 3. Git — flujo de trabajo
 
-**Rama activa**: `claude/setup-branch-or-project-fIwgB`
+**Rama principal**: `main`
 
-- **Nunca** desarrollar directamente sobre `main`
-- **Nunca** desarrollar directamente sobre `gh-pages` (es solo para el build publicado)
-- Al terminar: commit + push a la rama activa
-- Solo crear PR si el usuario lo pide explícitamente
+- Desarrollo sobre `main` (o una rama de feature cuando el cambio sea grande).
+- **Nunca** desarrollar directamente sobre `gh-pages` (es solo para el build publicado).
+- Al terminar: commit + push.
+- Solo crear PR si el usuario lo pide explícitamente.
 
 **Comandos habituales**:
 ```bash
 git status
-git checkout claude/setup-branch-or-project-fIwgB
-git pull origin claude/setup-branch-or-project-fIwgB
+git checkout main
+git pull origin main
 # ...cambios...
 git add <archivos específicos>
 git commit -m "tipo: descripción corta"
-git push -u origin claude/setup-branch-or-project-fIwgB
+git push origin main
 ```
 
 **Convención de commits**: `tipo(scope): descripción` en español.
@@ -72,18 +72,18 @@ Ejemplos: `feat(dashboard):`, `fix(minigames):`, `docs(ideas):`, `refactor(store
 El deploy es **manual**. Se hace así:
 
 ```bash
-cd virtual-pet-game/mimes-app
+cd mimes-app
 npm install          # si no has instalado aún
 npx vite build       # genera dist/
 
-cd /home/user/Proyectos_1
+cd ..                # volver a la raíz del repo
 git checkout gh-pages
 # borrar archivos viejos del root (cuidado de no borrar .git)
-# copiar contenido de virtual-pet-game/mimes-app/dist/ al root
+# copiar contenido de mimes-app/dist/ al root
 git add -A
 git commit -m "deploy: <descripción>"
 git push origin gh-pages
-git checkout -f claude/setup-branch-or-project-fIwgB   # volver a la rama activa
+git checkout -f main  # volver a la rama principal
 ```
 
 Ver `07-DEPLOYMENT.md` para el detalle completo.

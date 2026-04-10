@@ -5,7 +5,7 @@
 - **Proyecto Supabase**: `igcvucyhcfyupmzstoqg`
 - **URL**: `https://igcvucyhcfyupmzstoqg.supabase.co`
 - **Auth**: Email + password (Supabase Auth)
-- **Confirmacion email**: Activa. Site URL configurado como `https://angelrodriguez-source.github.io/Proyectos_1/`
+- **Confirmacion email**: Activa. Site URL configurado como `https://angelrodriguez-source.github.io/Mimes-Care-Corp/` (actualizar en Supabase Dashboard > Authentication > URL Configuration).
 
 ## Tablas
 

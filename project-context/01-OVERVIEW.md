@@ -27,15 +27,15 @@
 
 | Entorno | URL |
 |---------|-----|
-| **Produccion (GitHub Pages)** | `https://angelrodriguez-source.github.io/Proyectos_1/` |
+| **Produccion (GitHub Pages)** | `https://angelrodriguez-source.github.io/Mimes-Care-Corp/` |
 | **Supabase Dashboard** | `https://supabase.com/dashboard` (proyecto: `igcvucyhcfyupmzstoqg`) |
 | **Supabase API** | `https://igcvucyhcfyupmzstoqg.supabase.co` |
-| **Repositorio** | `github.com/angelrodriguez-source/Proyectos_1` |
+| **Repositorio** | `github.com/angelrodriguez-source/Mimes-Care-Corp` |
 
 ## Estructura de Carpetas
 
 ```
-virtual-pet-game/
+Mimes-Care-Corp/              # Raiz del repo
 ├── project-context/          # <-- Estos documentos
 ├── design/
 │   └── mimes/                # Fichas de personalidad de cada Mime
@@ -63,7 +63,7 @@ virtual-pet-game/
 │   │   ├── views/            # Pantallas principales
 │   │   ├── App.vue           # Componente raiz (solo RouterView)
 │   │   └── main.ts           # Entry point
-│   ├── vite.config.ts        # Build config (base: /Proyectos_1/)
+│   ├── vite.config.ts        # Build config (base: /Mimes-Care-Corp/)
 │   ├── package.json
 │   └── tsconfig.json
 ├── mime-preview.html         # Prototipo original CSS del Mime
@@ -76,16 +76,13 @@ virtual-pet-game/
 
 | Rama | Proposito |
 |------|-----------|
-| `main` | Rama base, no se desarrolla directamente aqui |
-| `claude/setup-branch-or-project-fIwgB` | **Rama principal de desarrollo** (todo el codigo actual) |
+| `main` | **Rama principal de desarrollo** (todo el codigo actual) |
 | `gh-pages` | Build compilado para GitHub Pages (contiene `.nojekyll`) |
-
-> La rama `claude/refactor-code-modularity-Id0rq` ya fue mergeada en la rama principal de desarrollo y puede eliminarse.
 
 ## Configuracion Importante
 
 ### Vite (`vite.config.ts`)
-- `base: '/Proyectos_1/'` — necesario porque GitHub Pages sirve bajo ese path
+- `base: '/Mimes-Care-Corp/'` — necesario porque GitHub Pages sirve bajo ese path (case-sensitive)
 - `host: true` — permite acceso desde otros dispositivos en la misma red (para probar en movil)
 
 ### Supabase (`src/services/supabase.ts`)

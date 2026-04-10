@@ -2,21 +2,21 @@
 
 ## GitHub Pages
 
-**URL produccion**: `https://angelrodriguez-source.github.io/Proyectos_1/`
+**URL produccion**: `https://angelrodriguez-source.github.io/Mimes-Care-Corp/`
 
 ### Como se publica
 
 El build de Vite se copia a la rama `gh-pages`. Pasos manuales:
 
 ```bash
-cd virtual-pet-game/mimes-app
+cd mimes-app
 npm run build-only          # genera dist/
 # copiar dist/ a gh-pages branch con .nojekyll
 ```
 
 ### Requisitos criticos
 
-1. **`base: '/Proyectos_1/'`** en `vite.config.ts` — porque GitHub Pages sirve bajo ese path
+1. **`base: '/Mimes-Care-Corp/'`** en `vite.config.ts` — porque GitHub Pages sirve bajo ese path (case-sensitive, coincide con el nombre exacto del repo)
 2. **`.nojekyll`** en la raiz de `gh-pages` — Jekyll ignora archivos con `_` prefix que Vite genera (ej: `_plugin-vue_export-helper-xxx.js`)
 3. **Hash router** (`createWebHashHistory`) — GitHub Pages no soporta SPA history mode. Las URLs usan `/#/` (ej: `/#/dashboard`)
 
@@ -53,17 +53,15 @@ npm run preview      # Preview del build local
 
 | Rama | Contenido | Accion |
 |------|-----------|--------|
-| `main` | Codigo base original | No se desarrolla aqui |
-| `claude/setup-branch-or-project-fIwgB` | **Toda la app actual** | Rama de desarrollo activa |
+| `main` | **Toda la app actual** | Rama de desarrollo activa |
 | `gh-pages` | Build compilado + .nojekyll | Publicada automaticamente por GitHub Pages |
-| `claude/refactor-code-modularity-Id0rq` | Ya mergeada | **Puede eliminarse** |
 
 ## Supabase
 
 ### Configuracion necesaria en el dashboard
 
 1. **Authentication > URL Configuration**:
-   - Site URL: `https://angelrodriguez-source.github.io/Proyectos_1/`
+   - Site URL: `https://angelrodriguez-source.github.io/Mimes-Care-Corp/`
 
 2. **SQL Editor**: Ejecutar las migraciones en orden:
    1. `supabase/schema.sql`
