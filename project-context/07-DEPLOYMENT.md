@@ -6,12 +6,20 @@
 
 ### Como se publica
 
-El build de Vite se copia a la rama `gh-pages`. Pasos manuales:
+El build de Vite se copia a la rama `gh-pages` usando el paquete `gh-pages`
+(instalado como devDependency desde 2026-04-11):
 
 ```bash
 cd mimes-app
-npm run build-only          # genera dist/
-# copiar dist/ a gh-pages branch con .nojekyll
+npm run build              # type-check + build (genera dist/)
+npx gh-pages -d dist       # publica dist/ a la rama gh-pages del remoto
+```
+
+Alternativa si el type-check da problemas y necesitas un deploy rapido:
+
+```bash
+npx vite build             # solo build, sin type-check
+npx gh-pages -d dist
 ```
 
 ### Requisitos criticos
@@ -46,6 +54,7 @@ npm run preview      # Preview del build local
 | vite | ^8.0.3 | Build tool |
 | typescript | ~6.0.0 | Type safety |
 | vue-tsc | ^3.2.6 | Vue type-checking |
+| gh-pages | ^6.3.0 | Deploy de dist/ a la rama gh-pages |
 
 **Node requerido**: ^20.19.0 || >=22.12.0
 

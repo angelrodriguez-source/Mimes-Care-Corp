@@ -21,6 +21,13 @@
 ### ~~Estrellas de RestGame con Math.random() en template~~ RESUELTO (2026-04-06)
 - Posiciones precalculadas en `onMounted` y guardadas en ref `starPositions`
 
+### ~~vue-tsc: 14 errores de tipos bloqueando `npm run build`~~ RESUELTO (2026-04-11)
+- `e.touches[0]` sin guardar en `MimeCharacter.vue` y `CleanGame.vue` — anadido early return
+- Acceso aleatorio a arrays (`FOODS[...]`, `HEARTS[...]`, `CLOTHES[...]`, `EMOJIS[...]`, `WRONG_COLORS[...]`) devolvia `string | undefined` bajo strict. Anadido fallback `?? '<emoji-default>'` en FeedGame, LoveGame, PlayGame, DressGame
+- `el.textContent = emojis[...]` en `useHeartBurst.ts` esperaba `string | null`. Fix: `?? ''`
+- `applyLazyDecay` en `mimeService.ts` tipado como `MimeFromDB → MimeFromDB` destruia la propiedad `cuidador_name` de `MimeWithNames` en `DashboardView.vue`. Fix: generico `<T extends MimeFromDB>(mime: T): Promise<T>`
+- `activeGame` en `CareScreen.vue` usaba `ReturnType<typeof Object.values<typeof ACTION_GAMES>>` (tipo array absurdo). Fix: `shallowRef<Component | null>(null)` importando `Component` de vue
+
 ## Codigo muerto / Limpieza
 
 | Que | Donde | Accion |
