@@ -6,12 +6,15 @@
  * la vista correspondiente a la URL actual. Si estás en "/" muestra HomeView,
  * si estás en "/about" muestra AboutView, etc.
  *
- * Aquí no necesitamos nada más por ahora. Más adelante añadiremos
- * navegación (barra inferior con "Mis Mimes" / "Cuidar" / "Perfil").
+ * TutorialOverlay se monta globalmente: sobrevive a los cambios de ruta
+ * porque el tutorial puede navegar del dashboard a la pantalla de cuidado
+ * y volver sin reiniciarse.
  */
 import { RouterView } from 'vue-router'
+import TutorialOverlay from './components/TutorialOverlay.vue'
 </script>
 
 <template>
   <RouterView />
+  <TutorialOverlay />
 </template>

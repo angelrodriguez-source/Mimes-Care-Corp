@@ -267,7 +267,7 @@ onMounted(loadMime)
       </MimeRoom>
 
       <!-- RESUMEN DE ESTADO (vertical, lado derecho) -->
-      <button class="status-summary" @click="showStats = !showStats">
+      <button class="status-summary" data-tutorial="status-summary" @click="showStats = !showStats">
         <div class="summary-item affinity">
           <span class="summary-icon">&#9829;</span>
           <span class="summary-value">{{ Math.round(afinidad) }}%</span>
@@ -284,7 +284,7 @@ onMounted(loadMime)
       </button>
 
       <!-- MENU ACCIONES (lateral izquierdo) -->
-      <div class="actions-menu">
+      <div class="actions-menu" data-tutorial="actions-menu">
         <button
           v-for="a in ACTION_CONFIG"
           :key="a.action"
