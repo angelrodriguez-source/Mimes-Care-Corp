@@ -22,6 +22,7 @@ export const useUserStore = defineStore('user', () => {
     puntos_mimes: number
     last_daily_claim_date: string | null
     daily_streak: number
+    tutorial_completed: boolean
   } | null>(null)
   // Para mostrar spinners mientras carga
   const loading = ref(true)
@@ -74,7 +75,7 @@ export const useUserStore = defineStore('user', () => {
 
     const { data } = await supabase
       .from('profiles')
-      .select('display_name, puntos_mimes, last_daily_claim_date, daily_streak')
+      .select('display_name, puntos_mimes, last_daily_claim_date, daily_streak, tutorial_completed')
       .eq('id', user.value.id)
       .single()
 

@@ -366,3 +366,15 @@ export async function claimDailyReward(): Promise<DailyRewardResult> {
   }
   return data as DailyRewardResult
 }
+
+// --- TUTORIAL INTERACTIVO ---
+
+/**
+ * Marca el tutorial como completado en el profile del usuario.
+ * Llama al RPC `mark_tutorial_completed` que hace UPDATE para auth.uid().
+ */
+export async function markTutorialCompleted(): Promise<{ error?: string }> {
+  const { error } = await supabase.rpc('mark_tutorial_completed')
+  if (error) return { error: error.message }
+  return {}
+}

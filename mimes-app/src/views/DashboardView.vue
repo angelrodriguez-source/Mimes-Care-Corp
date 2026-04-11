@@ -13,6 +13,7 @@ import { useRouter } from 'vue-router'
 import MimeCard from '../components/MimeCard.vue'
 import DailyRewardModal from '../components/DailyRewardModal.vue'
 import { useUserStore } from '../stores/userStore'
+import { useTutorialStore } from '../stores/tutorialStore'
 import { toStats, copyToClipboard } from '../utils/helpers'
 import { DAILY_REWARDS } from '../constants/gameConstants'
 import {
@@ -32,6 +33,7 @@ import {
 
 const router = useRouter()
 const userStore = useUserStore()
+const tutorialStore = useTutorialStore()
 
 const myMimes = ref<MimeWithNames[]>([])
 const caringMimes = ref<MimeWithNames[]>([])
@@ -130,6 +132,10 @@ async function loadData() {
   myMimes.value = decayedOwn
   caringMimes.value = activeCaring
   loading.value = false
+
+  // Dar al tutorial el id del primer Mime propio para que la pantalla de
+  // cuidado se pueda visitar durante el recorrido.
+  tutorialStore.setCareMimeId(decayedOwn[0]?.id ?? null)
 }
 
 async function handleShare(mimeId: string, nombre: string) {
@@ -228,8 +234,26 @@ async function handleClaimDaily() {
   }
 }
 
+function startTutorial() {
+  // Si la recompensa diaria esta abierta, la cerramos para no solapar overlays
+  dailyModal.value = null
+  tutorialStore.start()
+}
+
 onMounted(async () => {
   await loadData()
+
+  // Si el tutorial ya esta activo (p. ej. volvimos del CareScreen durante
+  // el recorrido), no tocamos nada — el TutorialOverlay sigue corriendo.
+  if (tutorialStore.active) return
+
+  // Si es la primera vez que entra, lanzar tutorial automaticamente.
+  // Si no, ofrecer la recompensa diaria.
+  if (userStore.profile && !userStore.profile.tutorial_completed) {
+    tutorialStore.start()
+    return
+  }
+
   // Chequear recompensa diaria una vez cargados los datos
   if (userStore.profile) {
     const next = computeNextDailyReward(userStore.profile)
@@ -249,10 +273,11 @@ onMounted(async () => {
         <p class="welcome">Hola, {{ userStore.profile?.display_name || 'Jugador' }}</p>
       </div>
       <div class="header-right">
-        <div class="puntos-badge">
+        <div class="puntos-badge" data-tutorial="pm-badge">
           <span class="puntos-heart">&#9829;</span>
           <span>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</span>
         </div>
+        <button class="help-btn" title="Ver tutorial" @click="startTutorial">?</button>
         <button class="logout-btn" @click="handleLogout">Salir</button>
       </div>
     </header>
@@ -264,11 +289,11 @@ onMounted(async () => {
 
     <template v-else>
       <!-- MIS MIMES -->
-      <section class="section">
+      <section class="section" data-tutorial="my-mimes-section">
         <h2 class="section-title">Mis Mimes</h2>
         <div class="cards-list">
           <MimeCard
-            v-for="mime in myMimes"
+            v-for="(mime, idx) in myMimes"
             :key="mime.id"
             :id="mime.id"
             :nombre="mime.nombre"
@@ -279,6 +304,7 @@ onMounted(async () => {
             :cuidador-name="mime.cuidador_name || null"
             :days-left="getCesionDaysLeft(mime.cesion_start)"
             mode="own"
+            :data-tutorial="idx === 0 ? 'share-btn-first' : undefined"
             @share="handleShare(mime.id, mime.nombre)"
             @rename="openRename(mime.id, mime.nombre)"
           />
@@ -312,7 +338,7 @@ onMounted(async () => {
       </section>
 
       <!-- ADOPTAR MIME -->
-      <section class="section claim-section">
+      <section class="section claim-section" data-tutorial="adopt-section">
         <h2 class="section-title">Adoptar Mime</h2>
         <p class="section-desc">Introduce el codigo que te hayan compartido</p>
         <div class="claim-row">
@@ -460,6 +486,28 @@ onMounted(async () => {
 
 .logout-btn:active {
   background: #f5f5f5;
+}
+
+.help-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e8eaf6;
+  border: 1.5px solid #c5cae9;
+  font-size: 14px;
+  font-weight: 700;
+  color: #5c6bc0;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.help-btn:active {
+  background: #c5cae9;
 }
 
 /* SECTIONS */
