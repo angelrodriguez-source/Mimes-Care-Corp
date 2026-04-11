@@ -35,7 +35,7 @@ Pinia store con Composition API (`defineStore('user', () => {...})`).
 | Campo | Tipo | Descripcion |
 |-------|------|-------------|
 | `user` | `User \| null` | Usuario Supabase Auth (email, id) |
-| `profile` | `{ display_name, puntos_mimes, last_daily_claim_date, daily_streak } \| null` | Datos del juego |
+| `profile` | `{ display_name, puntos_mimes, last_daily_claim_date, daily_streak, tutorial_completed } \| null` | Datos del juego |
 | `loading` | `boolean` | True mientras se comprueba sesion inicial |
 
 ### Computed
@@ -123,8 +123,36 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `renameMime(mimeId, nombre)` | Actualiza nombre del Mime en Supabase |
 | `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM) |
 | `claimDailyReward()` | Llama al RPC `claim_daily_reward` enviando la fecha local del cliente (`toLocaleDateString('sv-SE')`). Devuelve `DailyRewardResult` con `{ already_claimed, streak, reward, puntos_mimes }` |
+| `markTutorialCompleted()` | Llama al RPC `mark_tutorial_completed` para persistir que el usuario ya completo el tutorial. Devuelve `{ error? }` |
 
 **Tipos exportados**: `MimeFromDB` (incluye `cesion_start`), `MimeWithNames`, `CesionResult` — interfaces que mapean las columnas de la tabla.
+
+## Store del tutorial (`src/stores/tutorialStore.ts`)
+
+Pinia store que controla el tutorial interactivo. Se consume desde `DashboardView` (para lanzarlo) y desde `TutorialOverlay` (para pintarlo).
+
+### State
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `active` | `boolean` | True cuando el overlay esta visible |
+| `stepIndex` | `number` | Indice del paso actual (0..N-1) |
+| `careMimeId` | `string \| null` | Id del Mime propio a usar cuando el tutorial navega a `/care/:id` (lo setea DashboardView tras `loadData()`) |
+
+### Computed
+- `currentStep`: `TutorialStep | null` — paso actual, o null si no esta activo
+- `totalSteps`, `isFirstStep`, `isLastStep`
+
+### Actions
+| Accion | Que hace |
+|--------|----------|
+| `start()` | Arranca desde el paso 0 y activa el overlay |
+| `setCareMimeId(id)` | Setea el Mime que usara el tutorial para la pantalla de cuidado |
+| `next()` | Avanza un paso (o llama a `finish()` si es el ultimo) |
+| `prev()` | Retrocede un paso (si se puede) |
+| `skip()` | Cierra el overlay sin persistir nada en DB |
+| `finish()` | Llama al RPC `mark_tutorial_completed`, actualiza `profile.tutorial_completed` y cierra |
+
+Los pasos estan definidos en `src/constants/tutorialSteps.ts` (ver seccion siguiente).
 
 ## Composables (`src/composables/`)
 
@@ -181,6 +209,7 @@ Centraliza etiquetas, colores y configuraciones usadas en multiples componentes:
 | `CESION_DURATION_DAYS = 7` | Duracion de una cesion en dias |
 | `PM_PER_AFFINITY = 100` | Multiplicador: PM = afinidad * este valor |
 | `DAILY_REWARDS` | Array readonly `[10, 15, 20, 25, 35, 50, 75]` — PM de recompensa diaria segun dia de racha (1..7+) |
+| `TUTORIAL_STEPS` (en `tutorialSteps.ts`) | Array declarativo de pasos del tutorial interactivo — cada paso tiene `id`, `target?`, `route?`, `title`, `body`, `placement?` |
 | `FEEDBACK_DURATION_MS = 800` | Duracion del emoji flotante |
 | `REST_PAUSE_DURATION_MS = 5000` | Pausa de caminar al descansar |
 | `ROOM_THEMES` | Record<Personality, RoomTheme> — tema de habitacion por personalidad (colores pared/suelo, objetos) |

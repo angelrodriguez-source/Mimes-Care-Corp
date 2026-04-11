@@ -86,6 +86,9 @@
 - [x] **Recompensas diarias** por login — modal al entrar al dashboard con recompensa por racha (10/15/20/25/35/50/75 PM segun dia 1..7+). RPC `claim_daily_reward` atomica e idempotente. Migracion v5 (2026-04-10)
 - [ ] **Acciones premium** que suben mas la afinidad (necesarias para llegar al 100%)
 
+### Onboarding
+- [x] **Tutorial interactivo** — overlay global con spotlight y tooltip flotante que guia al usuario por dashboard y care screen. 10 pasos cubriendo bienvenida, mis mimes, compartir, cesion, adoptar, acciones de cuidado, stats y economia. Auto-arranque la primera vez (`profile.tutorial_completed = false`) o relanzable con el boton `?` del header. Persistencia via RPC `mark_tutorial_completed`. Migracion v6 (2026-04-11)
+
 ## Progreso del Roadmap (de ARCHITECTURE.md)
 
 | Fase | Estado | Notas |

@@ -10,13 +10,14 @@ App.vue
 │   ├── MimeCard.vue (x N)    — Tarjeta de Mime en dashboard
 │   │   └── MimeCharacter.vue  — Avatar del Mime (escala 0.45)
 │   └── DailyRewardModal.vue   — Modal de recompensa diaria (condicional)
-└── CareScreen.vue             — Pantalla de cuidado
-    ├── MimeRoom.vue           — Habitacion tematica (pared, suelo, objetos, dia/noche)
-    │   └── RoomObject.vue (x N) — Objeto interactivo/decorativo
-    ├── MimeCharacter.vue      — Mime en la habitacion
-    ├── StatBar.vue (x6)       — Barras de stats
-    └── MiniGameShell.vue      — Overlay de mini-juego
-        └── [Game].vue         — Juego individual
+├── CareScreen.vue             — Pantalla de cuidado
+│   ├── MimeRoom.vue           — Habitacion tematica (pared, suelo, objetos, dia/noche)
+│   │   └── RoomObject.vue (x N) — Objeto interactivo/decorativo
+│   ├── MimeCharacter.vue      — Mime en la habitacion
+│   ├── StatBar.vue (x6)       — Barras de stats
+│   └── MiniGameShell.vue      — Overlay de mini-juego
+│       └── [Game].vue         — Juego individual
+└── TutorialOverlay.vue        — Overlay global del tutorial (se monta una vez, sobrevive a cambios de ruta)
 ```
 
 ---
@@ -51,10 +52,10 @@ Pantalla de autenticacion con toggle login/registro.
 Hub principal despues de login. Usa `mimeService.loadDashboardData()` para cargar datos.
 
 **Secciones**:
-1. **Header sticky**: titulo "Mimes Care Corp", saludo, badge de PM, boton "Salir"
-2. **Mis Mimes**: MimeCard por cada mime propio. Boton "Compartir" si no tiene cuidador
+1. **Header sticky**: titulo "Mimes Care Corp", saludo, badge de PM (`data-tutorial="pm-badge"`), boton `?` (relanza tutorial), boton "Salir"
+2. **Mis Mimes** (`data-tutorial="my-mimes-section"`): MimeCard por cada mime propio. La primera card lleva `data-tutorial="share-btn-first"`. Boton "Compartir" si no tiene cuidador
 3. **Mimes a mi cargo**: MimeCard por cada mime que cuidas. Botones "Cuidar" y "Soltar"
-4. **Adoptar Mime**: Input de codigo de 6 chars + boton "Adoptar"
+4. **Adoptar Mime** (`data-tutorial="adopt-section"`): Input de codigo de 6 chars + boton "Adoptar"
 5. **Reset (pruebas)**: Boton dashed rojo que resetea todo (borrar antes de produccion)
 
 **Modal de compartir**: Muestra codigo generado con boton "Copiar". Se cierra pulsando fuera o "Cerrar".
@@ -62,6 +63,8 @@ Hub principal despues de login. Usa `mimeService.loadDashboardData()` para carga
 **Modal de renombrar**: Input con nombre actual, max 20 chars, Guardar/Cancelar. Solo para Mimes propios.
 
 **Modal de recompensa diaria** (`DailyRewardModal.vue`): Tras `loadData()` en `onMounted`, `computeNextDailyReward(userStore.profile)` comprueba si toca reclamo hoy (compara `last_daily_claim_date` con la fecha local calculada en `sv-SE` TZ del navegador). Si toca, se abre el modal en fase `offer`.
+
+**Tutorial interactivo**: Tras `loadData()`, si `profile.tutorial_completed === false` llama a `tutorialStore.start()` y SALTA la recompensa diaria ese ciclo (se pueden solapar overlays). Tambien expone `startTutorial()` en el boton `?` del header para relanzarlo manualmente. Si el tutorial ya esta activo al entrar (p. ej. se volvio desde CareScreen durante el recorrido), no hace nada. Ademas, tras `loadData()` se llama a `tutorialStore.setCareMimeId(myMimes[0]?.id ?? null)` para que el tutorial sepa a que Mime navegar cuando llegue al capitulo de cuidado.
 
 **Funciones principales**:
 - `handleShare(mimeId, nombre)` -> `generateShareCode()` RPC -> muestra modal
@@ -81,8 +84,8 @@ Pantalla principal de gameplay. Carga un Mime por su UUID desde la URL.
 - **Habitacion**: Componente `MimeRoom.vue` con tema por personalidad (aventurero=verde, tranquilo=lila, picaro=naranja). Incluye objetos interactivos y ciclo dia/noche. Mime se mueve horizontalmente (20%-80%)
 - **Crecimiento**: `mimeScale` se calcula segun dia de cesion (dia 1=40%, dia 7=100%). Botones debug +/- 10% para preview
 - **Cabecera** (z-index 30): Boton back, nombre del Mime, boton Reset, botones debug crecimiento, badge de PM
-- **Menu acciones** (izquierda, z-index 20): 6 FABs circulares con icono + coste. Deshabilitados si no hay PM suficiente
-- **Resumen de estado** (derecha, z-index 25): Afinidad, mood, media de stats. Click abre drawer
+- **Menu acciones** (izquierda, z-index 20, `data-tutorial="actions-menu"`): 6 FABs circulares con icono + coste. Deshabilitados si no hay PM suficiente
+- **Resumen de estado** (derecha, z-index 25, `data-tutorial="status-summary"`): Afinidad, mood, media de stats. Click abre drawer
 - **Stats drawer** (derecha, z-index 40): Panel deslizante con 6 StatBar
 - **Emoji flotante**: Aparece brevemente tras accion exitosa
 
@@ -241,3 +244,51 @@ Modal de recompensa diaria por login. Aparece una vez al dia en el dashboard (co
 - Fase `claimed`: mensaje de exito + boton "Cerrar"
 
 **Estilos scoped** autonomos (copia el lenguaje visual de los modales de DashboardView: `modal-overlay`, `modal-card`, fuente Baloo 2, color primario `#5c6bc0`, PM en naranja `#e65100`).
+
+### TutorialOverlay.vue
+**Archivo**: `src/components/TutorialOverlay.vue`
+
+Overlay global del tutorial interactivo. Se monta una sola vez en `App.vue` (fuera del `<RouterView />`) para sobrevivir a los cambios de ruta: el tutorial puede navegar del dashboard a CareScreen y volver sin reiniciarse.
+
+**Props / emits**: ninguno — lee todo del `tutorialStore` (Pinia).
+
+**Estado reactivo**:
+- `targetRect`: `DOMRect | null` — posicion del elemento destacado o null si no hay target
+- `tooltipStyle`: computed con `left`/`top` del tooltip (o `transform` centrado si no hay target)
+- `spotlightStyle`: computed con `left/top/width/height` del halo luminoso
+
+**Logica**:
+1. `watch(tutorial.currentStep, ...)` con `immediate: true` reacciona a cambios de paso
+2. Si el paso tiene `route`, `navigateIfNeeded()` hace `router.push` (solo si no estamos ya alli). Para `route: 'care'` usa `tutorial.careMimeId`
+3. `locateTarget()` hace hasta 40 intentos (nextTick + 100ms) de `document.querySelector('[data-tutorial="..."]')` — necesario porque CareScreen tiene un estado `loading` y el target no existe hasta que `loadMime()` termina
+4. Si el target esta fuera de pantalla, hace `scrollIntoView({ block: 'center' })` y recalcula
+5. Resize/scroll globales recalculan el rect
+
+**Template**:
+- Si hay spotlight: 4 bandas oscuras (`rgba(0,0,0,0.6)`) rodeando el target + halo luminoso con `box-shadow` pulsante morado (`#5c6bc0`)
+- Si no hay target o placement es `center`: un overlay completo oscuro + tooltip centrado
+- Tooltip: card blanca 300px con progreso "Paso N/M", titulo, body, boton "Saltar" + botones "Atras"/"Siguiente" (o "Terminar" en el ultimo paso)
+
+**Estilos scoped**. `z-index: 1000` para quedar sobre cualquier modal. `Teleport to="body"` para escapar stacking contexts.
+
+**Targets declarados en la app**:
+| data-tutorial | Donde | Paso del tutorial |
+|---------------|-------|-------------------|
+| `my-mimes-section` | DashboardView, seccion Mis Mimes | `my-mimes` |
+| `share-btn-first` | DashboardView, primera MimeCard (fallthrough attr) | `share` |
+| `adopt-section` | DashboardView, seccion Adoptar | `adoptar` |
+| `pm-badge` | DashboardView, badge de PM en header | `pm-dashboard` |
+| `actions-menu` | CareScreen, menu lateral de 6 FABs | `care-actions` |
+| `status-summary` | CareScreen, resumen derecho (afinidad/mood/avg) | `care-stats` |
+
+**Tutorial flow** (10 pasos, definidos en `src/constants/tutorialSteps.ts`):
+1. `welcome` — centrado, bienvenida
+2. `my-mimes` — spotlight en seccion Mis Mimes
+3. `share` — spotlight en primera card (explica que los cuida otro)
+4. `cesion-info` — centrado, explica cesion de 7 dias
+5. `adoptar` — spotlight en input de adopcion
+6. `care-intro` — centrado, transicion
+7. `care-actions` — navega a `/care/:id`, spotlight en FABs
+8. `care-stats` — spotlight en resumen derecho
+9. `pm-dashboard` — vuelve a dashboard, spotlight en PM badge
+10. `finale` — centrado, llama a `finish()` que persiste `tutorial_completed = true`

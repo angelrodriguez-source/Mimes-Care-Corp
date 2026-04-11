@@ -20,6 +20,7 @@ Extiende `auth.users` con datos del juego. Se crea automaticamente via trigger a
 | `puntos_mimes` | INTEGER | 100 | Moneda del juego |
 | `last_daily_claim_date` | DATE | null | Fecha local del ultimo reclamo de recompensa diaria (v5) |
 | `daily_streak` | INTEGER | 0 | Dias consecutivos de reclamo de recompensa diaria (v5) |
+| `tutorial_completed` | BOOLEAN | false | Si el usuario ya completo el tutorial interactivo (v6) |
 | `created_at` | TIMESTAMPTZ | now() | |
 
 ### `mimes`
@@ -164,6 +165,17 @@ Reclama la recompensa diaria por login. Atomico e idempotente (doble click no pa
 
 **Por que el cliente envia la fecha**: Postgres en Supabase esta en UTC. Para que "hoy" se calcule en la zona horaria del usuario, el frontend envia `new Date().toLocaleDateString('sv-SE')` (YYYY-MM-DD en TZ local).
 
+### `mark_tutorial_completed() -> VOID`
+Marca el tutorial interactivo como completado para el usuario autenticado.
+
+**Archivo**: `supabase/migration_v6_tutorial.sql`
+
+**Logica**:
+1. Lee `auth.uid()` (error si no hay sesion)
+2. `UPDATE profiles SET tutorial_completed = TRUE WHERE id = auth.uid()`
+
+Es idempotente (llamarlo N veces deja el campo en `true`) y se ejecuta con `SECURITY DEFINER` por consistencia con el resto de RPCs.
+
 ## Trigger: Registro automatico
 
 Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new_user()`:
@@ -182,3 +194,4 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 3. `supabase/migration_v3_one_per_owner.sql` — Actualiza claim_mime con restriccion 1-por-dueno
 4. `supabase/migration_v4_cesion.sql` — Anade cesion_start + actualiza claim_mime (pone cesion_start) y release_mime (limpia cesion_start)
 5. `supabase/migration_v5_daily_reward.sql` — Anade `last_daily_claim_date` + `daily_streak` a profiles y el RPC `claim_daily_reward`
+6. `supabase/migration_v6_tutorial.sql` — Anade `tutorial_completed` a profiles y el RPC `mark_tutorial_completed`

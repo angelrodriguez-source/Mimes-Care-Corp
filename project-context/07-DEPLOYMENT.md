@@ -78,6 +78,7 @@ npm run preview      # Preview del build local
    3. `supabase/migration_v3_one_per_owner.sql`
    4. `supabase/migration_v4_cesion.sql` (anade `cesion_start` + actualiza `claim_mime`/`release_mime`)
    5. `supabase/migration_v5_daily_reward.sql` (anade `last_daily_claim_date`/`daily_streak` + RPC `claim_daily_reward`)
+   6. `supabase/migration_v6_tutorial.sql` (anade `tutorial_completed` + RPC `mark_tutorial_completed`)
 
 3. **Auth > Settings**:
    - Email confirmations: activo
