@@ -18,6 +18,8 @@ Extiende `auth.users` con datos del juego. Se crea automaticamente via trigger a
 | `display_name` | TEXT | 'Jugador' | Nombre visible en el juego |
 | `avatar_url` | TEXT | null | No usado aun |
 | `puntos_mimes` | INTEGER | 100 | Moneda del juego |
+| `last_daily_claim_date` | DATE | null | Fecha local del ultimo reclamo de recompensa diaria (v5) |
+| `daily_streak` | INTEGER | 0 | Dias consecutivos de reclamo de recompensa diaria (v5) |
 | `created_at` | TIMESTAMPTZ | now() | |
 
 ### `mimes`
@@ -145,6 +147,23 @@ El cuidador suelta un Mime (deja de cuidarlo).
 1. Actualiza `cuidador_id = NULL`, `cesion_start = NULL` donde `id = p_mime_id AND cuidador_id = auth.uid()`
 2. Retorna `{ success: true }` o `{ error }`
 
+### `claim_daily_reward(p_client_date DATE) -> JSON`
+Reclama la recompensa diaria por login. Atomico e idempotente (doble click no paga dos veces).
+
+**Archivo**: `supabase/migration_v5_daily_reward.sql`
+
+**Logica**:
+1. `FOR UPDATE` lockea la fila del profile para evitar races
+2. Si `last_daily_claim_date = p_client_date` -> devuelve `{ already_claimed: true, reward: 0 }` sin modificar puntos
+3. Si el ultimo reclamo fue ayer (`p_client_date - INTERVAL '1 day'`) -> `daily_streak += 1` (cap a 7)
+4. Si hubo un hueco (> 1 dia) o nunca reclamo -> `daily_streak = 1`
+5. Si la fecha del cliente es anterior al ultimo reclamo -> devuelve `{ error: 'Fecha invalida' }` (reloj del cliente hacia atras)
+6. Calcula `reward` segun racha (array `[10, 15, 20, 25, 35, 50, 75]`, dia 7+ = 75 PM cap)
+7. Suma `puntos_mimes += reward` en SQL (no reutiliza `updateUserPoints` porque ese escribe valor absoluto y tendria race con otras operaciones)
+8. Retorna `{ already_claimed: false, streak, reward, puntos_mimes }`
+
+**Por que el cliente envia la fecha**: Postgres en Supabase esta en UTC. Para que "hoy" se calcule en la zona horaria del usuario, el frontend envia `new Date().toLocaleDateString('sv-SE')` (YYYY-MM-DD en TZ local).
+
 ## Trigger: Registro automatico
 
 Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new_user()`:
@@ -162,3 +181,4 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 2. `supabase/migration_v2_share.sql` — Anade share_code + RPCs
 3. `supabase/migration_v3_one_per_owner.sql` — Actualiza claim_mime con restriccion 1-por-dueno
 4. `supabase/migration_v4_cesion.sql` — Anade cesion_start + actualiza claim_mime (pone cesion_start) y release_mime (limpia cesion_start)
+5. `supabase/migration_v5_daily_reward.sql` — Anade `last_daily_claim_date` + `daily_streak` a profiles y el RPC `claim_daily_reward`

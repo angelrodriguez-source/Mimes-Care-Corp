@@ -100,8 +100,34 @@ Se calcula automaticamente a partir de los stats. Funcion: `deriveMood(stats)`.
 ### Como se ganan
 - Valor inicial al registrarse: **100 PM**
 - **Recompensa por cesion**: Al terminar una cesion de 7 dias, el cuidador recibe **afinidad × 100 PM** (ej: afinidad 75% = 75 PM)
+- **Recompensa diaria por login** (v5): Al abrir el dashboard por primera vez cada dia, modal con PM segun racha consecutiva (ver seccion abajo)
 - **Fuente secundaria** (pendiente): Tareas minimas (anuncios, etc.) — pocos PM
 - **El ciclo virtuoso**: Cuidas bien los de otros -> ganas PM al terminar cesion -> tienes PM para cuidar otros
+
+### Recompensa diaria por login
+
+Loop de retencion corto que complementa al loop semanal de cesiones.
+
+**Tabla de recompensas** (dia N consecutivo -> PM):
+
+| Dia | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|-----|---|---|---|---|---|---|----|
+| PM  | 10 | 15 | 20 | 25 | 35 | 50 | 75 |
+
+**Mecanica**:
+- Al abrir el dashboard, `computeNextDailyReward()` compara `profile.last_daily_claim_date` con la fecha local (TZ del navegador, via `toLocaleDateString('sv-SE')`)
+- Si no ha reclamado hoy, se abre el modal `DailyRewardModal` en fase `offer` mostrando la racha que se obtendria
+- Si el ultimo reclamo fue ayer, la racha suma 1 (cap a 7). Si hubo un hueco, se reinicia a 1
+- Al reclamar, el RPC `claim_daily_reward(p_client_date)` es atomico e idempotente (`FOR UPDATE` + comparacion de fecha) — doble click no paga dos veces
+- Tras el reclamo, `userStore.fetchProfile()` refresca el badge de PM del header automaticamente
+- Dia 7+ tiene cap: la racha sigue subiendo en DB pero la recompensa se queda en 75 PM
+
+**Archivos clave**:
+- Backend: `supabase/migration_v5_daily_reward.sql`
+- Servicio: `claimDailyReward()` en `mimeService.ts`
+- Constante: `DAILY_REWARDS` en `gameConstants.ts`
+- Componente: `DailyRewardModal.vue`
+- Integracion: `DashboardView.vue` (`onMounted` + `handleClaimDaily`)
 
 ## Afinidad
 

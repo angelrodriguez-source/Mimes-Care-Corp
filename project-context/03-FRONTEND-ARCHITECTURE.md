@@ -35,7 +35,7 @@ Pinia store con Composition API (`defineStore('user', () => {...})`).
 | Campo | Tipo | Descripcion |
 |-------|------|-------------|
 | `user` | `User \| null` | Usuario Supabase Auth (email, id) |
-| `profile` | `{ display_name, puntos_mimes } \| null` | Datos del juego |
+| `profile` | `{ display_name, puntos_mimes, last_daily_claim_date, daily_streak } \| null` | Datos del juego |
 | `loading` | `boolean` | True mientras se comprueba sesion inicial |
 
 ### Computed
@@ -122,6 +122,7 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `getCesionDay(cesionStart)` | Dia actual de cesion (1-7), usado para calcular escala de crecimiento |
 | `renameMime(mimeId, nombre)` | Actualiza nombre del Mime en Supabase |
 | `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM) |
+| `claimDailyReward()` | Llama al RPC `claim_daily_reward` enviando la fecha local del cliente (`toLocaleDateString('sv-SE')`). Devuelve `DailyRewardResult` con `{ already_claimed, streak, reward, puntos_mimes }` |
 
 **Tipos exportados**: `MimeFromDB` (incluye `cesion_start`), `MimeWithNames`, `CesionResult` — interfaces que mapean las columnas de la tabla.
 
@@ -179,6 +180,7 @@ Centraliza etiquetas, colores y configuraciones usadas en multiples componentes:
 | `INITIAL_PUNTOS = 100` | PM iniciales / de reset |
 | `CESION_DURATION_DAYS = 7` | Duracion de una cesion en dias |
 | `PM_PER_AFFINITY = 100` | Multiplicador: PM = afinidad * este valor |
+| `DAILY_REWARDS` | Array readonly `[10, 15, 20, 25, 35, 50, 75]` — PM de recompensa diaria segun dia de racha (1..7+) |
 | `FEEDBACK_DURATION_MS = 800` | Duracion del emoji flotante |
 | `REST_PAUSE_DURATION_MS = 5000` | Pausa de caminar al descansar |
 | `ROOM_THEMES` | Record<Personality, RoomTheme> — tema de habitacion por personalidad (colores pared/suelo, objetos) |

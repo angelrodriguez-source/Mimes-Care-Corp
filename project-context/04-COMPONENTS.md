@@ -7,8 +7,9 @@ App.vue
 ├── LoginView.vue              — Login / Registro
 ├── HomeView.vue               — Preview publica (explore) / Mis Mimes
 ├── DashboardView.vue          — Hub principal tras login
-│   └── MimeCard.vue (x N)    — Tarjeta de Mime en dashboard
-│       └── MimeCharacter.vue  — Avatar del Mime (escala 0.45)
+│   ├── MimeCard.vue (x N)    — Tarjeta de Mime en dashboard
+│   │   └── MimeCharacter.vue  — Avatar del Mime (escala 0.45)
+│   └── DailyRewardModal.vue   — Modal de recompensa diaria (condicional)
 └── CareScreen.vue             — Pantalla de cuidado
     ├── MimeRoom.vue           — Habitacion tematica (pared, suelo, objetos, dia/noche)
     │   └── RoomObject.vue (x N) — Objeto interactivo/decorativo
@@ -60,12 +61,15 @@ Hub principal despues de login. Usa `mimeService.loadDashboardData()` para carga
 
 **Modal de renombrar**: Input con nombre actual, max 20 chars, Guardar/Cancelar. Solo para Mimes propios.
 
+**Modal de recompensa diaria** (`DailyRewardModal.vue`): Tras `loadData()` en `onMounted`, `computeNextDailyReward(userStore.profile)` comprueba si toca reclamo hoy (compara `last_daily_claim_date` con la fecha local calculada en `sv-SE` TZ del navegador). Si toca, se abre el modal en fase `offer`.
+
 **Funciones principales**:
 - `handleShare(mimeId, nombre)` -> `generateShareCode()` RPC -> muestra modal
 - `handleClaim()` -> `claimMime()` RPC -> recarga datos
 - `handleRelease(mimeId)` -> `releaseMime()` RPC -> recarga datos
 - `handleReset()` -> `resetAllMimes()` -> recarga todo
 - `openRename(mimeId, nombre)` -> abre modal -> `renameMime()` -> recarga datos
+- `handleClaimDaily()` -> `claimDailyReward()` RPC -> `userStore.fetchProfile()` (actualiza badge del header) -> transiciona el modal a fase `claimed`
 - **Cesion check**: al cargar, `checkCesionExpiry()` se ejecuta para Mimes propios y a cargo. Si expirada, devuelve Mime + da PM al cuidador
 
 ### CareScreen.vue
@@ -213,3 +217,27 @@ Objeto posicionado absolutamente dentro de MimeRoom.
 **Emits**: interact (action) — solo si tiene action asociada
 
 Si tiene action, es clickable y muestra tooltip con label al hover/tap.
+
+### DailyRewardModal.vue
+**Archivo**: `src/components/DailyRewardModal.vue`
+
+Modal de recompensa diaria por login. Aparece una vez al dia en el dashboard (controlado por el padre).
+
+**Props**:
+| Prop | Tipo | Descripcion |
+|------|------|-------------|
+| `streakPreview` | number (1..7) | Dia de racha que se obtendria (o la racha confirmada en fase claimed) |
+| `rewardPreview` | number | PM de la recompensa |
+| `phase` | `'offer' \| 'claimed'` | Fase del modal: oferta inicial o celebracion post-reclamo |
+| `loading` | boolean | Deshabilita el boton mientras se reclama |
+
+**Emits**: `claim`, `close`
+
+**UI**:
+- Titulo "Recompensa diaria" (fase offer) o "Reclamado" (fase claimed)
+- Tracker visual de 7 circulos, los primeros `streakPreview` rellenos en naranja
+- Monto grande destacado (`+N PM`)
+- Fase `offer`: botones "Mas tarde" (cierra sin reclamar) y "Reclamar" (emite `claim`)
+- Fase `claimed`: mensaje de exito + boton "Cerrar"
+
+**Estilos scoped** autonomos (copia el lenguaje visual de los modales de DashboardView: `modal-overlay`, `modal-card`, fuente Baloo 2, color primario `#5c6bc0`, PM en naranja `#e65100`).
