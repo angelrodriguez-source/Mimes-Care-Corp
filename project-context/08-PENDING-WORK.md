@@ -83,7 +83,7 @@
 
 ### Economia
 - [ ] **Tienda de accesorios** con PM
-- [ ] **Recompensas diarias** por login
+- [x] **Recompensas diarias** por login — modal al entrar al dashboard con recompensa por racha (10/15/20/25/35/50/75 PM segun dia 1..7+). RPC `claim_daily_reward` atomica e idempotente. Migracion v5 (2026-04-10)
 - [ ] **Acciones premium** que suben mas la afinidad (necesarias para llegar al 100%)
 
 ## Progreso del Roadmap (de ARCHITECTURE.md)

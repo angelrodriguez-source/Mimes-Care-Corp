@@ -68,6 +68,10 @@ export const INITIAL_PUNTOS = 100
 export const CESION_DURATION_DAYS = 7
 export const PM_PER_AFFINITY = 100 // PM = afinidad × este valor
 
+// --- RECOMPENSA DIARIA ---
+// PM otorgados segun la racha de dias consecutivos (dia 1..7+). Dia 7 es el tope.
+export const DAILY_REWARDS = [10, 15, 20, 25, 35, 50, 75] as const
+
 // --- FEEDBACK DURATION ---
 export const FEEDBACK_DURATION_MS = 800
 export const REST_PAUSE_DURATION_MS = 5000
