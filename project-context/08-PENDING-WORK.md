@@ -1,5 +1,14 @@
 # 08 - Trabajo Pendiente, Issues Conocidos y Proximos Pasos
 
+## Ramas remotas por borrar
+
+Al borrar desde la CLI con `git push origin --delete` el servidor devuelve 403
+(restriccion del entorno de Claude Code). Hay que borrarlas manualmente desde
+la UI de GitHub en Settings > Branches o desde la vista de ramas del repo:
+
+- [ ] `claude/select-project-idea-KsKVH` — mergeada en main (feature: recompensas diarias por login, v5)
+- [ ] `claude/tutorial-interactivo` — mergeada en main (feature: tutorial interactivo con spotlight, v6)
+
 ## Inmediato (en progreso)
 
 ### Mini-juegos avanzados
