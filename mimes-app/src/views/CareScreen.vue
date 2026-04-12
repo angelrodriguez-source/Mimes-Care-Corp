@@ -10,7 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
 import StatBar from '../components/StatBar.vue'
-import { MiniGameShell, ACTION_GAMES, GAME_CONFIGS } from '../minigames'
+import { MiniGameShell, ACTION_GAMES, GAME_CONFIGS, ACTION_GAMES_ADVANCED, GAME_CONFIGS_ADVANCED } from '../minigames'
 import type { MiniGameResult, MiniGameConfig } from '../minigames'
 import { useUserStore } from '../stores/userStore'
 import { useCharacterMovement } from '../composables/useCharacterMovement'
@@ -140,9 +140,14 @@ function selectDifficulty(difficulty: 'easy' | 'advanced') {
   pendingAction.value = action
   pendingDifficulty.value = difficulty
 
-  // Lanzar mini-juego (por ahora ambos usan el mismo juego "facil")
-  activeGame.value = ACTION_GAMES[action]
-  activeGameConfig.value = GAME_CONFIGS[action]
+  // Lanzar mini-juego segun dificultad
+  if (difficulty === 'advanced' && ACTION_GAMES_ADVANCED[action]) {
+    activeGame.value = ACTION_GAMES_ADVANCED[action]!
+    activeGameConfig.value = GAME_CONFIGS_ADVANCED[action]!
+  } else {
+    activeGame.value = ACTION_GAMES[action]
+    activeGameConfig.value = GAME_CONFIGS[action]
+  }
 }
 
 function closePicker() {
@@ -336,10 +341,15 @@ onMounted(loadMime)
               <span class="picker-btn-label">Facil</span>
               <span class="picker-btn-desc">Minijuego clasico</span>
             </button>
-            <button class="picker-btn advanced" @click="selectDifficulty('advanced')">
+            <button
+              class="picker-btn advanced"
+              :class="{ 'picker-btn-disabled': !ACTION_GAMES_ADVANCED[pickerAction!] }"
+              :disabled="!ACTION_GAMES_ADVANCED[pickerAction!]"
+              @click="selectDifficulty('advanced')"
+            >
               <span class="picker-btn-icon">&#128293;</span>
               <span class="picker-btn-label">Avanzado</span>
-              <span class="picker-btn-desc">Proximamente</span>
+              <span class="picker-btn-desc">{{ ACTION_GAMES_ADVANCED[pickerAction!] ? 'Mas dificil' : 'Proximamente' }}</span>
             </button>
           </div>
           <button class="picker-cancel" @click="closePicker">Cancelar</button>
@@ -747,6 +757,15 @@ onMounted(loadMime)
   font-weight: 700;
   font-family: 'Baloo 2', cursive;
   cursor: pointer;
+}
+
+.picker-btn-disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+}
+
+.picker-btn-disabled:active {
+  transform: none;
 }
 
 .picker-cancel:active {
