@@ -225,6 +225,13 @@ export async function checkAbandon(mime: MimeFromDB): Promise<{ abandoned: boole
   if (!mime.cuidador_id) return { abandoned: false }
   if (!shouldAbandon(mime.afinidad)) return { abandoned: false }
 
+  // No abandonar durante las primeras 24h de cesion — el cuidador
+  // aun no ha tenido tiempo de interactuar y la afinidad empieza en 0
+  if (mime.cesion_start) {
+    const hoursElapsed = (Date.now() - new Date(mime.cesion_start).getTime()) / (1000 * 60 * 60)
+    if (hoursElapsed < 24) return { abandoned: false }
+  }
+
   await supabase
     .from('mimes')
     .update({ cuidador_id: null, share_code: null, afinidad: 0 })
