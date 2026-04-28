@@ -51,9 +51,9 @@ export const GAME_CONFIGS_ADVANCED: Partial<Record<CareAction, MiniGameConfig>> 
     duration: 20000,
   },
   limpiar: {
-    title: 'Fregar',
+    title: 'Campo minado',
     icon: '🧽',
-    instruction: 'Limpia sin tocar lo rojo!',
-    duration: 18000,
+    instruction: 'Limpia sin tocar las minas!',
+    duration: 20000,
   },
 }

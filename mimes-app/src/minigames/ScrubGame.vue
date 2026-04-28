@@ -2,10 +2,10 @@
 /**
  * ScrubGame.vue — Mini-juego avanzado de limpieza
  *
- * Mecanica: la pantalla esta cubierta de suciedad (grid de celdas).
- * Algunas celdas son toxicas (rojas) — si las tocas, pierdes.
- * El jugador debe limpiar el 90%+ de las celdas seguras sin
- * tocar ninguna toxica. Hay que pensar el recorrido.
+ * Mecanica: pantalla sucia con minas escondidas (💣).
+ * Arrastra la esponja para limpiar sin tocar las minas.
+ * Grid fino (20x28) con minas espaciadas para que sea
+ * dificil pero siempre posible.
  */
 import { ref, computed, watch, onUnmounted } from 'vue'
 
@@ -14,14 +14,15 @@ const props = defineProps<{
   onComplete: (success: boolean) => void
 }>()
 
-const COLS = 10
-const ROWS = 14
+const COLS = 20
+const ROWS = 28
 const TOTAL_CELLS = COLS * ROWS
-const TOXIC_PERCENT = 15
-const WIN_PERCENT = 90
-const SPONGE_RADIUS = 1.5
+const MINE_COUNT = 25
+const MIN_MINE_DIST = 3.5
+const WIN_PERCENT = 85
+const SPONGE_RADIUS = 1.2
 
-type CellType = 'dirt' | 'toxic'
+type CellType = 'dirt' | 'mine'
 
 const containerRef = ref<HTMLElement | null>(null)
 const cellTypes = ref<CellType[]>([])
@@ -30,7 +31,7 @@ const spongeX = ref(50)
 const spongeY = ref(50)
 const spongeVisible = ref(false)
 const done = ref(false)
-const hitToxic = ref(false)
+const hitMine = ref(false)
 
 const safeCells = computed(() => cellTypes.value.filter(c => c === 'dirt').length)
 const cleanedSafe = computed(() => {
@@ -46,35 +47,31 @@ const cleanedPercent = computed(() =>
 
 function generateLevel() {
   const types: CellType[] = new Array(TOTAL_CELLS).fill('dirt')
-  const toxicCount = Math.round(TOTAL_CELLS * TOXIC_PERCENT / 100)
+  const mines: { col: number; row: number }[] = []
 
-  // Place toxic cells avoiding clusters too tight
   let placed = 0
-  const maxAttempts = toxicCount * 20
   let attempts = 0
-  while (placed < toxicCount && attempts < maxAttempts) {
+  while (placed < MINE_COUNT && attempts < 2000) {
     attempts++
-    const idx = Math.floor(Math.random() * TOTAL_CELLS)
-    if (types[idx] === 'toxic') continue
+    const col = Math.floor(Math.random() * COLS)
+    const row = Math.floor(Math.random() * ROWS)
+    const idx = row * COLS + col
+    if (types[idx] === 'mine') continue
 
-    // Check neighbors — don't place toxic next to another toxic too often
-    const col = idx % COLS
-    const row = Math.floor(idx / COLS)
-    let toxicNeighbors = 0
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue
-        const nr = row + dr
-        const nc = col + dc
-        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
-          if (types[nr * COLS + nc] === 'toxic') toxicNeighbors++
-        }
+    // Ensure minimum distance from all other mines
+    let tooClose = false
+    for (const m of mines) {
+      const dx = col - m.col
+      const dy = row - m.row
+      if (dx * dx + dy * dy < MIN_MINE_DIST * MIN_MINE_DIST) {
+        tooClose = true
+        break
       }
     }
-    // Allow max 1 toxic neighbor to avoid impossible-to-navigate clusters
-    if (toxicNeighbors > 1) continue
+    if (tooClose) continue
 
-    types[idx] = 'toxic'
+    types[idx] = 'mine'
+    mines.push({ col, row })
     placed++
   }
 
@@ -93,11 +90,10 @@ function processAt(pxPercent: number, pyPercent: number) {
       if (dx * dx + dy * dy > SPONGE_RADIUS * SPONGE_RADIUS) continue
 
       const idx = r * COLS + c
-      if (cellTypes.value[idx] === 'toxic') {
-        // Hit toxic — lose!
+      if (cellTypes.value[idx] === 'mine') {
         if (!done.value) {
           done.value = true
-          hitToxic.value = true
+          hitMine.value = true
           props.onComplete(false)
         }
         return
@@ -168,7 +164,7 @@ watch(() => props.active, (val) => {
   if (val) {
     generateLevel()
     done.value = false
-    hitToxic.value = false
+    hitMine.value = false
     spongeVisible.value = false
   }
 }, { immediate: true })
@@ -191,7 +187,7 @@ onUnmounted(() => {
     @mouseup="onPointerEnd"
     @mouseleave="onPointerEnd"
   >
-    <!-- Clean background (visible where cells are cleaned) -->
+    <!-- Clean background -->
     <div class="clean-bg"></div>
 
     <!-- Dirt grid overlay -->
@@ -202,9 +198,11 @@ onUnmounted(() => {
         class="dirt-cell"
         :class="{
           cleaned: cleaned[idx],
-          toxic: type === 'toxic',
+          mine: type === 'mine',
         }"
-      ></div>
+      >
+        <span v-if="type === 'mine'" class="mine-icon">💣</span>
+      </div>
     </div>
 
     <!-- Sponge cursor -->
@@ -216,14 +214,14 @@ onUnmounted(() => {
       🧽
     </div>
 
-    <!-- Hit toxic feedback -->
-    <div v-if="hitToxic" class="toxic-flash">
-      <span class="toxic-icon">☠️</span>
-      <span class="toxic-text">Tocaste toxico!</span>
+    <!-- Hit mine feedback -->
+    <div v-if="hitMine" class="mine-flash">
+      <span class="mine-boom">💥</span>
+      <span class="mine-text">Pisaste una mina!</span>
     </div>
 
     <!-- Progress display -->
-    <div class="progress-display" v-if="active && !hitToxic">
+    <div class="progress-display" v-if="active && !hitMine">
       <div class="progress-bar-bg">
         <div
           class="progress-bar-fill"
@@ -234,16 +232,9 @@ onUnmounted(() => {
       <span class="progress-text">{{ cleanedPercent }}%</span>
     </div>
 
-    <!-- Legend -->
-    <div class="legend" v-if="active && cleanedSafe === 0 && !hitToxic">
-      <div class="legend-item">
-        <span class="legend-swatch dirt-swatch"></span>
-        <span>Limpia esto</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-swatch toxic-swatch"></span>
-        <span>No tocar!</span>
-      </div>
+    <!-- Hint -->
+    <div class="hint" v-if="active && cleanedSafe === 0 && !hitMine">
+      Limpia sin tocar las 💣
     </div>
   </div>
 </template>
@@ -269,15 +260,16 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(14, 1fr);
+  grid-template-columns: repeat(20, 1fr);
+  grid-template-rows: repeat(28, 1fr);
   z-index: 1;
 }
 
 .dirt-cell {
   background: #6d4c41;
-  border: 0.5px solid rgba(0, 0, 0, 0.08);
-  transition: opacity 0.2s ease-out;
+  border: 0.5px solid rgba(0, 0, 0, 0.06);
+  transition: opacity 0.15s ease-out;
+  position: relative;
 }
 
 .dirt-cell:nth-child(odd) {
@@ -292,11 +284,17 @@ onUnmounted(() => {
   background: #795548;
 }
 
-.dirt-cell.toxic {
-  background: #c62828 !important;
-  border-color: rgba(198, 40, 40, 0.3);
-  box-shadow: inset 0 0 8px rgba(255, 0, 0, 0.3);
-  animation: toxic-pulse 1.5s ease-in-out infinite;
+.dirt-cell.mine {
+  background: #5d4037;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mine-icon {
+  font-size: 12px;
+  line-height: 1;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
 }
 
 .dirt-cell.cleaned {
@@ -304,15 +302,10 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-@keyframes toxic-pulse {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 1; }
-}
-
 /* --- SPONGE --- */
 .sponge {
   position: absolute;
-  font-size: 44px;
+  font-size: 36px;
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 10;
@@ -325,8 +318,8 @@ onUnmounted(() => {
   100% { transform: translate(-50%, -50%) rotate(5deg); }
 }
 
-/* --- TOXIC HIT --- */
-.toxic-flash {
+/* --- MINE HIT --- */
+.mine-flash {
   position: absolute;
   inset: 0;
   z-index: 30;
@@ -334,17 +327,17 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(198, 40, 40, 0.6);
+  background: rgba(40, 40, 40, 0.7);
   animation: flash-in 0.3s ease;
 }
 
-.toxic-icon {
-  font-size: 64px;
-  animation: shake 0.4s ease;
+.mine-boom {
+  font-size: 72px;
+  animation: boom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.toxic-text {
-  color: white;
+.mine-text {
+  color: #ff7043;
   font-size: 22px;
   font-weight: 700;
   margin-top: 8px;
@@ -356,12 +349,10 @@ onUnmounted(() => {
   100% { opacity: 1; }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-8px); }
-  40% { transform: translateX(8px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+@keyframes boom {
+  0% { transform: scale(0) rotate(-30deg); }
+  60% { transform: scale(1.3) rotate(10deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 
 /* --- PROGRESS --- */
@@ -407,42 +398,23 @@ onUnmounted(() => {
   text-align: right;
 }
 
-/* --- LEGEND --- */
-.legend {
+/* --- HINT --- */
+.hint {
   position: absolute;
-  bottom: 20px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 16px;
-  z-index: 20;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 8px 16px;
-  border-radius: 16px;
-  backdrop-filter: blur(4px);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: white;
-  font-size: 12px;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
   font-weight: 700;
+  z-index: 15;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  animation: hint-pulse 1.5s ease-in-out infinite;
 }
 
-.legend-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-}
-
-.dirt-swatch {
-  background: #6d4c41;
-}
-
-.toxic-swatch {
-  background: #c62828;
-  box-shadow: 0 0 4px rgba(255, 0, 0, 0.5);
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
 }
 </style>
