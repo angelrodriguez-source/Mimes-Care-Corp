@@ -54,6 +54,6 @@ export const GAME_CONFIGS_ADVANCED: Partial<Record<CareAction, MiniGameConfig>> 
     title: 'Campo minado',
     icon: '🧽',
     instruction: 'Limpia sin tocar las minas!',
-    duration: 20000,
+    duration: 25000,
   },
 }
