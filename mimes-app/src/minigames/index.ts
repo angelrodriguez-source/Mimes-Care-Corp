@@ -53,7 +53,7 @@ export const GAME_CONFIGS_ADVANCED: Partial<Record<CareAction, MiniGameConfig>> 
   limpiar: {
     title: 'Fregar',
     icon: '🧽',
-    instruction: 'Limpia el 90% de la pantalla!',
-    duration: 15000,
+    instruction: 'Limpia sin tocar lo rojo!',
+    duration: 18000,
   },
 }
