@@ -24,6 +24,7 @@ import LoveGame from './LoveGame.vue'
 import RestGame from './RestGame.vue'
 import DressGame from './DressGame.vue'
 import BasketGame from './BasketGame.vue'
+import ScrubGame from './ScrubGame.vue'
 
 /** Mapeo acción → componente del mini-juego (facil) */
 export const ACTION_GAMES: Record<CareAction, Component> = {
@@ -38,6 +39,7 @@ export const ACTION_GAMES: Record<CareAction, Component> = {
 /** Mapeo acción → componente del mini-juego (avanzado) */
 export const ACTION_GAMES_ADVANCED: Partial<Record<CareAction, Component>> = {
   jugar: BasketGame,
+  limpiar: ScrubGame,
 }
 
 /** Configuraciones de mini-juegos avanzados */
@@ -47,5 +49,11 @@ export const GAME_CONFIGS_ADVANCED: Partial<Record<CareAction, MiniGameConfig>> 
     icon: '🏀',
     instruction: 'Encesta 3 de 5 tiros!',
     duration: 20000,
+  },
+  limpiar: {
+    title: 'Fregar',
+    icon: '🧽',
+    instruction: 'Limpia el 90% de la pantalla!',
+    duration: 15000,
   },
 }
