@@ -16,7 +16,7 @@ import { useUserStore } from '../stores/userStore'
 import { useTutorialStore } from '../stores/tutorialStore'
 import { useSfx } from '../composables/useSfx'
 import { toStats, copyToClipboard } from '../utils/helpers'
-import { DAILY_REWARDS } from '../constants/gameConstants'
+import { DAILY_REWARDS, ACCESSORIES } from '../constants/gameConstants'
 import {
   loadDashboardData,
   generateShareCode,
@@ -31,6 +31,8 @@ import {
   claimDailyReward,
   sendMimeMessage,
   subscribeMimesChanges,
+  getOwnedAccessories,
+  buyAccessory,
   type MimeWithNames,
   type MimeFromDB,
 } from '../services/mimeService'
@@ -52,6 +54,10 @@ const renameInput = ref('')
 const messageModal = ref<{ mimeId: string; nombre: string; cuidador: string } | null>(null)
 const messageInput = ref('')
 const messageSending = ref(false)
+const shopOpen = ref(false)
+const ownedAccessories = ref<string[]>([])
+const shopBuying = ref('')
+const shopMessage = ref('')
 const dailyModal = ref<{
   streakPreview: number
   rewardPreview: number
@@ -268,6 +274,35 @@ async function handleSendMessage() {
   setTimeout(() => (claimMessage.value = ''), 4000)
 }
 
+// --- TIENDA DE ACCESORIOS ---
+
+async function openShop() {
+  shopMessage.value = ''
+  shopOpen.value = true
+  if (userStore.user) {
+    ownedAccessories.value = await getOwnedAccessories(userStore.user.id)
+  }
+}
+
+async function handleBuy(accessoryId: string, price: number) {
+  if (!userStore.user) return
+  if ((userStore.profile?.puntos_mimes ?? 0) < price) return
+
+  shopBuying.value = accessoryId
+  const { error } = await buyAccessory(
+    userStore.user.id, accessoryId, price, ownedAccessories.value)
+  shopBuying.value = ''
+
+  if (error) {
+    shopMessage.value = error
+    return
+  }
+  ownedAccessories.value = [...ownedAccessories.value, accessoryId]
+  shopMessage.value = 'Comprado! Equipalo desde la pantalla de cuidado'
+  sfx.play('coin')
+  await userStore.fetchProfile()
+}
+
 // --- REALTIME: ver en vivo los cambios de mis Mimes ---
 
 let unsubscribeRealtime: (() => void) | null = null
@@ -334,6 +369,7 @@ onUnmounted(() => {
           <span class="puntos-heart">&#9829;</span>
           <span>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</span>
         </div>
+        <button class="help-btn" title="Tienda de accesorios" @click="openShop">🛍️</button>
         <button
           class="help-btn"
           :title="sfx.enabled.value ? 'Silenciar sonidos' : 'Activar sonidos'"
@@ -365,6 +401,7 @@ onUnmounted(() => {
             :afinidad="mime.afinidad"
             :cuidador-name="mime.cuidador_name || null"
             :days-left="getCesionDaysLeft(mime.cesion_start)"
+            :accessory="mime.accessory"
             mode="own"
             :data-tutorial="idx === 0 ? 'share-btn-first' : undefined"
             @share="handleShare(mime.id, mime.nombre)"
@@ -393,6 +430,7 @@ onUnmounted(() => {
             :afinidad="mime.afinidad"
             :dueno-name="mime.dueno_name || null"
             :days-left="getCesionDaysLeft(mime.cesion_start)"
+            :accessory="mime.accessory"
             mode="caring"
             @care="goToCare(mime.id)"
             @release="handleRelease(mime.id)"
@@ -462,6 +500,35 @@ onUnmounted(() => {
           <button class="modal-close" @click="renameModal = null">Cancelar</button>
           <button class="claim-btn" :disabled="!renameInput.trim()" @click="handleRename">Guardar</button>
         </div>
+      </div>
+    </div>
+
+    <!-- SHOP MODAL -->
+    <div v-if="shopOpen" class="modal-overlay" @click.self="shopOpen = false">
+      <div class="modal-card shop-card">
+        <h3>🛍️ Tienda de accesorios</h3>
+        <p class="modal-desc">
+          Tienes <strong>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</strong>.
+          Lo que compres se equipa desde la pantalla de cuidado.
+        </p>
+        <div class="shop-list">
+          <div v-for="item in ACCESSORIES" :key="item.id" class="shop-item">
+            <span class="shop-emoji">{{ item.emoji }}</span>
+            <div class="shop-info">
+              <span class="shop-label">{{ item.label }}</span>
+              <span class="shop-price">{{ item.price }} PM</span>
+            </div>
+            <button
+              v-if="!ownedAccessories.includes(item.id)"
+              class="claim-btn shop-buy"
+              :disabled="shopBuying === item.id || (userStore.profile?.puntos_mimes ?? 0) < item.price"
+              @click="handleBuy(item.id, item.price)"
+            >{{ shopBuying === item.id ? '...' : 'Comprar' }}</button>
+            <span v-else class="shop-owned">✓ Tuyo</span>
+          </div>
+        </div>
+        <p v-if="shopMessage" class="claim-msg">{{ shopMessage }}</p>
+        <button class="modal-close" @click="shopOpen = false">Cerrar</button>
       </div>
     </div>
 
@@ -838,6 +905,51 @@ onUnmounted(() => {
   resize: none;
 }
 .message-textarea:focus { border-color: #5c6bc0; }
+
+/* TIENDA */
+.shop-card { text-align: left; }
+.shop-card h3 { text-align: center; }
+.shop-card .modal-desc { text-align: center; }
+
+.shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f9ff;
+  border-radius: 12px;
+}
+
+.shop-emoji { font-size: 28px; line-height: 1; }
+
+.shop-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-label { font-size: 14px; font-weight: 700; color: #333; }
+.shop-price { font-size: 12px; color: #e65100; font-weight: 700; }
+
+.shop-buy { padding: 6px 14px; font-size: 12px; }
+
+.shop-owned {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.shop-card .modal-close {
+  display: block;
+  margin: 0 auto;
+}
 
 .rename-actions {
   display: flex;

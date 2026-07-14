@@ -16,6 +16,8 @@ const props = defineProps<{
   colorTheme: 'celeste' | 'lila' | 'melocoton'
   mood?: 'feliz' | 'euforico' | 'triste' | 'dormido' | 'hambriento' | ''
   scale?: number
+  /** Emoji del accesorio equipado (🎩, 👑...), null/undefined = ninguno */
+  accessory?: string | null
 }>()
 
 // --- HAIR TYPE MAP ---
@@ -147,6 +149,9 @@ onUnmounted(() => {
         <div class="strand"></div>
         <div class="strand"></div>
       </div>
+
+      <!-- Accesorio equipado (tienda) -->
+      <div v-if="accessory" class="accessory">{{ accessory }}</div>
 
       <!-- Cuerpo + barriga -->
       <div class="body">
@@ -328,6 +333,18 @@ onUnmounted(() => {
 }
 
 /* === HAIR === */
+.accessory {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-10deg);
+  font-size: 40px;
+  line-height: 1;
+  z-index: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+
 .hair {
   position: absolute;
   top: 20px;

@@ -24,6 +24,8 @@ import {
   fetchUnreadMessages,
   markMessageRead,
   subscribeMimeMessages,
+  getOwnedAccessories,
+  equipAccessory,
   type MimeMessage,
 } from '../services/mimeService'
 import { toStats } from '../utils/helpers'
@@ -36,6 +38,7 @@ import {
   REST_PAUSE_DURATION_MS,
   ADVANCED_REWARD_MULTIPLIER,
   ADVANCED_AFFINITY_WEIGHT,
+  getAccessory,
 } from '../constants/gameConstants'
 import { useSfx } from '../composables/useSfx'
 import {
@@ -101,6 +104,28 @@ const pendingDifficulty = ref<'easy' | 'advanced'>('easy')
 const { mimeX, mimeDirection, isWalking, startWalking, stopWalking, pauseWalking } =
   useCharacterMovement()
 
+// --- ACCESORIOS ---
+const equippedAccessory = ref<string | null>(null)
+const showAccessoryPicker = ref(false)
+const myAccessories = ref<string[]>([])
+
+const accessoryEmoji = computed(() => getAccessory(equippedAccessory.value)?.emoji ?? null)
+
+async function openAccessoryPicker() {
+  if (!userStore.user) return
+  myAccessories.value = await getOwnedAccessories(userStore.user.id)
+  showAccessoryPicker.value = true
+}
+
+async function handleEquip(accessoryId: string | null) {
+  showAccessoryPicker.value = false
+  if (accessoryId === equippedAccessory.value) return
+  equippedAccessory.value = accessoryId
+  playSfx('tap')
+  const { error: eqErr } = await equipAccessory(mimeId.value, accessoryId)
+  if (eqErr) showSaveError()
+}
+
 // --- MENSAJES DEL DUENO (el Mime los "dice" al cuidador) ---
 const pendingMessages = ref<MimeMessage[]>([])
 const currentMessage = computed(() => pendingMessages.value[0] ?? null)
@@ -146,6 +171,8 @@ async function loadMime() {
   // Crecimiento segun dia de cesion: dia 1=40%, dia 2=50%... dia 6-7=100%
   const day = getCesionDay(decayed.cesion_start)
   mimeScale.value = Math.min(1.0, 0.3 + day * 0.1)
+
+  equippedAccessory.value = decayed.accessory ?? null
 
   loading.value = false
   startWalking()
@@ -292,6 +319,9 @@ onUnmounted(() => {
       <header class="care-header">
         <button class="back-btn" @click="goBack">&#8592;</button>
         <h1 class="mime-name">{{ mimeName }}</h1>
+        <button class="accessory-btn" title="Accesorios" @click="openAccessoryPicker">
+          {{ accessoryEmoji ?? '🎀' }}
+        </button>
         <button class="reset-care-btn" @click="handleReset">Reset</button>
         <button class="growth-debug-btn" @click="mimeScale = Math.max(0.4, +(mimeScale - 0.1).toFixed(1))">-</button>
         <span class="growth-label">{{ Math.round(mimeScale * 100) }}%</span>
@@ -322,6 +352,7 @@ onUnmounted(() => {
             :color-theme="colorTheme"
             :mood="mood"
             :scale="mimeScale"
+            :accessory="accessoryEmoji"
           />
         </div>
 
@@ -421,6 +452,37 @@ onUnmounted(() => {
           </button>
         </div>
         <button class="picker-cancel" @click="closePicker">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- SELECTOR DE ACCESORIO -->
+    <div v-if="showAccessoryPicker" class="picker-overlay" @click.self="showAccessoryPicker = false">
+      <div class="picker-card">
+        <h3 class="picker-title">🎀 Accesorios</h3>
+        <p class="picker-subtitle">
+          {{ myAccessories.length ? 'Elige que lleva puesto' : 'Compra accesorios en la tienda del inicio' }}
+        </p>
+        <div class="accessory-options">
+          <button
+            class="accessory-option"
+            :class="{ selected: !equippedAccessory }"
+            @click="handleEquip(null)"
+          >
+            <span class="accessory-option-emoji">🚫</span>
+            <span class="accessory-option-label">Nada</span>
+          </button>
+          <button
+            v-for="id in myAccessories"
+            :key="id"
+            class="accessory-option"
+            :class="{ selected: equippedAccessory === id }"
+            @click="handleEquip(id)"
+          >
+            <span class="accessory-option-emoji">{{ getAccessory(id)?.emoji }}</span>
+            <span class="accessory-option-label">{{ getAccessory(id)?.label }}</span>
+          </button>
+        </div>
+        <button class="picker-cancel" @click="showAccessoryPicker = false">Cerrar</button>
       </div>
     </div>
 
@@ -553,6 +615,18 @@ onUnmounted(() => {
 
 .puntos-icon { color: #ff7043; font-size: 14px; }
 .puntos-value { font-size: 14px; font-weight: 700; color: #e65100; }
+
+.accessory-btn {
+  background: #fce4ec;
+  border: 1.5px solid #f8bbd0;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-right: 8px;
+  line-height: 1.4;
+}
+.accessory-btn:active { background: #f8bbd0; }
 
 /* === MIME EN LA HABITACION === */
 .mime-area {
@@ -882,6 +956,39 @@ onUnmounted(() => {
   font-size: 11px;
   color: #999;
 }
+
+/* Selector de accesorio */
+.accessory-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.accessory-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 72px;
+  padding: 10px 4px;
+  border: 2.5px solid #e0e0e0;
+  border-radius: 14px;
+  background: white;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
+  transition: all 0.2s;
+}
+
+.accessory-option:active { transform: scale(0.94); }
+
+.accessory-option.selected {
+  border-color: #5c6bc0;
+  background: #e8eaf6;
+}
+
+.accessory-option-emoji { font-size: 26px; line-height: 1.2; }
+.accessory-option-label { font-size: 11px; font-weight: 700; color: #555; }
 
 .picker-cancel {
   margin-top: 16px;

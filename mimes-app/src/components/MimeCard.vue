@@ -9,7 +9,7 @@ import { computed } from 'vue'
 import MimeCharacter from './MimeCharacter.vue'
 import { deriveMood, getStatsAverage } from '../models/MimeModel'
 import type { Personality, ColorTheme, MimeStats } from '../models/MimeModel'
-import { getMoodLabel, getHealthColor, PERSONALITY_LABELS } from '../constants/gameConstants'
+import { getMoodLabel, getHealthColor, PERSONALITY_LABELS, getAccessory } from '../constants/gameConstants'
 
 const props = defineProps<{
   id: string
@@ -21,6 +21,7 @@ const props = defineProps<{
   cuidadorName?: string | null
   duenoName?: string | null
   daysLeft?: number | null
+  accessory?: string | null
   mode: 'own' | 'caring'
 }>()
 
@@ -47,6 +48,7 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
         :color-theme="colorTheme"
         :mood="mood"
         :scale="0.45"
+        :accessory="getAccessory(accessory)?.emoji ?? null"
       />
     </div>
 

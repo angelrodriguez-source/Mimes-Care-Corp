@@ -29,6 +29,7 @@ export interface MimeFromDB {
   share_code: string | null
   last_decay_at?: string
   cesion_start?: string | null
+  accessory?: string | null
   created_at?: string
 }
 
@@ -512,4 +513,52 @@ export function subscribeMimeMessages(
     .subscribe()
 
   return () => { void supabase.removeChannel(channel) }
+}
+
+// --- TIENDA DE ACCESORIOS (requiere columnas de la migracion v7) ---
+
+/** Accesorios que el usuario ya compro (ids del catalogo) */
+export async function getOwnedAccessories(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('owned_accessories')
+    .eq('id', userId)
+    .single()
+  // Pre-v7 la columna no existe: tratamos como "sin accesorios"
+  if (error) return []
+  return (data?.owned_accessories ?? []) as string[]
+}
+
+/** Compra un accesorio: cobra el precio y lo anade a la coleccion */
+export async function buyAccessory(
+  userId: string,
+  accessoryId: string,
+  price: number,
+  owned: string[],
+): Promise<{ error: string | null }> {
+  if (owned.includes(accessoryId)) return { error: 'Ya lo tienes' }
+
+  const { error: payErr } = await addPoints(userId, -price)
+  if (payErr) return { error: payErr }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ owned_accessories: [...owned, accessoryId] })
+    .eq('id', userId)
+
+  if (error) {
+    // Devolver los PM si no se pudo guardar la compra
+    await addPoints(userId, price)
+    return { error: error.message }
+  }
+  return { error: null }
+}
+
+/** Equipa (o quita, con null) un accesorio a un Mime */
+export async function equipAccessory(mimeId: string, accessoryId: string | null) {
+  const { error } = await supabase
+    .from('mimes')
+    .update({ accessory: accessoryId })
+    .eq('id', mimeId)
+  return { error: error?.message ?? null }
 }
