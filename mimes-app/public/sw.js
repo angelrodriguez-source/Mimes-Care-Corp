@@ -1,0 +1,59 @@
+/**
+ * sw.js — Service Worker de Mimes Care Corp
+ *
+ * Estrategia conservadora para no servir versiones viejas:
+ *  - Navegaciones (HTML): red primero, cache como fallback offline
+ *  - Assets con hash de Vite (/assets/): cache primero (son inmutables)
+ *  - Resto: red con fallback a cache
+ */
+const CACHE = 'mimes-v1'
+
+self.addEventListener('install', (event) => {
+  // Activar el SW nuevo sin esperar a que se cierren las pestanas viejas
+  self.skipWaiting()
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(['./', './manifest.webmanifest', './icon.svg'])),
+  )
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
+    ).then(() => self.clients.claim()),
+  )
+})
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  if (request.method !== 'GET') return
+
+  const url = new URL(request.url)
+  // No interceptar llamadas a Supabase ni a otros origenes
+  if (url.origin !== self.location.origin) return
+
+  // Assets inmutables de Vite: cache primero
+  if (url.pathname.includes('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(
+        (hit) => hit ?? fetch(request).then((res) => {
+          const copy = res.clone()
+          caches.open(CACHE).then((cache) => cache.put(request, copy))
+          return res
+        }),
+      ),
+    )
+    return
+  }
+
+  // Navegaciones y demas: red primero, cache si estamos offline
+  event.respondWith(
+    fetch(request)
+      .then((res) => {
+        const copy = res.clone()
+        caches.open(CACHE).then((cache) => cache.put(request, copy))
+        return res
+      })
+      .catch(() => caches.match(request).then((hit) => hit ?? caches.match('./'))),
+  )
+})

@@ -40,8 +40,17 @@ npm run dev          # Dev server (hot reload) en http://localhost:5173
 npm run build        # Type-check + build
 npm run build-only   # Solo build (sin type-check)
 npm run type-check   # Solo vue-tsc --build
+npm run test         # Tests unitarios (Vitest) — MimeModel
 npm run preview      # Preview del build local
 ```
+
+### PWA
+
+La app es instalable como PWA (2026-07-14):
+- `public/manifest.webmanifest` — nombre, colores, `display: standalone`, icono SVG
+- `public/icon.svg` — icono de la app (carita de Mime)
+- `public/sw.js` — service worker: red-primero para HTML (no sirve versiones viejas), cache-primero para `/assets/` (inmutables por hash de Vite). No intercepta llamadas a Supabase
+- El SW se registra en `main.ts` solo en produccion (`import.meta.env.PROD`)
 
 ### Dependencias principales
 
@@ -79,6 +88,7 @@ npm run preview      # Preview del build local
    4. `supabase/migration_v4_cesion.sql` (anade `cesion_start` + actualiza `claim_mime`/`release_mime`)
    5. `supabase/migration_v5_daily_reward.sql` (anade `last_daily_claim_date`/`daily_streak` + RPC `claim_daily_reward`)
    6. `supabase/migration_v6_tutorial.sql` (anade `tutorial_completed` + RPC `mark_tutorial_completed`)
+   7. `supabase/migration_v7_social.sql` (RPCs `add_points`/`expire_cesion`, accesorios, mensajeria, realtime)
 
 3. **Auth > Settings**:
    - Email confirmations: activo

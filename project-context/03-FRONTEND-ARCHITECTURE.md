@@ -123,6 +123,15 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM). Devuelve `{ error: string \| null }`; CareScreen muestra un toast si fallo |
 | `claimDailyReward()` | Llama al RPC `claim_daily_reward` enviando la fecha local del cliente (`toLocaleDateString('sv-SE')`). Devuelve `DailyRewardResult` con `{ already_claimed, streak, reward, puntos_mimes }` |
 | `markTutorialCompleted()` | Llama al RPC `mark_tutorial_completed` para persistir que el usuario ya completo el tutorial. Devuelve `{ error? }` |
+| `addPoints(userId, delta)` | Delta atomico de PM via RPC `add_points` (v7), con fallback a lectura+escritura absoluta si el RPC no existe |
+| `sendMimeMessage(mimeId, content)` | Inserta mensaje `sender_type='dueno'` (max 200 chars) |
+| `fetchUnreadMessages(mimeId)` | Mensajes no leidos de un Mime (los que el Mime "dira") |
+| `markMessageRead(messageId)` | Marca un mensaje como leido (policy v7) |
+| `subscribeMimesChanges(userId, cb)` | Canal realtime de UPDATEs de los mimes del dueno. Devuelve funcion de unsubscribe |
+| `subscribeMimeMessages(mimeId, cb)` | Canal realtime de INSERTs de mensajes de un Mime. Devuelve funcion de unsubscribe |
+| `getOwnedAccessories(userId)` | Ids de accesorios comprados (pre-v7 devuelve `[]`) |
+| `buyAccessory(userId, id, price, owned)` | Cobra con addPoints y anade a la coleccion (devuelve los PM si falla el guardado) |
+| `equipAccessory(mimeId, id\|null)` | Equipa/quita el accesorio de un Mime |
 
 **Tipos exportados**: `MimeFromDB` (incluye `cesion_start`), `MimeWithNames`, `CesionResult` — interfaces que mapean las columnas de la tabla.
 
@@ -178,6 +187,17 @@ Animacion de explosion de emojis (corazones, besos).
 | `showClickBurst(event)` | Explosion de corazones (click en Mime) |
 
 Crea elementos DOM dinamicos con animacion CSS (`heart-fly`). Se auto-eliminan tras 1200ms.
+
+### `useSfx.ts`
+Efectos de sonido sintetizados con Web Audio (sin archivos de audio) + vibracion movil. Estado on/off a nivel de modulo, persistido en localStorage (`mimes-sfx-enabled`).
+
+| Retorna | Descripcion |
+|---------|-------------|
+| `enabled` | ref(boolean) compartido por toda la app |
+| `play(name)` | Reproduce 'tap' \| 'success' \| 'fail' \| 'coin' + vibracion |
+| `toggle()` | Cambia on/off y persiste |
+
+Usado por: MiniGameShell (resultado), CareScreen (acciones), Dashboard (recompensa diaria, tienda, toggle 🔊/🔇 del header).
 
 ### `useDayNight.ts`
 Ciclo dia/noche segun hora real del usuario. Actualiza cada minuto.

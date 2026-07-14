@@ -134,6 +134,27 @@ usa esos mapas cuando hay entrada para la accion; si no, cae al juego facil.
 
 ## Juegos Avanzados
 
+Las 6 acciones tienen juego avanzado. Ganar en avanzado da **recompensa x1.5**
+(`applyCareAction` con `ADVANCED_REWARD_MULTIPLIER`) y afinidad con peso 0.15
+(`ADVANCED_AFFINITY_WEIGHT`). El shell reproduce sonidos de victoria/derrota
+via `useSfx`.
+
+### FeedCatchGame.vue — Alimentar (avanzado)
+**Mecanica**: Cesta (🧺) que sigue el dedo/raton en horizontal. Caen alimentos: buenos (🍎🍖🥕🍌🧀🍇) y podridos (🤢🦠🗑️, ~25%). Atrapar podrido = derrota inmediata.
+- **Objetivo**: atrapar 10 comidas buenas. 25 segundos. Velocidad de caida creciente
+
+### SimonHeartsGame.vue — Cariño (avanzado)
+**Mecanica**: "Simon dice" con 4 corazones (❤️💛💙💚) en grid 2x2. Fase "Observa..." (secuencia iluminada) y fase "Tu turno!" (repetirla). Fallo = derrota.
+- **Objetivo**: 3 rondas con secuencias de 3, 4 y 5. 30 segundos
+
+### LullabyGame.vue — Descansar (avanzado)
+**Mecanica**: Escena nocturna con barra oscilante y zona verde. Tocar cuando el marcador pasa por la zona = acierto (la zona encoge x0.65 y el marcador acelera x1.25). Primer fallo = aviso 😠; segundo = derrota 😱.
+- **Objetivo**: 3 aciertos. 20 segundos
+
+### OutfitMemoryGame.vue — Vestir (avanzado)
+**Mecanica**: Se muestran 3 prendas 2.5s, luego grid 3x3 con 6 distractoras. Tocar las 3 correctas en cualquier orden; una incorrecta = derrota.
+- **Objetivo**: las 3 prendas. 20 segundos
+
 ### BasketGame.vue — Jugar (avanzado)
 **Mecanica**: Baloncesto tipo tirachinas. Arrastra la pelota (🏀) hacia atras y suelta para lanzarla con trayectoria parabolica hacia la canasta.
 - Fisica: gravedad + velocidad proporcional al drag, escalada por tamano de pantalla (baseline 375x667)

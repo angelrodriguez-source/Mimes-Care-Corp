@@ -58,6 +58,9 @@ import {
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+// Controles de debug (reset, crecimiento): solo visibles en desarrollo
+const isDev = import.meta.env.DEV
 const mimeCharRef = useTemplateRef<InstanceType<typeof MimeCharacter>>('mimeChar')
 
 // --- DATOS DEL MIME ---
@@ -322,10 +325,12 @@ onUnmounted(() => {
         <button class="accessory-btn" title="Accesorios" @click="openAccessoryPicker">
           {{ accessoryEmoji ?? '🎀' }}
         </button>
-        <button class="reset-care-btn" @click="handleReset">Reset</button>
-        <button class="growth-debug-btn" @click="mimeScale = Math.max(0.4, +(mimeScale - 0.1).toFixed(1))">-</button>
-        <span class="growth-label">{{ Math.round(mimeScale * 100) }}%</span>
-        <button class="growth-debug-btn" @click="mimeScale = Math.min(1.0, +(mimeScale + 0.1).toFixed(1))">+</button>
+        <template v-if="isDev">
+          <button class="reset-care-btn" @click="handleReset">Reset</button>
+          <button class="growth-debug-btn" @click="mimeScale = Math.max(0.4, +(mimeScale - 0.1).toFixed(1))">-</button>
+          <span class="growth-label">{{ Math.round(mimeScale * 100) }}%</span>
+          <button class="growth-debug-btn" @click="mimeScale = Math.min(1.0, +(mimeScale + 0.1).toFixed(1))">+</button>
+        </template>
         <div class="puntos">
           <span class="puntos-icon">&#9829;</span>
           <span class="puntos-value">{{ puntosMimes }}</span>

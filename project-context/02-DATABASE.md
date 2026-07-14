@@ -176,6 +176,31 @@ Marca el tutorial interactivo como completado para el usuario autenticado.
 
 Es idempotente (llamarlo N veces deja el campo en `true`) y se ejecuta con `SECURITY DEFINER` por consistencia con el resto de RPCs.
 
+### `add_points(p_delta INTEGER) -> JSON`
+Suma (o resta) PM del usuario autenticado de forma atomica. Con `GREATEST(0, ...)` los puntos nunca bajan de 0.
+
+**Archivo**: `supabase/migration_v7_social.sql`
+
+Sustituye las escrituras de valor absoluto en el flujo de mini-juegos y compras (evita que dos operaciones simultaneas se pisen). El frontend (`addPoints()` en mimeService) tiene fallback al metodo antiguo si el RPC no existe.
+
+### `expire_cesion(p_mime_id UUID) -> JSON`
+Cierra una cesion caducada de forma atomica: valida que el caller es participante, que la cesion tiene mas de 7 dias, paga `ROUND(afinidad)` PM al cuidador y resetea el Mime (cuidador, share_code, afinidad, cesion_start).
+
+**Archivo**: `supabase/migration_v7_social.sql`
+
+El `SELECT ... FOR UPDATE` garantiza que aunque dueno y cuidador detecten la expiracion a la vez, solo se paga una vez. Devuelve `{ expired, reward, cuidador_id }` o `{ expired: false }`.
+
+## Cambios v7 (migration_v7_social.sql)
+
+Ademas de los dos RPCs anteriores:
+
+| Cambio | Detalle |
+|--------|---------|
+| `profiles.owned_accessories TEXT[]` | Ids de accesorios comprados en la tienda (default `{}`) |
+| `mimes.accessory TEXT` | Id del accesorio equipado (null = ninguno) |
+| Policy `participants_update_messages` | UPDATE en `messages` para dueno/cuidador (marcar `read = true`) |
+| Publicacion realtime | `mimes` y `messages` anadidas a `supabase_realtime` (con guard de duplicado) |
+
 ## Trigger: Registro automatico
 
 Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new_user()`:
@@ -195,3 +220,4 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 4. `supabase/migration_v4_cesion.sql` — Anade cesion_start + actualiza claim_mime (pone cesion_start) y release_mime (limpia cesion_start)
 5. `supabase/migration_v5_daily_reward.sql` — Anade `last_daily_claim_date` + `daily_streak` a profiles y el RPC `claim_daily_reward`
 6. `supabase/migration_v6_tutorial.sql` — Anade `tutorial_completed` a profiles y el RPC `mark_tutorial_completed`
+7. `supabase/migration_v7_social.sql` — RPCs `add_points`/`expire_cesion`, columnas de accesorios, policy UPDATE de messages y publicacion realtime

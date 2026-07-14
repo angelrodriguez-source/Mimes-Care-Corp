@@ -19,3 +19,13 @@ app.mount('#app')
 
 const userStore = useUserStore()
 userStore.init()
+
+// PWA: registrar el service worker solo en produccion (en dev molesta
+// porque cachea y esconde los cambios del hot reload)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register(import.meta.env.BASE_URL + 'sw.js')
+      .catch(() => { /* sin SW la app funciona igual, solo pierde offline */ })
+  })
+}

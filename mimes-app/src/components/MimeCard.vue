@@ -57,6 +57,7 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
       <div class="card-name-row">
         <h3 class="card-name">{{ nombre }}</h3>
         <button v-if="mode === 'own'" class="rename-btn" @click.stop="$emit('rename')">&#9998;</button>
+        <span v-if="avgStats < 30" class="needs-care" title="Necesita cuidado">&#10071;</span>
       </div>
       <span class="card-personality">{{ PERSONALITY_LABELS[personalidad] }}</span>
 
@@ -173,6 +174,16 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
   line-height: 1;
 }
 .rename-btn:active { color: #5c6bc0; }
+
+.needs-care {
+  font-size: 13px;
+  animation: needs-care-pulse 1s ease-in-out infinite;
+}
+
+@keyframes needs-care-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
 
 .card-personality {
   font-size: 11px;

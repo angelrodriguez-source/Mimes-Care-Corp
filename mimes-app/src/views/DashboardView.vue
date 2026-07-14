@@ -42,6 +42,9 @@ const userStore = useUserStore()
 const tutorialStore = useTutorialStore()
 const sfx = useSfx()
 
+// Boton de reset: solo visible en desarrollo
+const isDev = import.meta.env.DEV
+
 const myMimes = ref<MimeWithNames[]>([])
 const caringMimes = ref<MimeWithNames[]>([])
 const loading = ref(true)
@@ -380,9 +383,12 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <!-- LOADING -->
-    <div v-if="loading" class="loading-state">
-      <p>Cargando...</p>
+    <!-- LOADING: skeletons con shimmer -->
+    <div v-if="loading" class="section">
+      <div class="skeleton skeleton-title"></div>
+      <div class="cards-list">
+        <div v-for="i in 3" :key="i" class="skeleton skeleton-card"></div>
+      </div>
     </div>
 
     <template v-else>
@@ -461,8 +467,8 @@ onUnmounted(() => {
         </div>
         <p v-if="claimMessage" class="claim-msg">{{ claimMessage }}</p>
       </section>
-      <!-- RESET (solo para pruebas) -->
-      <section class="section">
+      <!-- RESET (solo visible en desarrollo) -->
+      <section v-if="isDev" class="section">
         <button class="reset-btn" @click="handleReset">
           Reset (pruebas): restaurar stats y puntos
         </button>
@@ -766,12 +772,26 @@ onUnmounted(() => {
   text-align: center;
 }
 
-/* LOADING */
-.loading-state {
-  display: flex;
-  justify-content: center;
-  padding: 60px;
-  color: #999;
+/* LOADING: skeletons */
+.skeleton {
+  border-radius: 16px;
+  background: linear-gradient(90deg, #eeeeee 25%, #f7f7f7 50%, #eeeeee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton-title {
+  width: 120px;
+  height: 20px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.skeleton-card { height: 110px; }
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
 /* RESET BUTTON */

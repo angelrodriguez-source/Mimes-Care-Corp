@@ -15,6 +15,28 @@ import TutorialOverlay from './components/TutorialOverlay.vue'
 </script>
 
 <template>
-  <RouterView />
+  <RouterView v-slot="{ Component }">
+    <Transition name="route" mode="out-in">
+      <component :is="Component" />
+    </Transition>
+  </RouterView>
   <TutorialOverlay />
 </template>
+
+<style>
+/* Transicion suave entre pantallas (global: aplica al root de cada vista) */
+.route-enter-active,
+.route-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.route-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.route-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>

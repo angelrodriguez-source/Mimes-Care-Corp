@@ -245,3 +245,29 @@ Hay dos botones de reset (TEMPORALES, borrar antes de produccion):
 
 1. **DashboardView**: "Reset (pruebas)" -> resetea TODOS tus mimes (stats a 70, afinidad a 0, quita cuidadores) + PM a 100
 2. **CareScreen**: "Reset" en cabecera -> resetea ESE mime (stats a 70, afinidad a 0) + PM a 100
+
+## Dificultad Avanzada (2026-07-14)
+
+Cada accion ofrece dos mini-juegos: Facil (clasico) y Avanzado (mas dificil).
+Ganar en avanzado:
+- Stats: `applyCareAction(stats, action, ADVANCED_REWARD_MULTIPLIER)` → x1.5 (redondeado)
+- Afinidad: `updateAffinity` con peso `ADVANCED_AFFINITY_WEIGHT` (0.15 vs 0.1)
+
+El coste en PM es el mismo — el incentivo es la eficiencia por accion.
+
+## Tienda de Accesorios (2026-07-14)
+
+Catalogo en `gameConstants.ACCESSORIES`: lazo 30, gorra 35, gafas 60,
+chistera 80, corona 150 PM. Se compran desde el dashboard (🛍️), pertenecen
+al usuario (`profiles.owned_accessories`) y se equipan por Mime
+(`mimes.accessory`) desde la cabecera de CareScreen. El accesorio se pinta
+sobre el pelo del Mime (prop `accessory` de MimeCharacter) y lo ven ambos
+(dueno y cuidador) porque viaja con la fila del Mime.
+
+## Mensajeria via Mime (2026-07-14)
+
+El dueno escribe un mensaje desde su MimeCard (solo si el Mime esta cedido).
+El Mime se lo "dice" al cuidador: burbuja sobre el personaje en CareScreen,
+tocable para descartar (marca `read = true`). Los mensajes no leidos se
+encolan y llegan en vivo por realtime si el cuidador esta en la pantalla.
+Direccion unica dueno → cuidador (la policy de INSERT solo permite al dueno).

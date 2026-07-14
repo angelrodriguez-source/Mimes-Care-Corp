@@ -9,13 +9,23 @@ la UI de GitHub en Settings > Branches o desde la vista de ramas del repo:
 - [ ] `claude/select-project-idea-KsKVH` — mergeada en main (feature: recompensas diarias por login, v5)
 - [ ] `claude/tutorial-interactivo` — mergeada en main (feature: tutorial interactivo con spotlight, v6)
 
+## Accion requerida del usuario
+
+- [ ] **Ejecutar `supabase/migration_v7_social.sql`** en el SQL Editor de Supabase.
+  Sin ella: mensajeria no persiste el "leido", realtime no emite, la tienda
+  de accesorios falla al comprar, y los PM siguen con el metodo antiguo
+  (el frontend degrada con fallbacks, pero la v7 es necesaria para todo lo social)
+
 ## Inmediato (en progreso)
 
-### Mini-juegos avanzados
-- Selector de dificultad (Facil/Avanzado) implementado en CareScreen.vue, conectado a `ACTION_GAMES_ADVANCED`/`GAME_CONFIGS_ADVANCED`
-- [x] `jugar` → BasketGame (tirachinas con fisica parabolica) (2026-07-14)
-- [x] `limpiar` → ScrubGame (campo minado con esponja) (2026-07-14)
-- [ ] Pendientes: `alimentar`, `carino`, `descansar`, `vestir` — el usuario los define uno a uno
+### Mini-juegos avanzados — COMPLETO (2026-07-14)
+Las 6 acciones tienen juego avanzado (recompensa x1.5 stats, afinidad peso 0.15):
+- [x] `alimentar` → FeedCatchGame (cesta que atrapa comida, evita la podrida)
+- [x] `limpiar` → ScrubGame (campo minado con esponja)
+- [x] `jugar` → BasketGame (tirachinas con fisica parabolica)
+- [x] `carino` → SimonHeartsGame (Simon dice con corazones, 3 rondas)
+- [x] `descansar` → LullabyGame (timing en barra oscilante, 3 aciertos)
+- [x] `vestir` → OutfitMemoryGame (memoriza 3 prendas y eligelas en grid 3x3)
 
 ## Bugs conocidos
 
@@ -39,13 +49,9 @@ la UI de GitHub en Settings > Branches o desde la vista de ramas del repo:
 
 ## Codigo muerto / Limpieza
 
-| Que | Donde | Accion |
-|-----|-------|--------|
-| Botones de Reset | DashboardView + CareScreen | **Borrar antes de produccion** |
-| Botones debug crecimiento (+/-) | CareScreen cabecera | **Borrar antes de produccion** |
-
-Resuelto (2026-07-14): eliminados `ActionButton.vue` (sin uso) y el CSS residual
-`.mood-selector`/`.mood-btn` de HomeView.
+Resuelto (2026-07-14):
+- Eliminados `ActionButton.vue` (sin uso) y el CSS residual `.mood-selector`/`.mood-btn` de HomeView
+- Botones de Reset y debug de crecimiento ahora solo visibles en desarrollo (`import.meta.env.DEV`) — en el build de produccion desaparecen solos
 
 ## Mejoras tecnicas pendientes
 
@@ -61,10 +67,14 @@ Resuelto (2026-07-14): eliminados `ActionButton.vue` (sin uso) y el CSS residual
 ### ~~Picker de dificultad usa Teleport innecesario~~ RESUELTO (2026-07-14)
 - Quitado el `<Teleport to="body">`; el picker usa `position: fixed` con estilos scoped, igual que MiniGameShell
 
-### Escrituras de PM con valor absoluto (race condition potencial)
-- **Archivos**: `mimeService.ts` — `updateUserPoints()`, `checkCesionExpiry()`
-- **Problema**: escriben `puntos_mimes` como valor absoluto leido antes; dos operaciones simultaneas (p. ej. cesion expirando en dos pestanas) pueden pisarse
-- **Solucion**: migrar a un RPC atomico tipo `add_points(delta)` como ya hace `claim_daily_reward`
+### ~~Escrituras de PM con valor absoluto (race condition)~~ RESUELTO (2026-07-14)
+- Migracion v7: RPC `add_points(p_delta)` (delta atomico) y RPC `expire_cesion(p_mime_id)` (cierre de cesion con FOR UPDATE que paga una sola vez)
+- `addPoints()` y `checkCesionExpiry()` usan los RPCs con fallback al metodo antiguo si la v7 no esta ejecutada
+- `updateUserPoints()` (absoluto) queda solo para los resets de pruebas
+
+### Tests automatizados (parcial)
+- [x] `MimeModel` cubierto con Vitest — 20 tests (`npm run test`) (2026-07-14)
+- [ ] Pendiente: tests de `helpers.ts` y de los RPCs (contra un Supabase local)
 
 ## Features pendientes (de GAME_DESIGN.md y ARCHITECTURE.md)
 
@@ -74,14 +84,15 @@ Resuelto (2026-07-14): eliminados `ActionButton.vue` (sin uso) y el CSS residual
 - [x] **Abandono automatico**: `checkAbandon()` en mimeService — se ejecuta al cargar el Dashboard. Si afinidad < 10%, limpia `cuidador_id` y el Mime vuelve al dueno (2026-04-06)
 
 ### Plataforma
-- [ ] **Configurar Capacitor** (iOS + Android)
-- [ ] **Push notifications** cuando un Mime necesita cuidado
-- [ ] **Modo offline** con sincronizacion posterior
+- [x] **PWA instalable** — manifest + icono SVG + service worker (red-primero para HTML, cache-primero para assets con hash). Instalable en movil con icono propio (2026-07-14)
+- [ ] **Configurar Capacitor** (iOS + Android) — la PWA cubre gran parte; Capacitor solo si hacen falta APIs nativas
+- [ ] **Push notifications** cuando un Mime necesita cuidado — requiere backend de push (Edge Function + VAPID); como paliativo, las tarjetas muestran badge ❗ cuando la media de stats < 30
+- [ ] **Modo offline** con sincronizacion posterior — el SW ya da shell offline; falta cola de escrituras
 
 ### Social
 - [ ] **Conexion QR** (presencial) — la tabla `connections` existe pero no se usa. El sistema de share_code es el fallback
-- [ ] **Mensajeria Mime** — dueno deja mensajes que el Mime "dice" al cuidador. La tabla `messages` existe pero no hay UI
-- [ ] **Supabase Realtime** — en vista "Mis Mimes" para ver cambios en vivo
+- [x] **Mensajeria Mime** — el dueno escribe desde su MimeCard (boton 💬) y el Mime lo "dice" al cuidador en CareScreen con burbuja tocable. Cola de no-leidos + marca de leido (policy v7) (2026-07-14)
+- [x] **Supabase Realtime** — "Mis Mimes" se actualiza en vivo (UPDATE de mimes via publicacion v7) y la burbuja de mensajes llega en vivo al cuidador (2026-07-14)
 
 ### Visual
 - [x] **Objetos interactivos** en la habitacion — MimeRoom + RoomObject con objetos por personalidad (2026-04-07)
@@ -90,11 +101,11 @@ Resuelto (2026-07-14): eliminados `ActionButton.vue` (sin uso) y el CSS residual
 - [x] **Crecimiento visual** del Mime segun dia de cesion — 40% dia 1 a 100% dia 6-7 (2026-04-07)
 - [x] **Renombrar Mimes** — boton editar en MimeCard, modal en Dashboard (2026-04-07)
 - [ ] **Decoracion personalizable**
-- [ ] **Accesorios/ropa** para vestir al Mime
-- [ ] **Sonidos/efectos** al interactuar
+- [x] **Accesorios/ropa** para vestir al Mime — 5 accesorios equipables sobre el pelo (MimeCharacter prop `accessory`), visibles en care screen y tarjetas (2026-07-14)
+- [x] **Sonidos/efectos** al interactuar — useSfx con Web Audio sintetizado (tap/success/fail/coin) + vibracion, toggle 🔊/🔇 persistido (2026-07-14)
 
 ### Economia
-- [ ] **Tienda de accesorios** con PM
+- [x] **Tienda de accesorios** con PM — 5 items (30-150 PM) en modal del dashboard (boton 🛍️), compra atomica con devolucion si falla (2026-07-14)
 - [x] **Recompensas diarias** por login — modal al entrar al dashboard con recompensa por racha (10/15/20/25/35/50/75 PM segun dia 1..7+). RPC `claim_daily_reward` atomica e idempotente. Migracion v5 (2026-04-10)
 - [ ] **Acciones premium** que suben mas la afinidad (necesarias para llegar al 100%)
 
