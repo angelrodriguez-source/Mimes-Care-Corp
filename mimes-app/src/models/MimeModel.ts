@@ -294,6 +294,9 @@ export function applyDecay(
  *
  * @param stats - Los stats actuales
  * @param action - Qué acción de cuidado se hizo (alimentar, limpiar, etc.)
+ * @param multiplier - Multiplicador de la recompensa (default 1). Los
+ *   mini-juegos avanzados pasan un valor mayor (p. ej. 1.5) para que
+ *   ganar en dificil suba mas los stats
  * @returns Los stats nuevos después de la acción
  *
  * Ejemplo: si haces "alimentar":
@@ -301,7 +304,11 @@ export function applyDecay(
  *   energia y carino (secondary) suben +3 cada uno
  *   el resto no cambia
  */
-export function applyCareAction(stats: MimeStats, action: CareAction): MimeStats {
+export function applyCareAction(
+  stats: MimeStats,
+  action: CareAction,
+  multiplier: number = 1,
+): MimeStats {
   const primaryStat = ACTION_PRIMARY_STAT[action]
   const effects = ACTION_EFFECTS[action]
   const secondaryStats = ACTION_SECONDARY_STATS[action]
@@ -309,11 +316,13 @@ export function applyCareAction(stats: MimeStats, action: CareAction): MimeStats
   const newStats = { ...stats }
 
   // Subir el stat principal
-  newStats[primaryStat] = clamp(newStats[primaryStat] + effects.primary, 0, 100)
+  newStats[primaryStat] = clamp(
+    newStats[primaryStat] + Math.round(effects.primary * multiplier), 0, 100)
 
   // Subir los stats secundarios (efecto menor)
   for (const stat of secondaryStats) {
-    newStats[stat] = clamp(newStats[stat] + effects.secondary, 0, 100)
+    newStats[stat] = clamp(
+      newStats[stat] + Math.round(effects.secondary * multiplier), 0, 100)
   }
 
   return newStats

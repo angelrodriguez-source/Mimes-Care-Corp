@@ -140,3 +140,35 @@ export const ROOM_THEMES: Record<Personality, RoomTheme> = {
     ],
   },
 }
+
+// --- DIFICULTAD AVANZADA ---
+
+/** Multiplicador de subida de stats al ganar un mini-juego avanzado */
+export const ADVANCED_REWARD_MULTIPLIER = 1.5
+
+/** Peso de la afinidad al ganar en avanzado (facil usa el default 0.1) */
+export const ADVANCED_AFFINITY_WEIGHT = 0.15
+
+// --- TIENDA DE ACCESORIOS ---
+
+export interface Accessory {
+  id: string
+  emoji: string
+  label: string
+  price: number
+}
+
+/** Catalogo de accesorios comprables con PM (se equipan por Mime) */
+export const ACCESSORIES: readonly Accessory[] = [
+  { id: 'lazo', emoji: '🎀', label: 'Lazo', price: 30 },
+  { id: 'gorra', emoji: '🧢', label: 'Gorra', price: 35 },
+  { id: 'gafas', emoji: '🕶️', label: 'Gafas', price: 60 },
+  { id: 'chistera', emoji: '🎩', label: 'Chistera', price: 80 },
+  { id: 'corona', emoji: '👑', label: 'Corona', price: 150 },
+] as const
+
+/** Busca un accesorio del catalogo por id */
+export function getAccessory(id: string | null | undefined): Accessory | null {
+  if (!id) return null
+  return ACCESSORIES.find(a => a.id === id) ?? null
+}

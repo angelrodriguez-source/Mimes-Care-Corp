@@ -14,6 +14,7 @@ import MimeCard from '../components/MimeCard.vue'
 import DailyRewardModal from '../components/DailyRewardModal.vue'
 import { useUserStore } from '../stores/userStore'
 import { useTutorialStore } from '../stores/tutorialStore'
+import { useSfx } from '../composables/useSfx'
 import { toStats, copyToClipboard } from '../utils/helpers'
 import { DAILY_REWARDS } from '../constants/gameConstants'
 import {
@@ -34,6 +35,7 @@ import {
 const router = useRouter()
 const userStore = useUserStore()
 const tutorialStore = useTutorialStore()
+const sfx = useSfx()
 
 const myMimes = ref<MimeWithNames[]>([])
 const caringMimes = ref<MimeWithNames[]>([])
@@ -226,6 +228,8 @@ async function handleClaimDaily() {
     return
   }
 
+  sfx.play('coin')
+
   // Fase celebracion con los valores confirmados por el servidor
   dailyModal.value = {
     streakPreview: res.streak,
@@ -277,6 +281,11 @@ onMounted(async () => {
           <span class="puntos-heart">&#9829;</span>
           <span>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</span>
         </div>
+        <button
+          class="help-btn"
+          :title="sfx.enabled.value ? 'Silenciar sonidos' : 'Activar sonidos'"
+          @click="sfx.toggle()"
+        >{{ sfx.enabled.value ? '🔊' : '🔇' }}</button>
         <button class="help-btn" title="Ver tutorial" @click="startTutorial">?</button>
         <button class="logout-btn" @click="handleLogout">Salir</button>
       </div>

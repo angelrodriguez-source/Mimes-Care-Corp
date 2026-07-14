@@ -25,6 +25,10 @@ import RestGame from './RestGame.vue'
 import DressGame from './DressGame.vue'
 import BasketGame from './BasketGame.vue'
 import ScrubGame from './ScrubGame.vue'
+import FeedCatchGame from './FeedCatchGame.vue'
+import SimonHeartsGame from './SimonHeartsGame.vue'
+import LullabyGame from './LullabyGame.vue'
+import OutfitMemoryGame from './OutfitMemoryGame.vue'
 
 /** Mapeo acción → componente del mini-juego (facil) */
 export const ACTION_GAMES: Record<CareAction, Component> = {
@@ -37,23 +41,51 @@ export const ACTION_GAMES: Record<CareAction, Component> = {
 }
 
 /** Mapeo acción → componente del mini-juego (avanzado) */
-export const ACTION_GAMES_ADVANCED: Partial<Record<CareAction, Component>> = {
-  jugar: BasketGame,
+export const ACTION_GAMES_ADVANCED: Record<CareAction, Component> = {
+  alimentar: FeedCatchGame,
   limpiar: ScrubGame,
+  jugar: BasketGame,
+  carino: SimonHeartsGame,
+  descansar: LullabyGame,
+  vestir: OutfitMemoryGame,
 }
 
 /** Configuraciones de mini-juegos avanzados */
-export const GAME_CONFIGS_ADVANCED: Partial<Record<CareAction, MiniGameConfig>> = {
-  jugar: {
-    title: 'Baloncesto',
-    icon: '🏀',
-    instruction: 'Encesta 3 de 5 tiros!',
-    duration: 20000,
+export const GAME_CONFIGS_ADVANCED: Record<CareAction, MiniGameConfig> = {
+  alimentar: {
+    title: 'Cosecha',
+    icon: '🧺',
+    instruction: 'Atrapa 10 comidas buenas!',
+    duration: 25000,
   },
   limpiar: {
     title: 'Campo minado',
     icon: '🧽',
     instruction: 'Limpia sin tocar las minas!',
     duration: 25000,
+  },
+  jugar: {
+    title: 'Baloncesto',
+    icon: '🏀',
+    instruction: 'Encesta 3 de 5 tiros!',
+    duration: 20000,
+  },
+  carino: {
+    title: 'Simon de corazones',
+    icon: '💞',
+    instruction: 'Repite la secuencia!',
+    duration: 30000,
+  },
+  descansar: {
+    title: 'Nana',
+    icon: '🌙',
+    instruction: 'Toca cuando pase por la zona verde!',
+    duration: 20000,
+  },
+  vestir: {
+    title: 'Conjunto perfecto',
+    icon: '🧥',
+    instruction: 'Memoriza y elige las 3 prendas!',
+    duration: 20000,
   },
 }

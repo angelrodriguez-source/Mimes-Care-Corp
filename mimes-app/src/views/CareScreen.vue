@@ -30,7 +30,10 @@ import {
   INITIAL_PUNTOS,
   FEEDBACK_DURATION_MS,
   REST_PAUSE_DURATION_MS,
+  ADVANCED_REWARD_MULTIPLIER,
+  ADVANCED_AFFINITY_WEIGHT,
 } from '../constants/gameConstants'
+import { useSfx } from '../composables/useSfx'
 import {
   type MimeStats,
   type Personality,
@@ -126,10 +129,14 @@ async function loadMime() {
   startWalking()
 }
 
+const { play: playSfx } = useSfx()
+
 // --- EJECUTAR ACCION (muestra selector de dificultad) ---
 function handleAction(action: CareAction) {
   const cost = ACTION_COSTS[action]
   if (puntosMimes.value < cost) return
+
+  playSfx('tap')
 
   // Mostrar selector de dificultad
   pickerAction.value = action
@@ -196,8 +203,12 @@ async function onMiniGameDone(result: MiniGameResult) {
 
 /** Aplica los efectos de una accion exitosa en la UI */
 function applySuccessEffects(action: CareAction) {
-  stats.value = applyCareAction(stats.value, action)
-  afinidad.value = updateAffinity(afinidad.value, stats.value)
+  // Ganar en avanzado sube mas los stats y la afinidad
+  const advanced = pendingDifficulty.value === 'advanced'
+  stats.value = applyCareAction(
+    stats.value, action, advanced ? ADVANCED_REWARD_MULTIPLIER : 1)
+  afinidad.value = updateAffinity(
+    afinidad.value, stats.value, advanced ? ADVANCED_AFFINITY_WEIGHT : 0.1)
 
   // Feedback visual
   const icon = ACTION_CONFIG.find(a => a.action === action)?.icon ?? ''
@@ -360,15 +371,10 @@ onUnmounted(() => {
             <span class="picker-btn-label">Facil</span>
             <span class="picker-btn-desc">Minijuego clasico</span>
           </button>
-          <button
-            class="picker-btn advanced"
-            :class="{ 'picker-btn-disabled': !ACTION_GAMES_ADVANCED[pickerAction!] }"
-            :disabled="!ACTION_GAMES_ADVANCED[pickerAction!]"
-            @click="selectDifficulty('advanced')"
-          >
+          <button class="picker-btn advanced" @click="selectDifficulty('advanced')">
             <span class="picker-btn-icon">&#128293;</span>
             <span class="picker-btn-label">Avanzado</span>
-            <span class="picker-btn-desc">{{ ACTION_GAMES_ADVANCED[pickerAction!] ? 'Mas dificil' : 'Proximamente' }}</span>
+            <span class="picker-btn-desc">Recompensa x1.5</span>
           </button>
         </div>
         <button class="picker-cancel" @click="closePicker">Cancelar</button>

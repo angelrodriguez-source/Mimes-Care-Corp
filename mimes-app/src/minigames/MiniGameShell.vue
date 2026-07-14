@@ -15,6 +15,7 @@
  *   - Llamar al slot-prop 'onComplete(success)' cuando termine
  */
 import { ref, computed, onUnmounted } from 'vue'
+import { useSfx } from '../composables/useSfx'
 import type { MiniGameConfig, MiniGameResult } from './types'
 
 const props = defineProps<{
@@ -71,11 +72,14 @@ function startGame() {
   }, tick)
 }
 
+const { play } = useSfx()
+
 function endGame(success: boolean) {
   if (phase.value !== 'playing') return // evitar doble-fin
   gameActive.value = false
   if (gameTimer) { clearInterval(gameTimer); gameTimer = null }
 
+  play(success ? 'success' : 'fail')
   result.value = { success }
   phase.value = 'result'
 
