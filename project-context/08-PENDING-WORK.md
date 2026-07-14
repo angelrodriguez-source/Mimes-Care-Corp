@@ -12,10 +12,10 @@ la UI de GitHub en Settings > Branches o desde la vista de ramas del repo:
 ## Inmediato (en progreso)
 
 ### Mini-juegos avanzados
-- El selector de dificultad (Facil/Avanzado) ya esta implementado en CareScreen.vue
-- Los juegos "facil" son los 6 actuales
-- **Pendiente**: El usuario define cada juego avanzado uno a uno
-- Cuando esten listos: crear `ACTION_GAMES_ADVANCED` en `src/minigames/index.ts` y conectar con `selectDifficulty('advanced')`
+- Selector de dificultad (Facil/Avanzado) implementado en CareScreen.vue, conectado a `ACTION_GAMES_ADVANCED`/`GAME_CONFIGS_ADVANCED`
+- [x] `jugar` → BasketGame (tirachinas con fisica parabolica) (2026-07-14)
+- [x] `limpiar` → ScrubGame (campo minado con esponja) (2026-07-14)
+- [ ] Pendientes: `alimentar`, `carino`, `descansar`, `vestir` — el usuario los define uno a uno
 
 ## Bugs conocidos
 
@@ -41,27 +41,30 @@ la UI de GitHub en Settings > Branches o desde la vista de ramas del repo:
 
 | Que | Donde | Accion |
 |-----|-------|--------|
-| `ActionButton.vue` | `src/components/` | No se usa. Eliminar o integrar en CareScreen |
-| CSS `.mood-selector`, `.mood-btn` | `src/views/HomeView.vue` lineas 221-249 | Eliminar (residuo de version anterior) |
 | Botones de Reset | DashboardView + CareScreen | **Borrar antes de produccion** |
 | Botones debug crecimiento (+/-) | CareScreen cabecera | **Borrar antes de produccion** |
 
+Resuelto (2026-07-14): eliminados `ActionButton.vue` (sin uso) y el CSS residual
+`.mood-selector`/`.mood-btn` de HomeView.
+
 ## Mejoras tecnicas pendientes
 
-### Manejo de errores en guardado a Supabase
-- **Archivo**: `src/services/mimeService.ts` — `persistCareActionResult()`
-- **Problema**: `Promise.all()` sin catch. Si Supabase falla, el usuario ve stats actualizados localmente pero no se guardaron
-- **Solucion**: Anadir try/catch, mostrar feedback si falla
+### ~~Manejo de errores en guardado a Supabase~~ RESUELTO (2026-07-14)
+- `persistCareActionResult()` ahora devuelve `{ error: string | null }` recogiendo el primer error de las 3 escrituras
+- CareScreen muestra un toast rojo ("No se pudo guardar. Revisa tu conexion.") si el guardado falla
 
-### Router guard tiene gap de auth
-- **Archivo**: `src/router/index.ts` linea 41
-- **Problema**: Mientras `loading = true`, deja pasar a cualquier ruta protegida. Si la init tarda, un usuario no-autenticado puede ver brevemente el dashboard
-- **Solucion**: El guard deberia esperar a que `loading = false` antes de decidir
+### ~~Router guard tiene gap de auth~~ RESUELTO (2026-07-14)
+- `userStore` expone `waitUntilReady()` — promesa que se resuelve cuando `init()` termina (con try/finally para no colgarse si Supabase falla)
+- El guard hace `await waitUntilReady()` antes de decidir; ya no deja pasar a rutas protegidas durante la carga inicial
+- De paso: la redireccion login→dashboard del guard era codigo muerto (el early-return de rutas publicas la saltaba); ahora funciona
 
-### Picker de dificultad usa Teleport innecesario
-- **Archivo**: `src/views/CareScreen.vue`
-- **Problema**: Usa `<Teleport to="body">` + estilos no-scoped. MiniGameShell no usa Teleport y funciona igual con `position: fixed`
-- **Solucion**: Quitar Teleport, usar scoped styles con `position: fixed`
+### ~~Picker de dificultad usa Teleport innecesario~~ RESUELTO (2026-07-14)
+- Quitado el `<Teleport to="body">`; el picker usa `position: fixed` con estilos scoped, igual que MiniGameShell
+
+### Escrituras de PM con valor absoluto (race condition potencial)
+- **Archivos**: `mimeService.ts` — `updateUserPoints()`, `checkCesionExpiry()`
+- **Problema**: escriben `puntos_mimes` como valor absoluto leido antes; dos operaciones simultaneas (p. ej. cesion expirando en dos pestanas) pueden pisarse
+- **Solucion**: migrar a un RPC atomico tipo `add_points(delta)` como ya hace `claim_daily_reward`
 
 ## Features pendientes (de GAME_DESIGN.md y ARCHITECTURE.md)
 

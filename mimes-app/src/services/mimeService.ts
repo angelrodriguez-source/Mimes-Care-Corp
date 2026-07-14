@@ -322,6 +322,11 @@ export async function renameMime(mimeId: string, nombre: string) {
 
 // --- PERSISTIR RESULTADO DE MINI-JUEGO ---
 
+/**
+ * Guarda el resultado completo de un mini-juego (stats + log + PM).
+ * Devuelve el primer error encontrado (o null si todo se guardo bien)
+ * para que la UI pueda avisar al usuario si sus cambios no persistieron.
+ */
 export async function persistCareActionResult(
   mimeId: string,
   userId: string,
@@ -330,12 +335,18 @@ export async function persistCareActionResult(
   stats: MimeStats,
   afinidad: number,
   puntos: number,
-) {
-  return Promise.all([
-    updateMimeStats(mimeId, stats, afinidad),
-    logCareAction(mimeId, userId, action, cost),
-    updateUserPoints(userId, puntos),
-  ])
+): Promise<{ error: string | null }> {
+  try {
+    const [statsRes, actionRes, pointsRes] = await Promise.all([
+      updateMimeStats(mimeId, stats, afinidad),
+      logCareAction(mimeId, userId, action, cost),
+      updateUserPoints(userId, puntos),
+    ])
+    const err = statsRes.error ?? actionRes.error ?? pointsRes.error
+    return { error: err?.message ?? null }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Error de red' }
+  }
 }
 
 // --- RECOMPENSA DIARIA POR LOGIN ---

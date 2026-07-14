@@ -183,13 +183,6 @@ Barra visual de una estadistica.
 
 **Color de barra**: >= 60 verde, >= 30 naranja, < 30 rojo. Transition CSS de 0.5s.
 
-### ActionButton.vue
-**Archivo**: `src/components/ActionButton.vue`
-
-**NOTA**: Este componente EXISTE pero NO SE USA actualmente. CareScreen usa botones FAB directos en su template. Candidato a eliminar o integrar.
-
-**Props**: label, icon, cost, disabled. **Emits**: action.
-
 ### MimeRoom.vue
 **Archivo**: `src/components/MimeRoom.vue`
 

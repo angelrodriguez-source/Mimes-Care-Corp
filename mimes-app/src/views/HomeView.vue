@@ -179,36 +179,6 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.mood-selector {
-  display: flex;
-  gap: 6px;
-  margin-top: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: 0 8px;
-}
-
-.mood-btn {
-  padding: 5px 12px;
-  border: 2px solid #c5cae9;
-  border-radius: 20px;
-  background: white;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Baloo 2', cursive;
-}
-
-.mood-btn:hover {
-  border-color: #7986cb;
-}
-
-.mood-btn.active {
-  background: #5c6bc0;
-  color: white;
-  border-color: #5c6bc0;
-}
-
 .hint {
   color: #bdbdbd;
   font-size: 12px;

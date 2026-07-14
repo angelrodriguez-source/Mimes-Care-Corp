@@ -5,7 +5,7 @@
  * Carga un Mime por ID desde la URL, permite cuidarlo con acciones
  * que se guardan en la base de datos. El Mime se mueve por la habitacion.
  */
-import { ref, computed, onMounted, useTemplateRef, shallowRef, type Component } from 'vue'
+import { ref, computed, onMounted, onUnmounted, useTemplateRef, shallowRef, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
@@ -70,6 +70,15 @@ const moodLabel = computed(() => getMoodLabel(mood.value))
 // --- UI STATE ---
 const showStats = ref(false)
 const actionFeedback = ref('')
+const saveError = ref('')
+let saveErrorTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Muestra un aviso temporal cuando falla el guardado en Supabase */
+function showSaveError() {
+  saveError.value = 'No se pudo guardar. Revisa tu conexion.'
+  if (saveErrorTimer) clearTimeout(saveErrorTimer)
+  saveErrorTimer = setTimeout(() => (saveError.value = ''), 4000)
+}
 
 // --- DIFFICULTY PICKER ---
 const showDifficultyPicker = ref(false)
@@ -167,7 +176,7 @@ async function onMiniGameDone(result: MiniGameResult) {
 
   if (result.success) {
     applySuccessEffects(action)
-    await persistCareActionResult(
+    const { error: saveErr } = await persistCareActionResult(
       mimeId.value,
       userStore.user!.id,
       action,
@@ -176,8 +185,10 @@ async function onMiniGameDone(result: MiniGameResult) {
       afinidad.value,
       puntosMimes.value,
     )
+    if (saveErr) showSaveError()
   } else {
-    await updateUserPoints(userStore.user!.id, puntosMimes.value)
+    const { error: pointsErr } = await updateUserPoints(userStore.user!.id, puntosMimes.value)
+    if (pointsErr) showSaveError()
   }
 
   userStore.fetchProfile()
@@ -212,6 +223,10 @@ async function handleReset() {
 }
 
 onMounted(loadMime)
+
+onUnmounted(() => {
+  if (saveErrorTimer) clearTimeout(saveErrorTimer)
+})
 </script>
 
 <template>
@@ -324,38 +339,41 @@ onMounted(loadMime)
         class="stats-overlay"
         @click="showStats = false"
       ></div>
+
+      <!-- Aviso de error de guardado -->
+      <div v-if="saveError" class="save-toast" role="alert">
+        {{ saveError }}
+      </div>
     </template>
 
     <!-- SELECTOR DE DIFICULTAD -->
-    <Teleport to="body">
-      <div v-if="showDifficultyPicker" class="picker-overlay" @click.self="closePicker">
-        <div class="picker-card">
-          <h3 class="picker-title">
-            {{ ACTION_CONFIG.find(a => a.action === pickerAction)?.icon }}
-            {{ ACTION_CONFIG.find(a => a.action === pickerAction)?.label }}
-          </h3>
-          <p class="picker-subtitle">Elige dificultad</p>
-          <div class="picker-options">
-            <button class="picker-btn easy" @click="selectDifficulty('easy')">
-              <span class="picker-btn-icon">&#11088;</span>
-              <span class="picker-btn-label">Facil</span>
-              <span class="picker-btn-desc">Minijuego clasico</span>
-            </button>
-            <button
-              class="picker-btn advanced"
-              :class="{ 'picker-btn-disabled': !ACTION_GAMES_ADVANCED[pickerAction!] }"
-              :disabled="!ACTION_GAMES_ADVANCED[pickerAction!]"
-              @click="selectDifficulty('advanced')"
-            >
-              <span class="picker-btn-icon">&#128293;</span>
-              <span class="picker-btn-label">Avanzado</span>
-              <span class="picker-btn-desc">{{ ACTION_GAMES_ADVANCED[pickerAction!] ? 'Mas dificil' : 'Proximamente' }}</span>
-            </button>
-          </div>
-          <button class="picker-cancel" @click="closePicker">Cancelar</button>
+    <div v-if="showDifficultyPicker" class="picker-overlay" @click.self="closePicker">
+      <div class="picker-card">
+        <h3 class="picker-title">
+          {{ ACTION_CONFIG.find(a => a.action === pickerAction)?.icon }}
+          {{ ACTION_CONFIG.find(a => a.action === pickerAction)?.label }}
+        </h3>
+        <p class="picker-subtitle">Elige dificultad</p>
+        <div class="picker-options">
+          <button class="picker-btn easy" @click="selectDifficulty('easy')">
+            <span class="picker-btn-icon">&#11088;</span>
+            <span class="picker-btn-label">Facil</span>
+            <span class="picker-btn-desc">Minijuego clasico</span>
+          </button>
+          <button
+            class="picker-btn advanced"
+            :class="{ 'picker-btn-disabled': !ACTION_GAMES_ADVANCED[pickerAction!] }"
+            :disabled="!ACTION_GAMES_ADVANCED[pickerAction!]"
+            @click="selectDifficulty('advanced')"
+          >
+            <span class="picker-btn-icon">&#128293;</span>
+            <span class="picker-btn-label">Avanzado</span>
+            <span class="picker-btn-desc">{{ ACTION_GAMES_ADVANCED[pickerAction!] ? 'Mas dificil' : 'Proximamente' }}</span>
+          </button>
         </div>
+        <button class="picker-cancel" @click="closePicker">Cancelar</button>
       </div>
-    </Teleport>
+    </div>
 
     <!-- MINI-JUEGO OVERLAY -->
     <MiniGameShell
@@ -646,10 +664,26 @@ onMounted(loadMime)
   from { opacity: 0; }
   to { opacity: 1; }
 }
-</style>
 
-<!-- Picker styles unscoped (Teleport to body) -->
-<style>
+/* === TOAST DE ERROR DE GUARDADO === */
+.save-toast {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #c62828;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 60;
+  box-shadow: 0 4px 16px rgba(198, 40, 40, 0.4);
+  animation: fade-in 0.25s ease;
+  white-space: nowrap;
+}
+
+/* === SELECTOR DE DIFICULTAD === */
 .picker-overlay {
   position: fixed;
   inset: 0;

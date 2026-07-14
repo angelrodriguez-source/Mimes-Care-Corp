@@ -120,15 +120,35 @@ Todos reciben las mismas props via scoped slot: `active` y `onComplete`. Todos u
 
 ## Sistema de Dificultad
 
-**Estado actual**: Implementado el selector, pendientes los juegos avanzados.
+**Estado actual**: Selector implementado y 2 juegos avanzados publicados (jugar, limpiar).
 
-Cuando el usuario pulsa una accion de cuidado, aparece un modal (Teleport al body) con dos opciones:
-- **Facil** (estrella, fondo verde): Lanza el mini-juego actual
-- **Avanzado** (fuego, fondo naranja): Dice "Proximamente", lanza el facil por ahora
+Cuando el usuario pulsa una accion de cuidado, aparece un modal con dos opciones:
+- **Facil** (estrella, fondo verde): Lanza el mini-juego clasico
+- **Avanzado** (fuego, fondo naranja): Lanza el juego avanzado si existe para esa accion. Si no existe, el boton aparece deshabilitado con texto "Proximamente"
 
-**Plan**: El usuario definira los juegos avanzados uno a uno. Cuando esten listos, se creara un `ACTION_GAMES_ADVANCED: Record<CareAction, Component>` y `selectDifficulty('advanced')` usara ese mapeo en vez de `ACTION_GAMES`.
+Los juegos avanzados viven en `ACTION_GAMES_ADVANCED` y `GAME_CONFIGS_ADVANCED`
+(`Partial<Record<CareAction, ...>>` en `src/minigames/index.ts`). `selectDifficulty('advanced')`
+usa esos mapas cuando hay entrada para la accion; si no, cae al juego facil.
 
-**Estilos del picker**: En bloque `<style>` no-scoped (por el Teleport). Clases con prefijo `.picker-*`.
+**Estilos del picker**: scoped en CareScreen.vue (`position: fixed`, sin Teleport). Clases con prefijo `.picker-*`.
+
+## Juegos Avanzados
+
+### BasketGame.vue — Jugar (avanzado)
+**Mecanica**: Baloncesto tipo tirachinas. Arrastra la pelota (🏀) hacia atras y suelta para lanzarla con trayectoria parabolica hacia la canasta.
+- Fisica: gravedad + velocidad proporcional al drag, escalada por tamano de pantalla (baseline 375x667)
+- Preview de trayectoria (5 puntos) mientras arrastras
+- Deteccion de canasta con interpolacion entre frames (no puede "saltarse" el aro)
+- **Objetivo**: encestar 3 de 5 tiros. 20 segundos
+- Gana/pierde anticipadamente en cuanto el resultado es matematicamente seguro
+
+### ScrubGame.vue — Limpiar (avanzado)
+**Mecanica**: "Campo minado" de limpieza. Grid fino (20x28) de suciedad con 25 minas (💣). Arrastra la esponja (🧽) para limpiar sin tocar las minas.
+- Pointer Events unificados (raton + tactil) con captura de puntero
+- El trazo se interpola entre eventos: deslizar rapido no atraviesa minas ni deja huecos
+- Minas con distancia minima entre si (3.5 celdas) + zona de inicio segura (esquina superior izquierda) — el nivel siempre es navegable
+- Al tocar mina: se revelan todas, la detonada brilla, overlay 💥 y derrota
+- **Objetivo**: limpiar 85% de las celdas seguras. 25 segundos
 
 ## Flujo Completo (CareScreen -> MiniGame -> Supabase)
 

@@ -23,9 +23,7 @@ Hash mode (`createWebHashHistory`) para compatibilidad con GitHub Pages.
 | `/care/:id` | care | CareScreen | Si | Cuidar un Mime especifico (por UUID) |
 | `/explore` | explore | HomeView | No | Preview de 3 mimes demo sin login |
 
-*Guard*: `router.beforeEach` comprueba auth via `userStore`. Rutas protegidas redirigen a login si no hay sesion. Login redirige a dashboard si ya hay sesion.
-
-**Problema conocido**: Mientras `userStore.loading = true` (auth inicializando), el guard deja pasar a cualquier ruta. Un usuario no autenticado podria ver brevemente el dashboard.
+*Guard*: `router.beforeEach` espera `userStore.waitUntilReady()` antes de decidir (la ruta `explore` es la unica que no espera). Rutas protegidas redirigen a login si no hay sesion; login redirige a dashboard si ya la hay. Ya no existe el gap durante la inicializacion de auth.
 
 ## Estado Global (`src/stores/userStore.ts`)
 
@@ -44,7 +42,8 @@ Pinia store con Composition API (`defineStore('user', () => {...})`).
 ### Actions
 | Accion | Que hace |
 |--------|----------|
-| `init()` | Comprueba sesion en localStorage, escucha cambios de auth |
+| `init()` | Comprueba sesion en localStorage, escucha cambios de auth. Resuelve la promesa de `waitUntilReady()` al terminar (siempre, via try/finally) |
+| `waitUntilReady()` | Devuelve una promesa que se resuelve cuando la sesion inicial esta comprobada. La usa el router guard |
 | `fetchProfile()` | Carga profile desde tabla `profiles` |
 | `signUp(email, pass, name)` | Registro (trigger crea profile + 3 mimes) |
 | `signIn(email, pass)` | Login |
@@ -121,7 +120,7 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `getCesionDaysLeft(cesionStart)` | Dias restantes de cesion (null si no hay cesion activa) |
 | `getCesionDay(cesionStart)` | Dia actual de cesion (1-7), usado para calcular escala de crecimiento |
 | `renameMime(mimeId, nombre)` | Actualiza nombre del Mime en Supabase |
-| `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM) |
+| `persistCareActionResult(...)` | Guarda resultado completo de mini-juego (stats + action + PM). Devuelve `{ error: string \| null }`; CareScreen muestra un toast si fallo |
 | `claimDailyReward()` | Llama al RPC `claim_daily_reward` enviando la fecha local del cliente (`toLocaleDateString('sv-SE')`). Devuelve `DailyRewardResult` con `{ already_claimed, streak, reward, puntos_mimes }` |
 | `markTutorialCompleted()` | Llama al RPC `mark_tutorial_completed` para persistir que el usuario ya completo el tutorial. Devuelve `{ error? }` |
 

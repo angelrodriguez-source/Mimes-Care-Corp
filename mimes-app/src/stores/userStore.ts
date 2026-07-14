@@ -27,11 +27,25 @@ export const useUserStore = defineStore('user', () => {
   // Para mostrar spinners mientras carga
   const loading = ref(true)
 
+  // Promesa que se resuelve cuando init() termina. El router guard la
+  // espera antes de decidir, para no dejar pasar a rutas protegidas
+  // mientras la sesion inicial aun se esta comprobando.
+  let resolveReady: () => void
+  const ready = new Promise<void>(resolve => { resolveReady = resolve })
+
   // --- COMPUTED ---
   // Atajo: ¿está logueado?
   const isLoggedIn = computed(() => !!user.value)
 
   // --- ACTIONS ---
+
+  /**
+   * Devuelve una promesa que se resuelve cuando la sesión inicial
+   * ya está comprobada (init() terminó, con o sin sesión).
+   */
+  function waitUntilReady() {
+    return ready
+  }
 
   /**
    * Inicializa el store: comprueba si ya hay una sesión activa.
@@ -43,26 +57,31 @@ export const useUserStore = defineStore('user', () => {
   async function init() {
     loading.value = true
 
-    // getSession() comprueba si hay un token guardado en localStorage
-    const { data: { session } } = await supabase.auth.getSession()
+    try {
+      // getSession() comprueba si hay un token guardado en localStorage
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (session?.user) {
-      user.value = session.user
-      await fetchProfile()
-    }
-
-    // onAuthStateChange escucha cambios de sesión (login, logout, token refresh)
-    // Es como un "vigilante" que avisa cuando el estado de auth cambia
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      user.value = session?.user ?? null
       if (session?.user) {
+        user.value = session.user
         await fetchProfile()
-      } else {
-        profile.value = null
       }
-    })
 
-    loading.value = false
+      // onAuthStateChange escucha cambios de sesión (login, logout, token refresh)
+      // Es como un "vigilante" que avisa cuando el estado de auth cambia
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        user.value = session?.user ?? null
+        if (session?.user) {
+          await fetchProfile()
+        } else {
+          profile.value = null
+        }
+      })
+    } finally {
+      // Resolver SIEMPRE, incluso si Supabase falla — si no, el router
+      // guard se quedaria esperando para siempre
+      loading.value = false
+      resolveReady()
+    }
   }
 
   /**
@@ -128,6 +147,7 @@ export const useUserStore = defineStore('user', () => {
     profile,
     loading,
     isLoggedIn,
+    waitUntilReady,
     init,
     fetchProfile,
     signUp,

@@ -31,14 +31,15 @@ const router = createRouter({
 // Rutas que no requieren login
 const publicRoutes = ['login', 'explore']
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const userStore = useUserStore()
 
-  // Rutas publicas: acceso libre
-  if (to.meta.public || publicRoutes.includes(to.name as string)) return true
+  // Explore es totalmente publica: no hace falta esperar a la sesion
+  if (to.name === 'explore' || to.meta.public) return true
 
-  // Mientras carga la sesion inicial, no bloqueamos
-  if (userStore.loading) return true
+  // Esperar a que la sesion inicial este comprobada. Sin esto, un usuario
+  // no autenticado podia ver brevemente el dashboard mientras init() corria.
+  await userStore.waitUntilReady()
 
   // Si va a login y ya esta logueado → dashboard
   if (to.name === 'login' && userStore.isLoggedIn) {
