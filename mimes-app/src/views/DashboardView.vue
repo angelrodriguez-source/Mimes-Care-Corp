@@ -8,7 +8,7 @@
  *   3. Mimes a mi cargo: Mimes de otros que estas cuidando
  *   4. Adoptar: input para introducir un codigo de compartir
  */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import MimeCard from '../components/MimeCard.vue'
 import DailyRewardModal from '../components/DailyRewardModal.vue'
@@ -29,7 +29,10 @@ import {
   checkCesionExpiry,
   getCesionDaysLeft,
   claimDailyReward,
+  sendMimeMessage,
+  subscribeMimesChanges,
   type MimeWithNames,
+  type MimeFromDB,
 } from '../services/mimeService'
 
 const router = useRouter()
@@ -46,6 +49,9 @@ const claimMessage = ref('')
 const shareModal = ref<{ mimeId: string; code: string; nombre: string } | null>(null)
 const renameModal = ref<{ mimeId: string; nombre: string } | null>(null)
 const renameInput = ref('')
+const messageModal = ref<{ mimeId: string; nombre: string; cuidador: string } | null>(null)
+const messageInput = ref('')
+const messageSending = ref(false)
 const dailyModal = ref<{
   streakPreview: number
   rewardPreview: number
@@ -238,6 +244,43 @@ async function handleClaimDaily() {
   }
 }
 
+// --- MENSAJES AL CUIDADOR ---
+
+function openMessage(mime: MimeWithNames) {
+  messageModal.value = {
+    mimeId: mime.id,
+    nombre: mime.nombre,
+    cuidador: mime.cuidador_name ?? 'su cuidador',
+  }
+  messageInput.value = ''
+}
+
+async function handleSendMessage() {
+  if (!messageModal.value || !messageInput.value.trim()) return
+  messageSending.value = true
+  const { error } = await sendMimeMessage(messageModal.value.mimeId, messageInput.value)
+  messageSending.value = false
+
+  claimMessage.value = error
+    ? 'No se pudo enviar el mensaje'
+    : `${messageModal.value.nombre} le dara tu mensaje a ${messageModal.value.cuidador}!`
+  messageModal.value = null
+  setTimeout(() => (claimMessage.value = ''), 4000)
+}
+
+// --- REALTIME: ver en vivo los cambios de mis Mimes ---
+
+let unsubscribeRealtime: (() => void) | null = null
+
+/** Parchea la tarjeta local cuando el cuidador actualiza el Mime en vivo */
+function onMimeRealtimeUpdate(updated: MimeFromDB) {
+  const idx = myMimes.value.findIndex(m => m.id === updated.id)
+  const current = myMimes.value[idx]
+  if (!current) return
+  // Conservar los nombres enriquecidos; el resto viene fresco de la DB
+  myMimes.value[idx] = { ...current, ...updated }
+}
+
 function startTutorial() {
   // Si la recompensa diaria esta abierta, la cerramos para no solapar overlays
   dailyModal.value = null
@@ -246,6 +289,12 @@ function startTutorial() {
 
 onMounted(async () => {
   await loadData()
+
+  // Suscripcion realtime a mis Mimes (requiere migracion v7; si no esta,
+  // el canal simplemente no recibe eventos)
+  if (userStore.user) {
+    unsubscribeRealtime = subscribeMimesChanges(userStore.user.id, onMimeRealtimeUpdate)
+  }
 
   // Si el tutorial ya esta activo (p. ej. volvimos del CareScreen durante
   // el recorrido), no tocamos nada — el TutorialOverlay sigue corriendo.
@@ -265,6 +314,10 @@ onMounted(async () => {
       dailyModal.value = { ...next, phase: 'offer' }
     }
   }
+})
+
+onUnmounted(() => {
+  unsubscribeRealtime?.()
 })
 </script>
 
@@ -316,6 +369,7 @@ onMounted(async () => {
             :data-tutorial="idx === 0 ? 'share-btn-first' : undefined"
             @share="handleShare(mime.id, mime.nombre)"
             @rename="openRename(mime.id, mime.nombre)"
+            @message="openMessage(mime)"
           />
         </div>
       </section>
@@ -407,6 +461,29 @@ onMounted(async () => {
         <div class="rename-actions">
           <button class="modal-close" @click="renameModal = null">Cancelar</button>
           <button class="claim-btn" :disabled="!renameInput.trim()" @click="handleRename">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGE MODAL -->
+    <div v-if="messageModal" class="modal-overlay" @click.self="messageModal = null">
+      <div class="modal-card">
+        <h3>Mensaje para {{ messageModal.cuidador }}</h3>
+        <p class="modal-desc">{{ messageModal.nombre }} se lo dira de tu parte:</p>
+        <textarea
+          v-model="messageInput"
+          class="message-textarea"
+          maxlength="200"
+          rows="3"
+          placeholder="Escribe tu mensaje..."
+        ></textarea>
+        <div class="rename-actions">
+          <button class="modal-close" @click="messageModal = null">Cancelar</button>
+          <button
+            class="claim-btn"
+            :disabled="messageSending || !messageInput.trim()"
+            @click="handleSendMessage"
+          >{{ messageSending ? '...' : 'Enviar' }}</button>
         </div>
       </div>
     </div>
@@ -747,6 +824,20 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 .rename-input:focus { border-color: #5c6bc0; }
+
+.message-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: 'Baloo 2', cursive;
+  outline: none;
+  margin: 12px 0;
+  box-sizing: border-box;
+  resize: none;
+}
+.message-textarea:focus { border-color: #5c6bc0; }
 
 .rename-actions {
   display: flex;

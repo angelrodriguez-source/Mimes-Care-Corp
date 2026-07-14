@@ -18,9 +18,13 @@ import {
   fetchMimeById,
   resetMime,
   persistCareActionResult,
-  updateUserPoints,
+  addPoints,
   applyLazyDecay,
   getCesionDay,
+  fetchUnreadMessages,
+  markMessageRead,
+  subscribeMimeMessages,
+  type MimeMessage,
 } from '../services/mimeService'
 import { toStats } from '../utils/helpers'
 import {
@@ -97,6 +101,24 @@ const pendingDifficulty = ref<'easy' | 'advanced'>('easy')
 const { mimeX, mimeDirection, isWalking, startWalking, stopWalking, pauseWalking } =
   useCharacterMovement()
 
+// --- MENSAJES DEL DUENO (el Mime los "dice" al cuidador) ---
+const pendingMessages = ref<MimeMessage[]>([])
+const currentMessage = computed(() => pendingMessages.value[0] ?? null)
+let unsubscribeMessages: (() => void) | null = null
+
+async function loadMessages() {
+  // Solo el cuidador ve la burbuja (el dueno ya sabe lo que escribio)
+  pendingMessages.value = await fetchUnreadMessages(mimeId.value)
+}
+
+/** Descartar la burbuja actual: marca leido y muestra el siguiente */
+async function dismissMessage() {
+  const msg = currentMessage.value
+  if (!msg) return
+  pendingMessages.value = pendingMessages.value.slice(1)
+  await markMessageRead(msg.id)
+}
+
 // --- CARGAR MIME ---
 async function loadMime() {
   loading.value = true
@@ -127,6 +149,16 @@ async function loadMime() {
 
   loading.value = false
   startWalking()
+
+  // Mensajes del dueno: solo si soy el cuidador de este Mime
+  if (decayed.cuidador_id && decayed.cuidador_id === userStore.user?.id) {
+    loadMessages()
+    unsubscribeMessages = subscribeMimeMessages(id, msg => {
+      if (msg.sender_type === 'dueno' && !msg.read) {
+        pendingMessages.value = [...pendingMessages.value, msg]
+      }
+    })
+  }
 }
 
 const { play: playSfx } = useSfx()
@@ -190,11 +222,11 @@ async function onMiniGameDone(result: MiniGameResult) {
       cost,
       stats.value,
       afinidad.value,
-      puntosMimes.value,
     )
     if (saveErr) showSaveError()
   } else {
-    const { error: pointsErr } = await updateUserPoints(userStore.user!.id, puntosMimes.value)
+    // Perder tambien cuesta los PM: cobro atomico del coste
+    const { error: pointsErr } = await addPoints(userStore.user!.id, -cost)
     if (pointsErr) showSaveError()
   }
 
@@ -237,6 +269,8 @@ onMounted(loadMime)
 
 onUnmounted(() => {
   if (saveErrorTimer) clearTimeout(saveErrorTimer)
+  unsubscribeMessages?.()
+  stopWalking()
 })
 </script>
 
@@ -295,6 +329,15 @@ onUnmounted(() => {
         <div v-if="actionFeedback" class="action-feedback">
           {{ actionFeedback }}
         </div>
+
+        <!-- Burbuja: mensaje del dueno que el Mime "dice" -->
+        <button v-if="currentMessage" class="message-bubble" @click="dismissMessage">
+          <span class="bubble-text">{{ currentMessage.content }}</span>
+          <span class="bubble-hint">
+            mensaje de su dueno · toca para cerrar
+            <template v-if="pendingMessages.length > 1"> · +{{ pendingMessages.length - 1 }}</template>
+          </span>
+        </button>
       </MimeRoom>
 
       <!-- RESUMEN DE ESTADO (vertical, lado derecho) -->
@@ -669,6 +712,58 @@ onUnmounted(() => {
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* === BURBUJA DE MENSAJE === */
+.message-bubble {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 78%;
+  background: white;
+  border: none;
+  border-radius: 18px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  z-index: 15;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: bubble-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: center;
+}
+
+/* Colita de la burbuja */
+.message-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid white;
+}
+
+.bubble-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.bubble-hint {
+  font-size: 10px;
+  color: #aaa;
+}
+
+@keyframes bubble-pop {
+  from { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 
 /* === TOAST DE ERROR DE GUARDADO === */

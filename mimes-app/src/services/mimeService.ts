@@ -89,6 +89,31 @@ export async function updateUserPoints(userId: string, puntos: number) {
     .eq('id', userId)
 }
 
+/**
+ * Suma (o resta) PM de forma atomica via RPC `add_points` (migracion v7).
+ * Si el RPC aun no existe, cae al metodo antiguo (leer + escribir absoluto).
+ */
+export async function addPoints(
+  userId: string,
+  delta: number,
+): Promise<{ puntos: number | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('add_points', { p_delta: delta })
+  if (!error) {
+    const res = data as { puntos_mimes?: number; error?: string }
+    return { puntos: res?.puntos_mimes ?? null, error: res?.error ?? null }
+  }
+
+  // Fallback pre-v7: no atomico, pero funcional
+  const { data: prof } = await supabase
+    .from('profiles')
+    .select('puntos_mimes')
+    .eq('id', userId)
+    .single()
+  const nuevo = Math.max(0, (prof?.puntos_mimes ?? 0) + delta)
+  const { error: upErr } = await updateUserPoints(userId, nuevo)
+  return { puntos: nuevo, error: upErr?.message ?? null }
+}
+
 // --- RESET DE UN MIME ---
 
 export async function resetMime(mimeId: string, userId: string) {
@@ -257,11 +282,21 @@ export async function checkCesionExpiry(mime: MimeFromDB): Promise<CesionResult>
 
   if (elapsedDays < CESION_DURATION_DAYS) return { expired: false }
 
-  // Cesion expirada: calcular recompensa
+  // v7: RPC atomico — aunque dueno y cuidador detecten la expiracion a la
+  // vez, el FOR UPDATE del servidor garantiza que solo se paga una vez
+  const { data, error } = await supabase.rpc('expire_cesion', { p_mime_id: mime.id })
+  if (!error && data && !data.error) {
+    return {
+      expired: !!data.expired,
+      reward: data.reward,
+      cuidadorId: data.cuidador_id,
+    }
+  }
+
+  // Fallback pre-v7: dos escrituras no atomicas
   const reward = Math.round((mime.afinidad / 100) * PM_PER_AFFINITY)
   const cuidadorId = mime.cuidador_id
 
-  // Buscar puntos actuales del cuidador
   const { data: profile } = await supabase
     .from('profiles')
     .select('puntos_mimes')
@@ -270,7 +305,6 @@ export async function checkCesionExpiry(mime: MimeFromDB): Promise<CesionResult>
 
   const currentPuntos = profile?.puntos_mimes ?? 0
 
-  // Devolver Mime al dueno + dar PM al cuidador
   await Promise.all([
     supabase
       .from('mimes')
@@ -323,7 +357,8 @@ export async function renameMime(mimeId: string, nombre: string) {
 // --- PERSISTIR RESULTADO DE MINI-JUEGO ---
 
 /**
- * Guarda el resultado completo de un mini-juego (stats + log + PM).
+ * Guarda el resultado completo de un mini-juego (stats + log + cobro de PM).
+ * El coste se cobra como delta atomico via addPoints (no valor absoluto).
  * Devuelve el primer error encontrado (o null si todo se guardo bien)
  * para que la UI pueda avisar al usuario si sus cambios no persistieron.
  */
@@ -334,16 +369,15 @@ export async function persistCareActionResult(
   cost: number,
   stats: MimeStats,
   afinidad: number,
-  puntos: number,
 ): Promise<{ error: string | null }> {
   try {
     const [statsRes, actionRes, pointsRes] = await Promise.all([
       updateMimeStats(mimeId, stats, afinidad),
       logCareAction(mimeId, userId, action, cost),
-      updateUserPoints(userId, puntos),
+      addPoints(userId, -cost),
     ])
-    const err = statsRes.error ?? actionRes.error ?? pointsRes.error
-    return { error: err?.message ?? null }
+    const err = statsRes.error?.message ?? actionRes.error?.message ?? pointsRes.error
+    return { error: err ?? null }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error de red' }
   }
@@ -395,4 +429,87 @@ export async function markTutorialCompleted(): Promise<{ error?: string }> {
   const { error } = await supabase.rpc('mark_tutorial_completed')
   if (error) return { error: error.message }
   return {}
+}
+
+// --- MENSAJERIA (dueno -> Mime -> cuidador) ---
+
+export interface MimeMessage {
+  id: string
+  mime_id: string
+  sender_type: 'dueno' | 'mime'
+  content: string
+  read: boolean
+  created_at: string
+}
+
+/** El dueno deja un mensaje que el Mime "dira" a su cuidador */
+export async function sendMimeMessage(mimeId: string, content: string) {
+  const { error } = await supabase.from('messages').insert({
+    mime_id: mimeId,
+    sender_type: 'dueno',
+    content: content.trim().slice(0, 200),
+  })
+  return { error: error?.message ?? null }
+}
+
+/** Mensajes sin leer de un Mime (los que el Mime aun tiene que "decir") */
+export async function fetchUnreadMessages(mimeId: string): Promise<MimeMessage[]> {
+  const { data } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('mime_id', mimeId)
+    .eq('read', false)
+    .order('created_at')
+  return (data ?? []) as MimeMessage[]
+}
+
+/** Marca un mensaje como leido (requiere policy de UPDATE de la v7) */
+export async function markMessageRead(messageId: string) {
+  const { error } = await supabase
+    .from('messages')
+    .update({ read: true })
+    .eq('id', messageId)
+  return { error: error?.message ?? null }
+}
+
+// --- REALTIME (requiere publicacion de la migracion v7) ---
+
+/**
+ * Suscripcion en vivo a cambios en los Mimes de un dueno.
+ * Devuelve una funcion para cancelar la suscripcion.
+ */
+export function subscribeMimesChanges(
+  userId: string,
+  onChange: (mime: MimeFromDB) => void,
+): () => void {
+  const channel = supabase
+    .channel(`mimes-de-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'mimes', filter: `dueno_id=eq.${userId}` },
+      payload => onChange(payload.new as MimeFromDB),
+    )
+    .subscribe()
+
+  return () => { void supabase.removeChannel(channel) }
+}
+
+/**
+ * Suscripcion en vivo a mensajes nuevos de un Mime (para que el cuidador
+ * vea la burbuja aparecer sin recargar). Devuelve funcion de cancelacion.
+ */
+export function subscribeMimeMessages(
+  mimeId: string,
+  onMessage: (msg: MimeMessage) => void,
+): () => void {
+  const channel = supabase
+    .channel(`mensajes-${mimeId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `mime_id=eq.${mimeId}` },
+      payload => onMessage(payload.new as MimeMessage),
+    )
+    .subscribe()
+
+  return () => { void supabase.removeChannel(channel) }
 }

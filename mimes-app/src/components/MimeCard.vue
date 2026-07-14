@@ -29,6 +29,7 @@ defineEmits<{
   care: []
   release: []
   rename: []
+  message: []
 }>()
 
 const mood = computed(() => deriveMood(props.stats))
@@ -96,6 +97,9 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
     <div class="card-actions">
       <button v-if="mode === 'own' && !cuidadorName" class="card-btn share-btn" @click="$emit('share')">
         Compartir
+      </button>
+      <button v-if="mode === 'own' && cuidadorName" class="card-btn message-btn" @click="$emit('message')">
+        &#128172; Mensaje
       </button>
       <button v-if="mode === 'caring'" class="card-btn care-btn" @click="$emit('care')">
         Cuidar
@@ -268,6 +272,12 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
   color: #1565c0;
 }
 .share-btn:active { background: #bbdefb; }
+
+.message-btn {
+  background: #ede7f6;
+  color: #6a1b9a;
+}
+.message-btn:active { background: #d1c4e9; }
 
 .care-btn {
   background: #e8f5e9;
