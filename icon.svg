@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icono PWA de Mimes Care Corp: carita de Mime celeste -->
+  <rect width="512" height="512" rx="112" fill="#5c6bc0"/>
+  <ellipse cx="256" cy="284" rx="150" ry="164" fill="#90caf9"/>
+  <ellipse cx="256" cy="332" rx="92" ry="98" fill="#e3f2fd"/>
+  <!-- Orejas -->
+  <circle cx="118" cy="176" r="34" fill="#90caf9"/>
+  <circle cx="394" cy="176" r="34" fill="#90caf9"/>
+  <!-- Pelo punk -->
+  <path d="M216 132 L232 84 L248 128 L264 76 L280 126 L296 92 L306 132 Z" fill="#1565c0"/>
+  <!-- Ojos -->
+  <circle cx="206" cy="272" r="30" fill="#fff"/>
+  <circle cx="306" cy="272" r="30" fill="#fff"/>
+  <circle cx="210" cy="278" r="14" fill="#263238"/>
+  <circle cx="302" cy="278" r="14" fill="#263238"/>
+  <!-- Mofletes -->
+  <circle cx="164" cy="330" r="18" fill="#f48fb1" opacity="0.7"/>
+  <circle cx="348" cy="330" r="18" fill="#f48fb1" opacity="0.7"/>
+  <!-- Boca -->
+  <path d="M226 350 Q256 378 286 350" stroke="#263238" stroke-width="12" stroke-linecap="round" fill="none"/>
+</svg>
