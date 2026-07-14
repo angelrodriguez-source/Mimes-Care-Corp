@@ -1,11 +1,18 @@
 <script setup lang="ts">
 /**
- * ScrubGame.vue — Mini-juego avanzado de limpieza
+ * ScrubGame.vue — Mini-juego avanzado de limpieza ("campo minado")
  *
- * Mecanica: pantalla sucia con minas escondidas (💣).
- * Arrastra la esponja para limpiar sin tocar las minas.
- * Grid fino (20x28) con minas espaciadas para que sea
- * dificil pero siempre posible.
+ * Mecanica: la pantalla esta cubierta por un grid fino de suciedad con
+ * minas repartidas. El jugador arrastra la esponja para limpiar celdas.
+ * Si la esponja toca una mina, pierde. Gana al limpiar WIN_PERCENT de
+ * las celdas seguras antes de que acabe el tiempo del shell.
+ *
+ * Detalles de implementacion:
+ * - Pointer Events unificados (raton + tactil) con captura de puntero.
+ * - El trazo se interpola entre eventos consecutivos: un deslizamiento
+ *   rapido no puede "saltar" por encima de una mina ni dejar huecos.
+ * - La generacion garantiza distancia minima entre minas y una zona de
+ *   inicio segura, para que el nivel siempre sea navegable.
  */
 import { ref, computed, watch, onUnmounted } from 'vue'
 
@@ -14,163 +21,231 @@ const props = defineProps<{
   onComplete: (success: boolean) => void
 }>()
 
+// --- CONFIGURACION DEL NIVEL ---
 const COLS = 20
 const ROWS = 28
 const TOTAL_CELLS = COLS * ROWS
+/** Numero de minas repartidas por el grid */
 const MINE_COUNT = 25
+/** Distancia minima entre minas (en celdas) — garantiza pasillos navegables */
 const MIN_MINE_DIST = 3.5
+/** Radio sin minas alrededor de la esquina superior izquierda (zona de inicio) */
+const SAFE_START_RADIUS = 3
+/** Porcentaje de celdas seguras que hay que limpiar para ganar */
 const WIN_PERCENT = 85
+/** Radio de limpieza de la esponja (en celdas) */
 const SPONGE_RADIUS = 1.2
+/** Paso de interpolacion del trazo (en celdas) — menor que SPONGE_RADIUS */
+const STROKE_STEP = 0.5
+/** Pausa para mostrar el feedback de explosion/victoria antes de cerrar */
+const FEEDBACK_DELAY_MS = 900
 
-type CellType = 'dirt' | 'mine'
+// --- ESTADO DEL NIVEL ---
+interface Cell {
+  mine: boolean
+  cleaned: boolean
+  /** Variacion visual de la suciedad (0-3), fijada al generar el nivel */
+  shade: number
+}
 
+const cells = ref<Cell[]>([])
+const cleanedCount = ref(0)
+const safeCellCount = ref(TOTAL_CELLS)
+
+// --- ESTADO DE LA PARTIDA ---
+type Outcome = 'playing' | 'won' | 'exploded'
+const outcome = ref<Outcome>('playing')
+/** Indice de la mina pisada, para resaltarla al explotar */
+const explodedIndex = ref<number | null>(null)
+
+// --- ESTADO DE LA ESPONJA ---
 const containerRef = ref<HTMLElement | null>(null)
-const cellTypes = ref<CellType[]>([])
-const cleaned = ref<boolean[]>([])
 const spongeX = ref(50)
 const spongeY = ref(50)
-const spongeVisible = ref(false)
-const done = ref(false)
-const hitMine = ref(false)
+const scrubbing = ref(false)
+/** Ultima posicion del puntero en coordenadas de celda, para interpolar */
+let lastCellPos: { col: number; row: number } | null = null
 
-const safeCells = computed(() => cellTypes.value.filter(c => c === 'dirt').length)
-const cleanedSafe = computed(() => {
-  let count = 0
-  for (let i = 0; i < TOTAL_CELLS; i++) {
-    if (cellTypes.value[i] === 'dirt' && cleaned.value[i]) count++
-  }
-  return count
-})
+let feedbackTimer: ReturnType<typeof setTimeout> | null = null
+
+// --- COMPUTED ---
 const cleanedPercent = computed(() =>
-  safeCells.value > 0 ? Math.round((cleanedSafe.value / safeCells.value) * 100) : 0
+  safeCellCount.value > 0
+    ? Math.round((cleanedCount.value / safeCellCount.value) * 100)
+    : 0,
+)
+const showHint = computed(
+  () => props.active && cleanedCount.value === 0 && outcome.value === 'playing',
 )
 
-function generateLevel() {
-  const types: CellType[] = new Array(TOTAL_CELLS).fill('dirt')
-  const mines: { col: number; row: number }[] = []
+// --- GENERACION DEL NIVEL ---
 
-  let placed = 0
+function generateLevel() {
+  const next: Cell[] = Array.from({ length: TOTAL_CELLS }, () => ({
+    mine: false,
+    cleaned: false,
+    shade: Math.floor(Math.random() * 4),
+  }))
+
+  const mines: Array<{ col: number; row: number }> = []
   let attempts = 0
-  while (placed < MINE_COUNT && attempts < 2000) {
+
+  while (mines.length < MINE_COUNT && attempts < 2000) {
     attempts++
     const col = Math.floor(Math.random() * COLS)
     const row = Math.floor(Math.random() * ROWS)
-    const idx = row * COLS + col
-    if (types[idx] === 'mine') continue
 
-    // Ensure minimum distance from all other mines
-    let tooClose = false
-    for (const m of mines) {
-      const dx = col - m.col
-      const dy = row - m.row
-      if (dx * dx + dy * dy < MIN_MINE_DIST * MIN_MINE_DIST) {
-        tooClose = true
-        break
-      }
-    }
+    // Zona de inicio segura: sin minas cerca de la esquina superior izquierda
+    if (Math.hypot(col, row) < SAFE_START_RADIUS + MIN_MINE_DIST) continue
+
+    // Distancia minima respecto al resto de minas
+    const tooClose = mines.some(
+      m => Math.hypot(col - m.col, row - m.row) < MIN_MINE_DIST,
+    )
     if (tooClose) continue
 
-    types[idx] = 'mine'
+    next[row * COLS + col]!.mine = true
     mines.push({ col, row })
-    placed++
   }
 
-  cellTypes.value = types
-  cleaned.value = new Array(TOTAL_CELLS).fill(false)
+  cells.value = next
+  cleanedCount.value = 0
+  safeCellCount.value = TOTAL_CELLS - mines.length
 }
 
-function processAt(pxPercent: number, pyPercent: number) {
-  const col = (pxPercent / 100) * COLS
-  const row = (pyPercent / 100) * ROWS
+// --- LOGICA DE LIMPIEZA ---
 
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+/**
+ * Limpia las celdas dentro del radio de la esponja centrado en (col, row).
+ * Devuelve el indice de la mina tocada, o null si la pasada fue segura.
+ */
+function scrubAt(col: number, row: number): number | null {
+  const minC = Math.max(0, Math.floor(col - SPONGE_RADIUS - 1))
+  const maxC = Math.min(COLS - 1, Math.ceil(col + SPONGE_RADIUS))
+  const minR = Math.max(0, Math.floor(row - SPONGE_RADIUS - 1))
+  const maxR = Math.min(ROWS - 1, Math.ceil(row + SPONGE_RADIUS))
+  const r2 = SPONGE_RADIUS * SPONGE_RADIUS
+
+  for (let r = minR; r <= maxR; r++) {
+    for (let c = minC; c <= maxC; c++) {
       const dx = c + 0.5 - col
       const dy = r + 0.5 - row
-      if (dx * dx + dy * dy > SPONGE_RADIUS * SPONGE_RADIUS) continue
+      if (dx * dx + dy * dy > r2) continue
 
       const idx = r * COLS + c
-      if (cellTypes.value[idx] === 'mine') {
-        if (!done.value) {
-          done.value = true
-          hitMine.value = true
-          props.onComplete(false)
-        }
-        return
+      const cell = cells.value[idx]!
+      if (cell.mine) return idx
+      if (!cell.cleaned) {
+        cell.cleaned = true
+        cleanedCount.value++
       }
-      cleaned.value[idx] = true
+    }
+  }
+  return null
+}
+
+/**
+ * Aplica el trazo desde la ultima posicion conocida hasta (col, row),
+ * muestreando cada STROKE_STEP celdas para no atravesar minas en
+ * movimientos rapidos.
+ */
+function applyStroke(col: number, row: number) {
+  const from = lastCellPos ?? { col, row }
+  const dist = Math.hypot(col - from.col, row - from.row)
+  const steps = Math.max(1, Math.ceil(dist / STROKE_STEP))
+
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps
+    const sc = from.col + (col - from.col) * t
+    const sr = from.row + (row - from.row) * t
+    const mineIdx = scrubAt(sc, sr)
+    if (mineIdx !== null) {
+      explode(mineIdx)
+      return
     }
   }
 
-  checkWin()
+  lastCellPos = { col, row }
+  if (cleanedPercent.value >= WIN_PERCENT) win()
 }
 
-function checkWin() {
-  if (done.value) return
-  if (cleanedPercent.value >= WIN_PERCENT) {
-    done.value = true
-    props.onComplete(true)
+function explode(mineIndex: number) {
+  if (outcome.value !== 'playing') return
+  outcome.value = 'exploded'
+  explodedIndex.value = mineIndex
+  scrubbing.value = false
+  feedbackTimer = setTimeout(() => props.onComplete(false), FEEDBACK_DELAY_MS)
+}
+
+function win() {
+  if (outcome.value !== 'playing') return
+  outcome.value = 'won'
+  scrubbing.value = false
+  feedbackTimer = setTimeout(() => props.onComplete(true), FEEDBACK_DELAY_MS * 0.7)
+}
+
+// --- ENTRADA (Pointer Events) ---
+
+/** Convierte un evento de puntero a coordenadas de celda y de pantalla (%) */
+function toGameCoords(e: PointerEvent) {
+  const rect = containerRef.value?.getBoundingClientRect()
+  if (!rect || rect.width === 0 || rect.height === 0) return null
+  const px = ((e.clientX - rect.left) / rect.width) * 100
+  const py = ((e.clientY - rect.top) / rect.height) * 100
+  return {
+    px,
+    py,
+    col: (px / 100) * COLS,
+    row: (py / 100) * ROWS,
   }
 }
 
-function getEventPercent(e: MouseEvent | TouchEvent): { px: number; py: number } | null {
-  if (!containerRef.value) return null
-  const rect = containerRef.value.getBoundingClientRect()
-  let clientX: number, clientY: number
-
-  if ('touches' in e) {
-    const t = e.touches[0]
-    if (!t) return null
-    clientX = t.clientX
-    clientY = t.clientY
-  } else {
-    clientX = e.clientX
-    clientY = e.clientY
-  }
-
-  const px = ((clientX - rect.left) / rect.width) * 100
-  const py = ((clientY - rect.top) / rect.height) * 100
-  return { px, py }
-}
-
-function onPointerStart(e: MouseEvent | TouchEvent) {
-  if (!props.active || done.value) return
-  spongeVisible.value = true
-  const pos = getEventPercent(e)
+function onPointerDown(e: PointerEvent) {
+  if (!props.active || outcome.value !== 'playing') return
+  const pos = toGameCoords(e)
   if (!pos) return
+
+  containerRef.value?.setPointerCapture(e.pointerId)
+  scrubbing.value = true
+  lastCellPos = null
   spongeX.value = pos.px
   spongeY.value = pos.py
-  processAt(pos.px, pos.py)
+  applyStroke(pos.col, pos.row)
 }
 
-function onPointerMove(e: MouseEvent | TouchEvent) {
-  if (!props.active || done.value || !spongeVisible.value) return
-  if ('buttons' in e && e.buttons === 0) {
-    spongeVisible.value = false
-    return
-  }
-  const pos = getEventPercent(e)
+function onPointerMove(e: PointerEvent) {
+  if (!scrubbing.value || !props.active || outcome.value !== 'playing') return
+  const pos = toGameCoords(e)
   if (!pos) return
+
   spongeX.value = pos.px
   spongeY.value = pos.py
-  processAt(pos.px, pos.py)
+  applyStroke(pos.col, pos.row)
 }
 
-function onPointerEnd() {
-  spongeVisible.value = false
+function onPointerUp() {
+  scrubbing.value = false
+  lastCellPos = null
 }
 
-watch(() => props.active, (val) => {
-  if (val) {
-    generateLevel()
-    done.value = false
-    hitMine.value = false
-    spongeVisible.value = false
-  }
-}, { immediate: true })
+// --- CICLO DE VIDA ---
+
+watch(
+  () => props.active,
+  active => {
+    if (active) {
+      generateLevel()
+      outcome.value = 'playing'
+      explodedIndex.value = null
+      scrubbing.value = false
+      lastCellPos = null
+    }
+  },
+  { immediate: true },
+)
 
 onUnmounted(() => {
-  // cleanup
+  if (feedbackTimer) clearTimeout(feedbackTimer)
 })
 </script>
 
@@ -178,63 +253,69 @@ onUnmounted(() => {
   <div
     ref="containerRef"
     class="scrub-game"
-    @touchstart.prevent="onPointerStart"
-    @touchmove.prevent="onPointerMove"
-    @touchend="onPointerEnd"
-    @touchcancel="onPointerEnd"
-    @mousedown="onPointerStart"
-    @mousemove="onPointerMove"
-    @mouseup="onPointerEnd"
-    @mouseleave="onPointerEnd"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerUp"
   >
-    <!-- Clean background -->
-    <div class="clean-bg"></div>
+    <!-- Fondo limpio, visible donde se retira la suciedad -->
+    <div class="clean-bg" aria-hidden="true"></div>
 
-    <!-- Dirt grid overlay -->
+    <!-- Grid de suciedad + minas -->
     <div class="dirt-grid">
       <div
-        v-for="(type, idx) in cellTypes"
+        v-for="(cell, idx) in cells"
         :key="idx"
         class="dirt-cell"
-        :class="{
-          cleaned: cleaned[idx],
-          mine: type === 'mine',
-        }"
+        :class="[
+          `shade-${cell.shade}`,
+          {
+            cleaned: cell.cleaned,
+            mine: cell.mine,
+            revealed: cell.mine && outcome === 'exploded',
+            detonated: idx === explodedIndex,
+          },
+        ]"
       >
-        <span v-if="type === 'mine'" class="mine-icon">💣</span>
+        <span v-if="cell.mine" class="mine-icon">💣</span>
       </div>
     </div>
 
-    <!-- Sponge cursor -->
+    <!-- Esponja -->
     <div
-      v-if="spongeVisible && !done"
+      v-if="scrubbing && outcome === 'playing'"
       class="sponge"
       :style="{ left: spongeX + '%', top: spongeY + '%' }"
     >
       🧽
     </div>
 
-    <!-- Hit mine feedback -->
-    <div v-if="hitMine" class="mine-flash">
-      <span class="mine-boom">💥</span>
-      <span class="mine-text">Pisaste una mina!</span>
-    </div>
-
-    <!-- Progress display -->
-    <div class="progress-display" v-if="active && !hitMine">
-      <div class="progress-bar-bg">
+    <!-- HUD de progreso -->
+    <div v-if="active && outcome !== 'exploded'" class="hud">
+      <div class="hud-bar">
         <div
-          class="progress-bar-fill"
-          :style="{ width: cleanedPercent + '%' }"
+          class="hud-fill"
           :class="{ winning: cleanedPercent >= WIN_PERCENT }"
+          :style="{ width: cleanedPercent + '%' }"
         ></div>
+        <span class="hud-goal" :style="{ left: WIN_PERCENT + '%' }"></span>
       </div>
-      <span class="progress-text">{{ cleanedPercent }}%</span>
+      <span class="hud-text">{{ cleanedPercent }}%</span>
     </div>
 
-    <!-- Hint -->
-    <div class="hint" v-if="active && cleanedSafe === 0 && !hitMine">
-      Limpia sin tocar las 💣
+    <!-- Pista inicial -->
+    <div v-if="showHint" class="hint">Limpia sin tocar las 💣</div>
+
+    <!-- Explosion -->
+    <div v-if="outcome === 'exploded'" class="overlay overlay-lose">
+      <span class="overlay-icon">💥</span>
+      <span class="overlay-text">Pisaste una mina!</span>
+    </div>
+
+    <!-- Victoria -->
+    <div v-if="outcome === 'won'" class="overlay overlay-win">
+      <span class="overlay-icon">✨</span>
+      <span class="overlay-text">Reluciente!</span>
     </div>
   </div>
 </template>
@@ -253,56 +334,59 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #e1f5fe 100%);
-  z-index: 0;
 }
 
+/* === GRID DE SUCIEDAD === */
 .dirt-grid {
   position: absolute;
   inset: 0;
   display: grid;
   grid-template-columns: repeat(20, 1fr);
   grid-template-rows: repeat(28, 1fr);
-  z-index: 1;
 }
 
 .dirt-cell {
-  background: #6d4c41;
-  border: 0.5px solid rgba(0, 0, 0, 0.06);
-  transition: opacity 0.15s ease-out;
   position: relative;
-}
-
-.dirt-cell:nth-child(odd) {
-  background: #5d4037;
-}
-
-.dirt-cell:nth-child(3n) {
-  background: #4e342e;
-}
-
-.dirt-cell:nth-child(7n) {
-  background: #795548;
-}
-
-.dirt-cell.mine {
-  background: #5d4037;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.18s ease-out;
 }
 
-.mine-icon {
-  font-size: 12px;
-  line-height: 1;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
-}
+.shade-0 { background: #6d4c41; }
+.shade-1 { background: #5d4037; }
+.shade-2 { background: #4e342e; }
+.shade-3 { background: #795548; }
 
 .dirt-cell.cleaned {
   opacity: 0;
   pointer-events: none;
 }
 
-/* --- SPONGE --- */
+.mine-icon {
+  font-size: 11px;
+  line-height: 1;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Al explotar, se revelan todas las minas y se marca la detonada */
+.dirt-cell.revealed {
+  background: #b71c1c;
+  animation: mine-reveal 0.4s ease both;
+}
+
+.dirt-cell.detonated {
+  background: #ff6f00;
+  box-shadow: 0 0 18px 6px rgba(255, 111, 0, 0.8);
+  z-index: 2;
+}
+
+@keyframes mine-reveal {
+  from { filter: brightness(0.6); }
+  to { filter: brightness(1); }
+}
+
+/* === ESPONJA === */
 .sponge {
   position: absolute;
   font-size: 36px;
@@ -314,49 +398,12 @@ onUnmounted(() => {
 }
 
 @keyframes sponge-wobble {
-  0% { transform: translate(-50%, -50%) rotate(-5deg); }
-  100% { transform: translate(-50%, -50%) rotate(5deg); }
+  from { transform: translate(-50%, -50%) rotate(-6deg); }
+  to { transform: translate(-50%, -50%) rotate(6deg); }
 }
 
-/* --- MINE HIT --- */
-.mine-flash {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(40, 40, 40, 0.7);
-  animation: flash-in 0.3s ease;
-}
-
-.mine-boom {
-  font-size: 72px;
-  animation: boom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.mine-text {
-  color: #ff7043;
-  font-size: 22px;
-  font-weight: 700;
-  margin-top: 8px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-@keyframes flash-in {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes boom {
-  0% { transform: scale(0) rotate(-30deg); }
-  60% { transform: scale(1.3) rotate(10deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-
-/* --- PROGRESS --- */
-.progress-display {
+/* === HUD === */
+.hud {
   position: absolute;
   top: 16px;
   left: 50%;
@@ -365,50 +412,62 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   z-index: 20;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   padding: 6px 14px;
   border-radius: 20px;
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.progress-bar-bg {
-  width: 120px;
+.hud-bar {
+  position: relative;
+  width: 130px;
   height: 8px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
-  overflow: hidden;
 }
 
-.progress-bar-fill {
+.hud-fill {
   height: 100%;
   background: #ffd54f;
   border-radius: 4px;
-  transition: width 0.2s ease;
+  transition: width 0.15s ease-out;
 }
 
-.progress-bar-fill.winning {
+.hud-fill.winning {
   background: #66bb6a;
 }
 
-.progress-text {
+/* Marca del objetivo (85%) sobre la barra */
+.hud-goal {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 1px;
+}
+
+.hud-text {
   color: white;
   font-size: 14px;
   font-weight: 700;
-  min-width: 36px;
+  min-width: 40px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-/* --- HINT --- */
+/* === PISTA === */
 .hint {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 18px;
   font-weight: 700;
   z-index: 15;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   animation: hint-pulse 1.5s ease-in-out infinite;
 }
@@ -416,5 +475,47 @@ onUnmounted(() => {
 @keyframes hint-pulse {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
+}
+
+/* === OVERLAYS DE RESULTADO === */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: overlay-in 0.25s ease;
+  pointer-events: none;
+}
+
+.overlay-lose { background: rgba(30, 20, 20, 0.65); }
+.overlay-win { background: rgba(255, 255, 255, 0.25); }
+
+.overlay-icon {
+  font-size: 72px;
+  animation: overlay-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.overlay-text {
+  font-size: 22px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.overlay-lose .overlay-text { color: #ff8a65; }
+.overlay-win .overlay-text { color: #2e7d32; text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8); }
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlay-pop {
+  0% { transform: scale(0) rotate(-25deg); }
+  60% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 </style>
