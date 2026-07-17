@@ -52,6 +52,14 @@ Las migraciones nuevas se dejan en `supabase/migrations/` con nombre
 Las migraciones historicas (schema + v2..v7, en `supabase/`) se ejecutaron
 a mano en el SQL Editor y quedan como referencia.
 
+## Puesta en marcha
+
+Checklist paso a paso (reactivar Supabase, migracion v7, secrets, pruebas):
+**[GUIA-PUESTA-EN-MARCHA.md](GUIA-PUESTA-EN-MARCHA.md)**
+
+El workflow `keepalive.yml` hace ping a Supabase cada 3 dias para que el
+free tier no pause el proyecto; si falla, GitHub avisa por email.
+
 ## Documentacion
 
 Toda la documentacion viva esta en [`project-context/`](project-context/):

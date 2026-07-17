@@ -1,0 +1,39 @@
+# Keepalive de Supabase
+#
+# El free tier de Supabase PAUSA el proyecto tras ~7 dias sin actividad.
+# Este workflow hace una consulta trivial cada 3 dias para mantenerlo
+# despierto. Usa la anon key (publica, la misma del frontend) — no
+# necesita secrets.
+#
+# Bonus: si Supabase esta caido o pausado, el workflow falla y GitHub
+# te avisa por email — funciona tambien como monitorizacion gratuita.
+#
+# Nota: GitHub deshabilita los crons si el repo lleva 60 dias sin
+# commits. Si eso pasa, se reactiva con un click en la pestana Actions.
+name: Keepalive Supabase
+
+on:
+  schedule:
+    # Cada 3 dias a las 09:17 UTC (hora aleatoria para no coincidir
+    # con los picos de crons de GitHub, que se retrasan)
+    - cron: '17 9 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consulta trivial a Supabase
+        run: |
+          ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnY3Z1Y3loY2Z5dXBtenN0b3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDc1MTcsImV4cCI6MjA5MDk4MzUxN30.dpC179HbuVLvSE_vs9DaED6eI3g0GDkllZoxg74N4YM'
+          STATUS=$(curl -s -o /tmp/resp.json -w '%{http_code}' \
+            "https://igcvucyhcfyupmzstoqg.supabase.co/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $ANON_KEY" \
+            -H "Authorization: Bearer $ANON_KEY")
+          echo "HTTP $STATUS"
+          cat /tmp/resp.json
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Supabase respondio $STATUS — puede estar pausado. Entra en https://supabase.com/dashboard y reactivalo."
+            exit 1
+          fi
+          echo "Supabase despierto ✔"
