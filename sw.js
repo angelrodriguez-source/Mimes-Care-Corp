@@ -9,11 +9,15 @@
 const CACHE = 'mimes-v1'
 
 self.addEventListener('install', (event) => {
-  // Activar el SW nuevo sin esperar a que se cierren las pestanas viejas
-  self.skipWaiting()
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(['./', './manifest.webmanifest', './icon.svg'])),
   )
+})
+
+// La app envia SKIP_WAITING cuando el usuario acepta actualizar
+// (toast "version nueva" en App.vue)
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
