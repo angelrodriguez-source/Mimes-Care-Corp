@@ -26,14 +26,16 @@ jobs:
       - name: Consulta trivial a Supabase
         run: |
           ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnY3Z1Y3loY2Z5dXBtenN0b3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDc1MTcsImV4cCI6MjA5MDk4MzUxN30.dpC179HbuVLvSE_vs9DaED6eI3g0GDkllZoxg74N4YM'
+          # '|| true' para que un fallo de curl (ej. DNS de proyecto
+          # pausado, exit 6) no aborte el script antes del mensaje claro
           STATUS=$(curl -s -o /tmp/resp.json -w '%{http_code}' \
             "https://igcvucyhcfyupmzstoqg.supabase.co/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: $ANON_KEY" \
-            -H "Authorization: Bearer $ANON_KEY")
-          echo "HTTP $STATUS"
-          cat /tmp/resp.json
+            -H "Authorization: Bearer $ANON_KEY" || true)
+          echo "HTTP ${STATUS:-sin respuesta}"
+          cat /tmp/resp.json 2>/dev/null || true
           if [ "$STATUS" != "200" ]; then
-            echo "::error::Supabase respondio $STATUS — puede estar pausado. Entra en https://supabase.com/dashboard y reactivalo."
+            echo "::error::Supabase no responde (HTTP ${STATUS:-000} — si es 000 el dominio no resuelve, tipico de proyecto PAUSADO). Entra en https://supabase.com/dashboard, pulsa 'Restore project' y relanza este workflow."
             exit 1
           fi
           echo "Supabase despierto ✔"
