@@ -15,6 +15,11 @@ la UI de GitHub en Settings > Branches o desde la vista de ramas del repo:
   Sin ella: mensajeria no persiste el "leido", realtime no emite, la tienda
   de accesorios falla al comprar, y los PM siguen con el metodo antiguo
   (el frontend degrada con fallbacks, pero la v7 es necesaria para todo lo social)
+- [ ] **Crear el secret `SUPABASE_DB_URL`** en GitHub (Settings > Secrets and
+  variables > Actions > New repository secret) con la connection string de
+  Supabase Dashboard > Settings > Database > Connection string (URI).
+  Con el secret creado, las migraciones futuras en `supabase/migrations/`
+  se aplican solas al hacer push (ver 07-DEPLOYMENT)
 
 ## Inmediato (en progreso)
 

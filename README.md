@@ -1,5 +1,7 @@
 # Mimes Care Corp
 
+[![CI y Deploy](https://github.com/angelrodriguez-source/Mimes-Care-Corp/actions/workflows/deploy.yml/badge.svg)](https://github.com/angelrodriguez-source/Mimes-Care-Corp/actions/workflows/deploy.yml)
+
 Juego social de mascotas virtuales: **no cuidas a tus Mimes — cuidas a los de
 tus amigos, y ellos cuidan a los tuyos**. Cesiones de 7 dias, mini-juegos con
 dos dificultades, economia de Puntos Mimes, tienda de accesorios y mensajeria
