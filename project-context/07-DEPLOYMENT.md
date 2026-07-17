@@ -4,10 +4,16 @@
 
 **URL produccion**: `https://angelrodriguez-source.github.io/Mimes-Care-Corp/`
 
-### Como se publica
+### Como se publica (automatico desde 2026-07-17)
 
-El build de Vite se copia a la rama `gh-pages` usando el paquete `gh-pages`
-(instalado como devDependency desde 2026-04-11):
+**Push a `main` = deploy.** El workflow `.github/workflows/deploy.yml`:
+1. `npm ci` + `npm run test` + `npm run build` (si algo falla, NO se publica)
+2. Publica `mimes-app/dist/` en la rama `gh-pages` (peaceiris/actions-gh-pages)
+
+GitHub Pages sigue sirviendo la rama `gh-pages` — no hubo que cambiar
+configuracion. En PRs el workflow solo testea y buildea (sin publicar).
+
+Deploy manual de emergencia (el metodo antiguo sigue funcionando):
 
 ```bash
 cd mimes-app
@@ -15,12 +21,21 @@ npm run build              # type-check + build (genera dist/)
 npx gh-pages -d dist       # publica dist/ a la rama gh-pages del remoto
 ```
 
-Alternativa si el type-check da problemas y necesitas un deploy rapido:
+### Migraciones de base de datos (automatico desde 2026-07-17)
 
-```bash
-npx vite build             # solo build, sin type-check
-npx gh-pages -d dist
-```
+Las migraciones NUEVAS van en `supabase/migrations/` con nombre
+`YYYYMMDDHHMM_descripcion.sql`. Al hacer push, el workflow
+`.github/workflows/migrate.yml` ejecuta `scripts/apply-migrations.sh`,
+que aplica solo lo pendiente (registro en la tabla `public._migrations`,
+cada archivo en su propia transaccion).
+
+**Requiere** el secret `SUPABASE_DB_URL` en GitHub (Settings > Secrets and
+variables > Actions) con la connection string de Supabase Dashboard >
+Settings > Database. Tambien se puede lanzar a mano (pestana Actions) o en
+local: `SUPABASE_DB_URL='...' bash scripts/apply-migrations.sh`.
+
+Las migraciones historicas (schema + v2..v7) se ejecutaron a mano en el
+SQL Editor y NO deben copiarse a `supabase/migrations/`.
 
 ### Requisitos criticos
 

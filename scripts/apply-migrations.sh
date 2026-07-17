@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# ============================================================
+# apply-migrations.sh — Aplica las migraciones NUEVAS de
+# supabase/migrations/ contra la base de datos de Supabase.
+#
+# Lleva la cuenta de lo ya aplicado en la tabla public._migrations,
+# asi que es seguro ejecutarlo N veces: solo aplica lo pendiente.
+#
+# Uso local:
+#   SUPABASE_DB_URL='postgresql://...' bash scripts/apply-migrations.sh
+#
+# En CI lo ejecuta .github/workflows/migrate.yml con el secret
+# SUPABASE_DB_URL (Dashboard > Settings > Database > Connection string).
+#
+# Cada archivo se aplica dentro de una transaccion (-1): si algo
+# falla, esa migracion se revierte entera y el script se detiene.
+# ============================================================
+set -euo pipefail
+
+if [ -z "${SUPABASE_DB_URL:-}" ]; then
+  echo "ERROR: define la variable SUPABASE_DB_URL" >&2
+  exit 1
+fi
+
+MIGRATIONS_DIR="$(cd "$(dirname "$0")/.." && pwd)/supabase/migrations"
+
+if [ ! -d "$MIGRATIONS_DIR" ]; then
+  echo "No existe $MIGRATIONS_DIR — nada que aplicar"
+  exit 0
+fi
+
+# Tabla de control (idempotente)
+psql "$SUPABASE_DB_URL" -q -v ON_ERROR_STOP=1 -c \
+  "CREATE TABLE IF NOT EXISTS public._migrations (
+     name TEXT PRIMARY KEY,
+     applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+   );"
+
+applied=0
+skipped=0
+
+# Orden alfabetico = orden cronologico (nombres con prefijo YYYYMMDDHHMM)
+for file in $(ls "$MIGRATIONS_DIR"/*.sql 2>/dev/null | sort); do
+  name="$(basename "$file")"
+
+  exists="$(psql "$SUPABASE_DB_URL" -tA -c \
+    "SELECT 1 FROM public._migrations WHERE name = '$name'")"
+
+  if [ "$exists" = "1" ]; then
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  echo ">> Aplicando $name ..."
+  psql "$SUPABASE_DB_URL" -q -v ON_ERROR_STOP=1 -1 -f "$file"
+  psql "$SUPABASE_DB_URL" -q -v ON_ERROR_STOP=1 -c \
+    "INSERT INTO public._migrations (name) VALUES ('$name');"
+  echo "   OK"
+  applied=$((applied + 1))
+done
+
+echo "Hecho: $applied aplicadas, $skipped ya estaban"
