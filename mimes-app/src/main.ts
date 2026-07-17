@@ -23,9 +23,37 @@ userStore.init()
 // PWA: registrar el service worker solo en produccion (en dev molesta
 // porque cachea y esconde los cambios del hot reload)
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register(import.meta.env.BASE_URL + 'sw.js')
-      .catch(() => { /* sin SW la app funciona igual, solo pierde offline */ })
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js')
+
+      // Avisar a la app cuando hay una version nueva esperando.
+      // App.vue escucha este evento y muestra el toast de actualizar.
+      const notifyUpdate = (sw: ServiceWorker) => {
+        window.dispatchEvent(new CustomEvent('mimes-sw-update', { detail: sw }))
+      }
+
+      if (reg.waiting) notifyUpdate(reg.waiting)
+      reg.addEventListener('updatefound', () => {
+        const nuevo = reg.installing
+        if (!nuevo) return
+        nuevo.addEventListener('statechange', () => {
+          // 'installed' con un controller previo = hay version vieja activa
+          if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
+            notifyUpdate(nuevo)
+          }
+        })
+      })
+
+      // Cuando el SW nuevo toma el control (tras aceptar), recargar una vez
+      let recargado = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargado) return
+        recargado = true
+        window.location.reload()
+      })
+    } catch {
+      /* sin SW la app funciona igual, solo pierde offline */
+    }
   })
 }

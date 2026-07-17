@@ -199,6 +199,26 @@ async function copyCode(code: string) {
   if (ok) setTimeout(() => (claimMessage.value = ''), 2000)
 }
 
+/** Compartir el codigo por WhatsApp/Telegram/etc. via share nativo del movil */
+async function shareCodeNative(code: string, nombre: string) {
+  const text =
+    `Cuida a mi Mime "${nombre}" en Mimes Care Corp 🐾\n` +
+    `Codigo de adopcion: ${code}\n` +
+    `https://angelrodriguez-source.github.io/Mimes-Care-Corp/`
+  if (navigator.share) {
+    try {
+      await navigator.share({ text })
+    } catch {
+      /* el usuario cancelo el share, no es un error */
+    }
+  } else {
+    // Desktop sin Web Share API: copiar el texto completo
+    const ok = await copyToClipboard(text)
+    claimMessage.value = ok ? 'Invitacion copiada!' : `Codigo: ${code}`
+    setTimeout(() => (claimMessage.value = ''), 2000)
+  }
+}
+
 async function handleReset() {
   const userId = userStore.user?.id
   if (!userId) return
@@ -484,6 +504,10 @@ onUnmounted(() => {
           <span class="code-text">{{ shareModal.code }}</span>
           <button class="copy-btn" @click="copyCode(shareModal.code)">Copiar</button>
         </div>
+        <button
+          class="claim-btn share-native-btn"
+          @click="shareCodeNative(shareModal.code, shareModal.nombre)"
+        >📤 Enviar invitacion</button>
         <p class="modal-hint">El codigo es de un solo uso. Cuando alguien lo introduzca, se convertira en el cuidador de tu Mime.</p>
         <button class="modal-close" @click="shareModal = null">Cerrar</button>
       </div>
@@ -880,6 +904,12 @@ onUnmounted(() => {
   font-size: 11px;
   color: #bbb;
   margin: 0 0 16px;
+}
+
+.share-native-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
 }
 
 .modal-close {
