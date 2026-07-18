@@ -142,7 +142,9 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  /* visible: el accesorio (gorro/corona) sobresale por encima de la
+     cabeza y overflow hidden lo recortaba */
+  overflow: visible;
 }
 
 .card-info {

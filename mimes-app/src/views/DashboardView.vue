@@ -33,6 +33,7 @@ import {
   subscribeMimesChanges,
   getOwnedAccessories,
   buyAccessory,
+  addPoints,
   type MimeWithNames,
   type MimeFromDB,
 } from '../services/mimeService'
@@ -161,8 +162,29 @@ async function handleShare(mimeId: string, nombre: string) {
   if (data?.code) shareModal.value = { mimeId, code: data.code, nombre }
 }
 
+/** Codigo secreto: escribirlo en el input de adoptar regala 100 PM */
+const CHEAT_CODE = 'MIMESTATS'
+const CHEAT_REWARD = 100
+
 async function handleClaim() {
   if (!claimCode.value.trim()) return
+
+  // Truquito 🤫
+  if (claimCode.value.trim().toUpperCase() === CHEAT_CODE) {
+    claimCode.value = ''
+    if (!userStore.user) return
+    const { error } = await addPoints(userStore.user.id, CHEAT_REWARD)
+    if (!error) {
+      sfx.play('coin')
+      await userStore.fetchProfile()
+      claimMessage.value = `Truco activado! +${CHEAT_REWARD} PM 🎉`
+    } else {
+      claimMessage.value = 'El truco no funciono... intenta luego'
+    }
+    setTimeout(() => (claimMessage.value = ''), 3000)
+    return
+  }
+
   claimLoading.value = true
   claimMessage.value = ''
 
@@ -392,9 +414,10 @@ onUnmounted(() => {
           <span class="puntos-heart">&#9829;</span>
           <span>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</span>
         </div>
-        <button class="help-btn" title="Tienda de accesorios" @click="openShop">🛍️</button>
+        <button class="help-btn" data-tutorial="shop-btn" title="Tienda de accesorios" @click="openShop">🛍️</button>
         <button
           class="help-btn"
+          data-tutorial="sound-btn"
           :title="sfx.enabled.value ? 'Silenciar sonidos' : 'Activar sonidos'"
           @click="sfx.toggle()"
         >{{ sfx.enabled.value ? '🔊' : '🔇' }}</button>
@@ -474,7 +497,7 @@ onUnmounted(() => {
             class="claim-input"
             type="text"
             placeholder="Ej: A3F2B1"
-            maxlength="6"
+            maxlength="9"
             @keyup.enter="handleClaim"
           />
           <button

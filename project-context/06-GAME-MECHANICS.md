@@ -99,6 +99,7 @@ Se calcula automaticamente a partir de los stats. Funcion: `deriveMood(stats)`.
 
 ### Como se ganan
 - Valor inicial al registrarse: **100 PM**
+- **Truco secreto** 🤫: escribir `MIMESTATS` en el input de "Adoptar Mime" regala 100 PM (sin limite de usos — pensado para pruebas)
 - **Recompensa por cesion**: Al terminar una cesion de 7 dias, el cuidador recibe **afinidad × 100 PM** (ej: afinidad 75% = 75 PM)
 - **Recompensa diaria por login** (v5): Al abrir el dashboard por primera vez cada dia, modal con PM segun racha consecutiva (ver seccion abajo)
 - **Fuente secundaria** (pendiente): Tareas minimas (anuncios, etc.) — pocos PM

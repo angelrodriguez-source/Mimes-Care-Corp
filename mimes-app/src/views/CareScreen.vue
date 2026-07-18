@@ -322,7 +322,7 @@ onUnmounted(() => {
       <header class="care-header">
         <button class="back-btn" @click="goBack">&#8592;</button>
         <h1 class="mime-name">{{ mimeName }}</h1>
-        <button class="accessory-btn" title="Accesorios" @click="openAccessoryPicker">
+        <button class="accessory-btn" data-tutorial="accessory-btn" title="Accesorios" @click="openAccessoryPicker">
           {{ accessoryEmoji ?? '🎀' }}
         </button>
         <template v-if="isDev">
