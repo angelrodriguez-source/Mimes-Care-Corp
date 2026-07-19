@@ -221,3 +221,4 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 5. `supabase/migration_v5_daily_reward.sql` — Anade `last_daily_claim_date` + `daily_streak` a profiles y el RPC `claim_daily_reward`
 6. `supabase/migration_v6_tutorial.sql` — Anade `tutorial_completed` a profiles y el RPC `mark_tutorial_completed`
 7. `supabase/migration_v7_social.sql` — RPCs `add_points`/`expire_cesion`, columnas de accesorios, policy UPDATE de messages y publicacion realtime
+8. `supabase/migrations/202607172100_google_display_name.sql` — (pipeline automatico) `handle_new_user` toma el nombre de Google (`full_name`/`name`) para logins OAuth

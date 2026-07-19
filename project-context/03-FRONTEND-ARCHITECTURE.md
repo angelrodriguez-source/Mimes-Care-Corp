@@ -47,6 +47,7 @@ Pinia store con Composition API (`defineStore('user', () => {...})`).
 | `fetchProfile()` | Carga profile desde tabla `profiles` |
 | `signUp(email, pass, name)` | Registro (trigger crea profile + 3 mimes) |
 | `signIn(email, pass)` | Login |
+| `signInWithGoogle()` | Login OAuth con Google (`signInWithOAuth`). El cliente usa `flowType: 'pkce'` para que el retorno llegue como `?code=` y no choque con el hash router |
 | `signOut()` | Cierra sesion, limpia state |
 
 ### Flujo de Auth

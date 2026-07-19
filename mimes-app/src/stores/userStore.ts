@@ -134,6 +134,24 @@ export const useUserStore = defineStore('user', () => {
   }
 
   /**
+   * Login con Google (OAuth). Redirige el navegador a Google; al volver,
+   * supabase-js detecta el ?code= de la URL, crea la sesion y
+   * onAuthStateChange hace el resto. Si es la primera vez, el trigger
+   * handle_new_user crea el perfil + 3 mimes igual que en el registro
+   * por email (v8: toma el nombre de la cuenta de Google).
+   */
+  async function signInWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        // Volver a la raiz de la app (funciona en GitHub Pages y en dev)
+        redirectTo: window.location.origin + import.meta.env.BASE_URL,
+      },
+    })
+    return error
+  }
+
+  /**
    * Logout: cierra la sesión.
    */
   async function signOut() {
@@ -152,6 +170,7 @@ export const useUserStore = defineStore('user', () => {
     fetchProfile,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
   }
 })

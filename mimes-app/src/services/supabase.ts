@@ -25,4 +25,10 @@ const SUPABASE_ANON_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ??
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnY3Z1Y3loY2Z5dXBtenN0b3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDc1MTcsImV4cCI6MjA5MDk4MzUxN30.dpC179HbuVLvSE_vs9DaED6eI3g0GDkllZoxg74N4YM'
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+// flowType 'pkce': el retorno del OAuth (Google) llega como ?code=... en
+// la query string, ANTES del hash — asi no choca con el hash router de
+// GitHub Pages. Con el flujo 'implicit' (default) los tokens vendrian en
+// el #fragment y el router los interpretaria como una ruta.
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { flowType: 'pkce' },
+})
