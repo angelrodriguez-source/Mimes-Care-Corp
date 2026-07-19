@@ -117,6 +117,12 @@ export const useUserStore = defineStore('user', () => {
       password,
       options: {
         data: { display_name: displayName },
+        // URL exacta a la que vuelve el enlace de confirmacion del email.
+        // Sin esto, Supabase redirige a la Site URL del dashboard y un
+        // typo alli provocaba un 404 en GitHub Pages.
+        // OJO: esta URL debe estar en la allow-list de Redirect URLs
+        // (Supabase Dashboard > Authentication > URL Configuration).
+        emailRedirectTo: window.location.origin + import.meta.env.BASE_URL,
       },
     })
     return error
