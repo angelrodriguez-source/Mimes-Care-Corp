@@ -41,7 +41,15 @@ async function navigateIfNeeded(step: TutorialStep) {
 }
 
 // --- LOCALIZAR EL TARGET EN EL DOM ---
+
+// Token de generacion: cada llamada invalida a las anteriores. Sin esto,
+// un loop de reintentos del paso N podia resolver tarde y pisar el rect
+// del paso N+1 con el del paso viejo.
+let locateGeneration = 0
+
 async function locateTarget(step: TutorialStep | null) {
+  const generation = ++locateGeneration
+
   if (!step || !step.target) {
     targetRect.value = null
     return
@@ -52,6 +60,7 @@ async function locateTarget(step: TutorialStep | null) {
   // 40 × 100ms = 4s maximo antes de caer a tooltip centrado.
   for (let attempt = 0; attempt < 40; attempt++) {
     await nextTick()
+    if (generation !== locateGeneration) return // hay una busqueda mas nueva
     const el = document.querySelector<HTMLElement>(
       `[data-tutorial="${step.target}"]`,
     )
@@ -63,14 +72,16 @@ async function locateTarget(step: TutorialStep | null) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         // Dar tiempo al smooth scroll antes de recalcular
         await new Promise(r => setTimeout(r, 350))
+        if (generation !== locateGeneration) return
         targetRect.value = el.getBoundingClientRect()
       }
       return
     }
     await new Promise(r => setTimeout(r, 100))
+    if (generation !== locateGeneration) return
   }
   // No encontrado: caemos a tooltip centrado
-  targetRect.value = null
+  if (generation === locateGeneration) targetRect.value = null
 }
 
 // --- REACCIONAR A CAMBIOS DE PASO ---
@@ -88,8 +99,14 @@ watch(
 )
 
 // --- RECALCULAR RECT EN RESIZE / SCROLL ---
+// Throttle con rAF: scroll dispara decenas de eventos por segundo
+let recalcRaf = 0
 function recalc() {
-  if (tutorial.currentStep) locateTarget(tutorial.currentStep)
+  if (recalcRaf) return
+  recalcRaf = requestAnimationFrame(() => {
+    recalcRaf = 0
+    if (tutorial.currentStep) void locateTarget(tutorial.currentStep)
+  })
 }
 
 onMounted(() => {

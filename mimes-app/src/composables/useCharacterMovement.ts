@@ -55,14 +55,22 @@ export function useCharacterMovement(options: MovementOptions = {}) {
     }, tickMs)
   }
 
+  // Handle del timeout de pausa: sin el, un pauseWalking() seguido de
+  // unmount rearrancaba el intervalo sobre un componente muerto (fuga)
+  let pauseTimeout: ReturnType<typeof setTimeout> | null = null
+
   function stopWalking() {
     if (walkInterval) { clearInterval(walkInterval); walkInterval = null }
+    if (pauseTimeout) { clearTimeout(pauseTimeout); pauseTimeout = null }
     isWalking.value = false
   }
 
   function pauseWalking(durationMs: number) {
     stopWalking()
-    setTimeout(() => startWalking(), durationMs)
+    pauseTimeout = setTimeout(() => {
+      pauseTimeout = null
+      startWalking()
+    }, durationMs)
   }
 
   onUnmounted(stopWalking)

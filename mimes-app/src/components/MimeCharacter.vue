@@ -40,22 +40,36 @@ const scaleStyle = computed(() => {
 // --- EYE TRACKING ---
 const characterRef = ref<HTMLElement | null>(null)
 
+// Throttle con rAF: el handler fuerza layout (getBoundingClientRect) y
+// escribe estilos — sin throttle, cada pixel de movimiento del raton
+// ejecutaba esto en TODAS las instancias (jank en el dashboard).
+let eyeRaf = 0
+
 function trackEyes(e: { clientX: number; clientY: number }) {
-  const ch = characterRef.value
-  if (!ch) return
+  // Los avatares miniatura (tarjetas del dashboard) no mueven los ojos:
+  // no se aprecia y multiplicaba el coste por numero de tarjetas
+  if ((props.scale ?? 1) < 0.6) return
+  if (eyeRaf) return
 
-  const rect = ch.getBoundingClientRect()
-  const cx = rect.left + rect.width / 2
-  const cy = rect.top + rect.height * 0.3
-  const dx = e.clientX - cx
-  const dy = e.clientY - cy
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  const maxOffset = 5
-  const mx = (dx / dist) * Math.min(dist * 0.02, maxOffset)
-  const my = (dy / dist) * Math.min(dist * 0.02, maxOffset)
+  eyeRaf = requestAnimationFrame(() => {
+    eyeRaf = 0
+    const ch = characterRef.value
+    if (!ch) return
 
-  ch.querySelectorAll<HTMLElement>('.pupil').forEach((p) => {
-    p.style.transform = `translate(calc(-50% + ${mx}px), ${my}px)`
+    const rect = ch.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height * 0.3
+    const dx = e.clientX - cx
+    const dy = e.clientY - cy
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist === 0) return
+    const maxOffset = 5
+    const mx = (dx / dist) * Math.min(dist * 0.02, maxOffset)
+    const my = (dy / dist) * Math.min(dist * 0.02, maxOffset)
+
+    ch.querySelectorAll<HTMLElement>('.pupil').forEach((p) => {
+      p.style.transform = `translate(calc(-50% + ${mx}px), ${my}px)`
+    })
   })
 }
 
@@ -118,6 +132,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (eyeRaf) cancelAnimationFrame(eyeRaf)
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('touchmove', onTouchMove as EventListener)
 })

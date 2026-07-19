@@ -5,7 +5,7 @@
  * Carga un Mime por ID desde la URL, permite cuidarlo con acciones
  * que se guardan en la base de datos. El Mime se mueve por la habitacion.
  */
-import { ref, computed, onMounted, onUnmounted, useTemplateRef, shallowRef, type Component } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, useTemplateRef, shallowRef, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
@@ -180,11 +180,18 @@ async function loadMime() {
   loading.value = false
   startWalking()
 
-  // Mensajes del dueno: solo si soy el cuidador de este Mime
+  // Mensajes del dueno: solo si soy el cuidador de este Mime.
+  // Se espera al fetch ANTES de abrir realtime (si no, un INSERT que
+  // llegara en medio seria pisado por la asignacion del fetch), y el
+  // callback dedupea por id por si el mensaje viene por ambas vias.
   if (decayed.cuidador_id && decayed.cuidador_id === userStore.user?.id) {
-    loadMessages()
+    await loadMessages()
     unsubscribeMessages = subscribeMimeMessages(id, msg => {
-      if (msg.sender_type === 'dueno' && !msg.read) {
+      if (
+        msg.sender_type === 'dueno' &&
+        !msg.read &&
+        !pendingMessages.value.some(m => m.id === msg.id)
+      ) {
         pendingMessages.value = [...pendingMessages.value, msg]
       }
     })
@@ -257,7 +264,10 @@ async function onMiniGameDone(result: MiniGameResult) {
     if (pointsErr) showSaveError()
   }
 
-  userStore.fetchProfile()
+  // Resincronizar el contador local con el servidor: si el cobro fallo
+  // o clampo a 0, el valor local optimista habria divergido
+  await userStore.fetchProfile()
+  puntosMimes.value = userStore.profile?.puntos_mimes ?? puntosMimes.value
 }
 
 /** Aplica los efectos de una accion exitosa en la UI */
@@ -293,6 +303,17 @@ async function handleReset() {
 }
 
 onMounted(loadMime)
+
+// Si cambia el id de la ruta (navegar de /care/A a /care/B), la instancia
+// se reutiliza: hay que cerrar la suscripcion vieja y recargar todo
+watch(() => route.params.id, (nuevo, viejo) => {
+  if (!nuevo || nuevo === viejo) return
+  unsubscribeMessages?.()
+  unsubscribeMessages = null
+  pendingMessages.value = []
+  stopWalking()
+  loadMime()
+})
 
 onUnmounted(() => {
   if (saveErrorTimer) clearTimeout(saveErrorTimer)

@@ -84,6 +84,18 @@ Resuelto (2026-07-14):
 - `addPoints()` y `checkCesionExpiry()` usan los RPCs con fallback al metodo antiguo si la v7 no esta ejecutada
 - `updateUserPoints()` (absoluto) queda solo para los resets de pruebas
 
+### Auditoria de seguridad (2026-07-19) — resuelto y asumido
+Corregido en migracion v9 (`202607192030_harden_rls.sql`):
+- [x] ALTA: un cuidador podia robar un Mime (update de `dueno_id`) — trigger `protect_mime_identity` (dueno_id inmutable; cesion solo la toca el dueno o los RPCs)
+- [x] MEDIA: `profiles` era legible sin login (rol anon) — policy SELECT restringida a `authenticated`
+- [x] BAJA: un participante podia editar el texto de los mensajes — trigger `protect_message_update` (solo `read`)
+- [x] BAJA: interpolacion de nombre de archivo en apply-migrations.sh — validacion de caracteres
+
+Riesgos evaluados y ASUMIDOS (juego casual, solo afectan al propio tramposo):
+- `add_points` sin limite de delta y columnas `puntos_mimes`/`owned_accessories` escribibles por el propio usuario (coherente con el truco MIMESTATS)
+- Un cuidador puede inflar la `afinidad` de un Mime que cuida (max ~100 PM por cesion)
+- `claim_mime` sin rate-limit de intentos de codigo (ventana corta, reversible)
+
 ### Tests automatizados (parcial)
 - [x] `MimeModel` cubierto con Vitest — 20 tests (`npm run test`) (2026-07-14)
 - [ ] Pendiente: tests de `helpers.ts` y de los RPCs (contra un Supabase local)

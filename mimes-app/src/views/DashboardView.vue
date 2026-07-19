@@ -111,41 +111,41 @@ async function loadData() {
   const decayedCaring = await Promise.all(data.caringMimes.map(m => applyLazyDecay(m)))
 
   // Checkear cesion expirada y abandono en Mimes propios con cuidador
-  for (const mime of decayedOwn) {
-    if (mime.cuidador_id) {
-      // Primero: cesion de 7 dias expirada?
-      const { expired, reward } = await checkCesionExpiry(mime)
-      if (expired) {
-        mime.cuidador_id = null
-        mime.cuidador_name = undefined
-        mime.afinidad = 0
-        mime.cesion_start = null
-        claimMessage.value = `Cesion terminada! El cuidador recibio ${reward} PM`
-        setTimeout(() => (claimMessage.value = ''), 4000)
-        continue
-      }
-      // Segundo: abandono por afinidad baja
-      const { abandoned } = await checkAbandon(mime)
-      if (abandoned) {
-        mime.cuidador_id = null
-        mime.cuidador_name = undefined
-        mime.afinidad = 0
-      }
-    }
-  }
-
-  // Checkear cesion expirada en Mimes a cargo (el cuidador lo ve)
-  const activeCaring: MimeWithNames[] = []
-  for (const mime of decayedCaring) {
+  // (en paralelo: cada Mime es independiente, no hace falta serializar)
+  await Promise.all(decayedOwn.map(async mime => {
+    if (!mime.cuidador_id) return
+    // Primero: cesion de 7 dias expirada?
     const { expired, reward } = await checkCesionExpiry(mime)
     if (expired) {
-      claimMessage.value = `Tu cesion de ${mime.nombre} termino! Ganaste ${reward} PM`
-      await userStore.fetchProfile()
+      mime.cuidador_id = null
+      mime.cuidador_name = undefined
+      mime.afinidad = 0
+      mime.cesion_start = null
+      claimMessage.value = `Cesion terminada! El cuidador recibio ${reward} PM`
       setTimeout(() => (claimMessage.value = ''), 4000)
-    } else {
-      activeCaring.push(mime)
+      return
     }
-  }
+    // Segundo: abandono por afinidad baja
+    const { abandoned } = await checkAbandon(mime)
+    if (abandoned) {
+      mime.cuidador_id = null
+      mime.cuidador_name = undefined
+      mime.afinidad = 0
+    }
+  }))
+
+  // Checkear cesion expirada en Mimes a cargo (el cuidador lo ve)
+  const expiredIds = new Set<string>()
+  await Promise.all(decayedCaring.map(async mime => {
+    const { expired, reward } = await checkCesionExpiry(mime)
+    if (expired) {
+      expiredIds.add(mime.id)
+      claimMessage.value = `Tu cesion de ${mime.nombre} termino! Ganaste ${reward} PM`
+      setTimeout(() => (claimMessage.value = ''), 4000)
+    }
+  }))
+  if (expiredIds.size > 0) await userStore.fetchProfile()
+  const activeCaring = decayedCaring.filter(m => !expiredIds.has(m.id))
 
   myMimes.value = decayedOwn
   caringMimes.value = activeCaring
@@ -168,12 +168,16 @@ const CHEAT_REWARD = 100
 
 async function handleClaim() {
   if (!claimCode.value.trim()) return
+  // Guard doble-envio: Enter repetido saltaba el disabled del boton
+  if (claimLoading.value) return
 
   // Truquito 🤫
   if (claimCode.value.trim().toUpperCase() === CHEAT_CODE) {
     claimCode.value = ''
     if (!userStore.user) return
+    claimLoading.value = true
     const { error } = await addPoints(userStore.user.id, CHEAT_REWARD)
+    claimLoading.value = false
     if (!error) {
       sfx.play('coin')
       await userStore.fetchProfile()
@@ -188,9 +192,12 @@ async function handleClaim() {
   claimLoading.value = true
   claimMessage.value = ''
 
-  const { data } = await claimMime(claimCode.value)
+  const { data, error: rpcError } = await claimMime(claimCode.value)
 
-  if (data?.error) {
+  if (rpcError) {
+    // Error de red o del RPC: sin esto el usuario no veia nada
+    claimMessage.value = 'No se pudo adoptar. Revisa tu conexion.'
+  } else if (data?.error) {
     claimMessage.value = data.error
   } else if (data?.success) {
     claimMessage.value = `Ahora cuidas a ${data.mime_name}!`
@@ -574,7 +581,7 @@ onUnmounted(() => {
             <button
               v-if="!ownedAccessories.includes(item.id)"
               class="claim-btn shop-buy"
-              :disabled="shopBuying === item.id || (userStore.profile?.puntos_mimes ?? 0) < item.price"
+              :disabled="shopBuying !== '' || (userStore.profile?.puntos_mimes ?? 0) < item.price"
               @click="handleBuy(item.id, item.price)"
             >{{ shopBuying === item.id ? '...' : 'Comprar' }}</button>
             <span v-else class="shop-owned">✓ Tuyo</span>

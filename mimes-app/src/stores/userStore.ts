@@ -66,12 +66,14 @@ export const useUserStore = defineStore('user', () => {
         await fetchProfile()
       }
 
-      // onAuthStateChange escucha cambios de sesión (login, logout, token refresh)
-      // Es como un "vigilante" que avisa cuando el estado de auth cambia
-      supabase.auth.onAuthStateChange(async (_event, session) => {
+      // onAuthStateChange escucha cambios de sesión (login, logout, token refresh).
+      // OJO: el callback corre con el lock interno de auth cogido — hacer
+      // llamadas a Supabase DENTRO (await fetchProfile) puede deadlockear
+      // el refresh de token. Se difiere fuera del lock con setTimeout(0).
+      supabase.auth.onAuthStateChange((_event, session) => {
         user.value = session?.user ?? null
         if (session?.user) {
-          await fetchProfile()
+          setTimeout(() => { void fetchProfile() }, 0)
         } else {
           profile.value = null
         }

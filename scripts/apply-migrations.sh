@@ -64,6 +64,12 @@ skipped=0
 for file in $(ls "$MIGRATIONS_DIR"/*.sql 2>/dev/null | sort); do
   name="$(basename "$file")"
 
+  # El nombre se interpola en SQL: solo caracteres seguros
+  if ! printf '%s' "$name" | grep -Eq '^[A-Za-z0-9._-]+$'; then
+    echo "ERROR: nombre de migracion invalido: $name (solo letras, numeros, punto, guion)" >&2
+    exit 1
+  fi
+
   exists="$(psql "$SUPABASE_DB_URL" -tA -c \
     "SELECT 1 FROM public._migrations WHERE name = '$name'")"
 
