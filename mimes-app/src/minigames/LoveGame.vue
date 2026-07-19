@@ -26,14 +26,38 @@ interface Heart {
 const TARGET = 6
 const collected = ref(0)
 const hearts = ref<Heart[]>([])
+/** Evita doble onComplete */
+const done = ref(false)
 let spawnTimer: ReturnType<typeof setInterval> | null = null
 let moveTimer: ReturnType<typeof setInterval> | null = null
 let nextId = 0
 
 const HEARTS = ['❤️', '💛', '💖', '🧡', '💜', '💗', '💕']
 
+function clearAllTimers() {
+  if (spawnTimer) {
+    clearInterval(spawnTimer)
+    spawnTimer = null
+  }
+  if (moveTimer) {
+    clearInterval(moveTimer)
+    moveTimer = null
+  }
+}
+
+/** Resetea todo el estado y arranca la partida */
+function start() {
+  clearAllTimers()
+  done.value = false
+  collected.value = 0
+  hearts.value = []
+  nextId = 0
+  spawnTimer = setInterval(spawnHeart, 500)
+  moveTimer = setInterval(moveHearts, 30)
+}
+
 function spawnHeart() {
-  if (!props.active) return
+  if (!props.active || done.value) return
   hearts.value.push({
     id: nextId++,
     x: 10 + Math.random() * 80,
@@ -56,27 +80,26 @@ function moveHearts() {
 }
 
 function collectHeart(id: number) {
-  if (!props.active) return
+  if (!props.active || done.value) return
   const heart = hearts.value.find(h => h.id === id)
   if (heart && !heart.collected) {
     heart.collected = true
     collected.value++
     if (collected.value >= TARGET) {
+      done.value = true
+      clearAllTimers()
       props.onComplete(true)
     }
   }
 }
 
 watch(() => props.active, (val) => {
-  if (val) {
-    spawnTimer = setInterval(spawnHeart, 500)
-    moveTimer = setInterval(moveHearts, 30)
-  }
+  if (val) start()
+  else clearAllTimers()
 }, { immediate: true })
 
 onUnmounted(() => {
-  if (spawnTimer) clearInterval(spawnTimer)
-  if (moveTimer) clearInterval(moveTimer)
+  clearAllTimers()
 })
 </script>
 

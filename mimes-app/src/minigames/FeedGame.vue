@@ -24,14 +24,38 @@ interface FoodItem {
 const TARGET = 5
 const caught = ref(0)
 const items = ref<FoodItem[]>([])
+/** Evita doble onComplete */
+const done = ref(false)
 let spawnTimer: ReturnType<typeof setInterval> | null = null
 let moveTimer: ReturnType<typeof setInterval> | null = null
 let nextId = 0
 
 const FOODS = ['🍖', '🍕', '🍎', '🍩', '🌮', '🍪', '🧁', '🍌']
 
+function clearAllTimers() {
+  if (spawnTimer) {
+    clearInterval(spawnTimer)
+    spawnTimer = null
+  }
+  if (moveTimer) {
+    clearInterval(moveTimer)
+    moveTimer = null
+  }
+}
+
+/** Resetea todo el estado y arranca la partida */
+function start() {
+  clearAllTimers()
+  done.value = false
+  caught.value = 0
+  items.value = []
+  nextId = 0
+  spawnTimer = setInterval(spawnFood, 400)
+  moveTimer = setInterval(moveItems, 30)
+}
+
 function spawnFood() {
-  if (!props.active) return
+  if (!props.active || done.value) return
   items.value.push({
     id: nextId++,
     x: 10 + Math.random() * 80,
@@ -53,27 +77,26 @@ function moveItems() {
 }
 
 function catchFood(id: number) {
-  if (!props.active) return
+  if (!props.active || done.value) return
   const item = items.value.find(i => i.id === id)
   if (item && !item.caught) {
     item.caught = true
     caught.value++
     if (caught.value >= TARGET) {
+      done.value = true
+      clearAllTimers()
       props.onComplete(true)
     }
   }
 }
 
 watch(() => props.active, (val) => {
-  if (val) {
-    spawnTimer = setInterval(spawnFood, 400)
-    moveTimer = setInterval(moveItems, 30)
-  }
+  if (val) start()
+  else clearAllTimers()
 }, { immediate: true })
 
 onUnmounted(() => {
-  if (spawnTimer) clearInterval(spawnTimer)
-  if (moveTimer) clearInterval(moveTimer)
+  clearAllTimers()
 })
 </script>
 

@@ -6,7 +6,7 @@
  * El jugador debe tocarlo 8 veces en 5 segundos.
  * Cada vez que lo toca, se mueve a otro sitio.
  */
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -18,6 +18,8 @@ const taps = ref(0)
 const targetX = ref(50)
 const targetY = ref(50)
 const targetEmoji = ref('🎾')
+/** Evita doble onComplete */
+const done = ref(false)
 let moveTimer: ReturnType<typeof setInterval> | null = null
 
 const EMOJIS = ['🎾', '⚽', '🏀', '🎯', '⭐']
@@ -28,29 +30,42 @@ function moveTarget() {
   targetEmoji.value = EMOJIS[Math.floor(Math.random() * EMOJIS.length)] ?? '🎾'
 }
 
+function clearAllTimers() {
+  if (moveTimer) {
+    clearInterval(moveTimer)
+    moveTimer = null
+  }
+}
+
+/** Resetea todo el estado y arranca la partida */
+function start() {
+  clearAllTimers()
+  done.value = false
+  taps.value = 0
+  moveTarget()
+  moveTimer = setInterval(() => {
+    moveTarget()
+  }, 1200)
+}
+
 function tapTarget() {
-  if (!props.active) return
+  if (!props.active || done.value) return
   taps.value++
   moveTarget()
   if (taps.value >= TARGET) {
+    done.value = true
+    clearAllTimers()
     props.onComplete(true)
   }
 }
 
-onMounted(() => {
-  moveTarget()
-})
-
 watch(() => props.active, (val) => {
-  if (val) {
-    moveTimer = setInterval(() => {
-      moveTarget()
-    }, 1200)
-  }
+  if (val) start()
+  else clearAllTimers()
 }, { immediate: true })
 
 onUnmounted(() => {
-  if (moveTimer) clearInterval(moveTimer)
+  clearAllTimers()
 })
 </script>
 

@@ -7,7 +7,7 @@
  * el color del Mime. Si toca una incorrecta, pierde.
  * Debe acertar 4 correctas para ganar.
  */
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import type { ColorTheme } from '../models/MimeModel'
 
 const props = defineProps<{
@@ -29,6 +29,8 @@ interface ClothingItem {
 const TARGET = 4
 const correct = ref(0)
 const items = ref<ClothingItem[]>([])
+/** Evita doble onComplete */
+const done = ref(false)
 
 const CLOTHES = ['👕', '👖', '🧢', '👗', '🧣', '🧤', '👟', '🎩']
 
@@ -81,8 +83,15 @@ function generateItems() {
   items.value = allItems.sort(() => Math.random() - 0.5)
 }
 
+/** Resetea todo el estado y arranca la partida */
+function start() {
+  done.value = false
+  correct.value = 0
+  generateItems()
+}
+
 function tapItem(id: number) {
-  if (!props.active) return
+  if (!props.active || done.value) return
   const item = items.value.find(i => i.id === id)
   if (!item || item.tapped) return
 
@@ -91,15 +100,19 @@ function tapItem(id: number) {
   if (item.isCorrect) {
     correct.value++
     if (correct.value >= TARGET) {
+      done.value = true
       props.onComplete(true)
     }
   } else {
     // Tocó una incorrecta → pierde
+    done.value = true
     props.onComplete(false)
   }
 }
 
-onMounted(generateItems)
+watch(() => props.active, (val) => {
+  if (val) start()
+}, { immediate: true })
 </script>
 
 <template>

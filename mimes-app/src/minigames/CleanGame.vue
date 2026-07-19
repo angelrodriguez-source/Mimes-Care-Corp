@@ -6,7 +6,7 @@
  * pasa el dedo/ratón sobre ellas para limpiarlas.
  * Debe limpiar todas antes de que se acabe el tiempo.
  */
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -24,6 +24,8 @@ interface DirtSpot {
 const TOTAL_SPOTS = 10
 const spots = ref<DirtSpot[]>([])
 const gameAreaRef = ref<HTMLElement | null>(null)
+/** Evita doble onComplete */
+const done = ref(false)
 
 function generateSpots() {
   spots.value = Array.from({ length: TOTAL_SPOTS }, (_, i) => ({
@@ -35,14 +37,29 @@ function generateSpots() {
   }))
 }
 
+/** Resetea todo el estado y arranca la partida */
+function start() {
+  done.value = false
+  generateSpots()
+}
+
 function checkWin() {
+  if (done.value) return
   if (spots.value.every(s => s.cleaned)) {
+    done.value = true
     props.onComplete(true)
   }
 }
 
+/** Toque directo sobre una mancha */
+function tapSpot(spot: DirtSpot) {
+  if (!props.active || done.value) return
+  spot.cleaned = true
+  checkWin()
+}
+
 function cleanAt(clientX: number, clientY: number) {
-  if (!props.active || !gameAreaRef.value) return
+  if (!props.active || done.value || !gameAreaRef.value) return
   const rect = gameAreaRef.value.getBoundingClientRect()
   const px = ((clientX - rect.left) / rect.width) * 100
   const py = ((clientY - rect.top) / rect.height) * 100
@@ -68,7 +85,9 @@ function onMouseMove(e: MouseEvent) {
   cleanAt(e.clientX, e.clientY)
 }
 
-onMounted(generateSpots)
+watch(() => props.active, (val) => {
+  if (val) start()
+}, { immediate: true })
 </script>
 
 <template>
@@ -89,8 +108,8 @@ onMounted(generateSpots)
         width: spot.size + 'px',
         height: spot.size + 'px',
       }"
-      @touchstart.prevent="() => { spot.cleaned = true; checkWin() }"
-      @mousedown="() => { spot.cleaned = true; checkWin() }"
+      @touchstart.prevent="tapSpot(spot)"
+      @mousedown="tapSpot(spot)"
     />
 
     <div class="clean-counter" v-if="active">

@@ -8,7 +8,7 @@
  *
  * Contrapartida a los demás juegos: requiere paciencia.
  */
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps<{
   active: boolean
@@ -16,23 +16,33 @@ const props = defineProps<{
 }>()
 
 const failed = ref(false)
+/** Evita doble onComplete */
+const done = ref(false)
 
 // Bug fix: precalcular posiciones de estrellas (antes usaba Math.random() en template)
 const starPositions = ref<{ left: string; top: string; delay: string }[]>([])
 
-onMounted(() => {
+/** Resetea todo el estado y arranca la partida */
+function start() {
+  done.value = false
+  failed.value = false
   starPositions.value = Array.from({ length: 8 }, () => ({
     left: (10 + Math.random() * 80) + '%',
     top: (5 + Math.random() * 40) + '%',
     delay: (Math.random() * 2) + 's',
   }))
-})
+}
 
 function handleTouch() {
-  if (!props.active || failed.value) return
+  if (!props.active || done.value || failed.value) return
   failed.value = true
+  done.value = true
   props.onComplete(false)
 }
+
+watch(() => props.active, (val) => {
+  if (val) start()
+}, { immediate: true })
 </script>
 
 <template>
