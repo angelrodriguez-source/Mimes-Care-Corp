@@ -19,7 +19,7 @@ const props = defineProps<{
 }>()
 
 // --- CONSTANTES ---
-const REQUIRED = 5
+const REQUIRED = 4
 const FOODS = ['🍩', '🍪', '🍎'] as const
 const GRAVITY = 0.55        // aceleracion de caida (px/frame, baseline 375)
 const HIT_RADIUS = 50       // tolerancia horizontal (px, baseline 375)

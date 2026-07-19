@@ -127,7 +127,7 @@ function onDragStart(e: MouseEvent | TouchEvent) {
 }
 
 function onDragMove(e: MouseEvent | TouchEvent) {
-  if (!dragging.value) return
+  if (!dragging.value || !props.active || done.value) return
   const pos = getEventPos(e)
   if (!pos) return
 
@@ -147,6 +147,7 @@ function onDragMove(e: MouseEvent | TouchEvent) {
 
 function onDragEnd() {
   if (!dragging.value) return
+  if (!props.active || done.value) { dragging.value = false; return }
   dragging.value = false
 
   const dist = Math.sqrt(dragDx.value ** 2 + dragDy.value ** 2)

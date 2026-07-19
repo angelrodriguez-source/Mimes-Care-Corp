@@ -32,7 +32,7 @@ const MIN_MINE_DIST = 3.5
 /** Radio sin minas alrededor de la esquina superior izquierda (zona de inicio) */
 const SAFE_START_RADIUS = 3
 /** Porcentaje de celdas seguras que hay que limpiar para ganar */
-const WIN_PERCENT = 85
+const WIN_PERCENT = 75
 /** Radio de limpieza de la esponja (en celdas) */
 const SPONGE_RADIUS = 1.2
 /** Paso de interpolacion del trazo (en celdas) — menor que SPONGE_RADIUS */
@@ -234,6 +234,8 @@ watch(
   () => props.active,
   active => {
     if (active) {
+      // Cancelar un onComplete pendiente de una partida anterior
+      if (feedbackTimer) { clearTimeout(feedbackTimer); feedbackTimer = null }
       generateLevel()
       outcome.value = 'playing'
       explodedIndex.value = null

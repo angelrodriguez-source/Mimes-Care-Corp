@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 // --- CONSTANTES ---
-const REQUIRED = 6          // ruidos a silenciar
+const REQUIRED = 5          // ruidos a silenciar
 const RING_TIME = 1.6       // segundos antes de que el ruido despierte al Mime
 const SPAWN_DELAY = 900     // ms tras silenciar el anterior
 const FIRST_DELAY = 600     // ms hasta el primer ruido

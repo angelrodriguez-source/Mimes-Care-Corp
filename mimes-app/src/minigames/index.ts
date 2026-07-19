@@ -91,7 +91,7 @@ const ADVANCED_POOLS: Record<CareAction, GameDef[]> = {
   jugar: [
     { load: () => import('./BasketGame.vue'), config: cfg('Baloncesto', '🏀', 'Encesta 3 de 5 tiros!', 20000) },
     { load: () => import('./MemoryPairsGame.vue'), config: cfg('Parejas', '🃏', 'Encuentra las 3 parejas!', 25000) },
-    { load: () => import('./ReflexGame.vue'), config: cfg('Semaforo', '🚦', 'Toca solo en verde!', 20000) },
+    { load: () => import('./ReflexGame.vue'), config: cfg('Semaforo', '🚦', 'Toca solo en verde!', 25000) },
   ],
   carino: [
     { load: () => import('./SimonHeartsGame.vue'), config: cfg('Simon de corazones', '💞', 'Repite la secuencia!', 30000) },
