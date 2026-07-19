@@ -130,10 +130,31 @@ Cuando el usuario pulsa una accion, aparece el picker con dos opciones:
 devuelve uno al azar del pool, con **anti-repeticion**: nunca sale el mismo juego dos
 veces seguidas para la misma accion+dificultad (memoria en un Map a nivel de modulo).
 
-Estado actual: **2 juegos por pool** (24 juegos en total). Para anadir otro: crear el
-.vue con el contrato estandar y anadir `{ component, config }` al pool — nada mas.
+Estado actual: **3 juegos por pool** (36 juegos en total). Para anadir otro: crear el
+.vue con el contrato estandar y anadir `{ load, config }` al pool — nada mas.
 Las configs (titulo, icono, instruccion, duracion) viven junto a cada entrada del pool;
 el `GAME_CONFIGS` global de types.ts se elimino.
+
+**Carga perezosa (2026-07-19)**: los juegos NO se importan estaticamente. Cada entrada
+del pool es `{ load: () => import('./X.vue'), config }`; `pickGame` lanza la descarga
+del chunk al elegir (la cuenta atras 3-2-1 del shell la cubre) y envuelve el componente
+con `defineAsyncComponent` (cacheado por juego). Resultado: el bundle de CareScreen no
+crece con cada juego nuevo y el service worker cachea cada chunk tras su primer uso.
+
+## Tercera tanda de juegos (2026-07-19)
+
+**Faciles** (8s): DropFeedGame (alimentar — pendulo de comida, suelta sobre la boca),
+TrashSortGame (limpiar — clasifica organico/reciclaje), BalloonBlowGame (jugar — infla
+manteniendo pulsado hasta la zona verde), HeartTraceGame (carino — une 8 puntos
+trazando un corazon), HushGame (descansar — silencia los ruidos antes de que expire su
+anillo), ShadowMatchGame (vestir — adivina la prenda por su sombra, 4 rondas).
+
+**Avanzados** (20-25s): BurgerStackGame (alimentar — apilador de 6 pisos),
+RecycleRushGame (limpiar — cinta transportadora con 3 cubos, 7 aciertos/3 fallos),
+ReflexGame (jugar — semaforo de reflejos <650ms, 5 rondas), HugMeterGame (carino —
+suelta la barra en la zona ideal que se estrecha), DreamCatchGame (descansar — caza
+estrellas fugaces, evita pesadillas 👻), SpotChangeGame (vestir — detecta que prenda
+cambio tras el parpadeo, 3 rondas).
 
 **Estilos del picker**: scoped en CareScreen.vue (`position: fixed`, sin Teleport). Clases con prefijo `.picker-*`.
 

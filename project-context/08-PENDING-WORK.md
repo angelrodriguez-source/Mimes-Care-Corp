@@ -34,8 +34,10 @@ Las 6 acciones tienen juego avanzado (recompensa x1.5 stats, afinidad peso 0.15)
 
 ### Pools aleatorios de mini-juegos (2026-07-19)
 - [x] Motor `pickGame(action, difficulty)` con anti-repeticion — elige al azar del pool
-- [x] Segunda tanda: 12 juegos nuevos (1 facil + 1 avanzado por accion) → **2 por pool, 24 en total**
-- [ ] Tercera tanda (objetivo: 3 por pool) — cuando el usuario quiera; anadir un juego = crear el .vue + una linea en el pool
+- [x] Segunda tanda: 12 juegos nuevos → 2 por pool
+- [x] Tercera tanda: 12 juegos mas → **3 por pool, 36 en total**
+- [x] Carga perezosa: cada juego es un chunk que se descarga al elegirlo (defineAsyncComponent + precarga en pickGame)
+- [ ] Cuarta tanda (si algun dia se quiere mas variedad): anadir un juego = crear el .vue + una linea en el pool
 
 ## Bugs conocidos
 

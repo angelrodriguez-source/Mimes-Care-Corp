@@ -5,51 +5,30 @@
  * accion, `pickGame()` elige uno al azar del pool correspondiente,
  * evitando repetir el mismo que la vez anterior (anti-repeticion).
  *
- * Para anadir un juego nuevo: crear el .vue (mismo contrato de props
- * que los demas) y anadir una entrada { component, config } al pool.
+ * CARGA PEREZOSA: los juegos NO se importan estaticamente — cada uno
+ * es un chunk propio que se descarga al ser elegido (pickGame lanza la
+ * descarga en ese momento; la cuenta atras del shell la cubre de sobra
+ * y el service worker lo cachea para la proxima).
+ *
+ * Para anadir un juego: crear el .vue (contrato estandar de props) y
+ * anadir { load, config } al pool. Nada mas.
  */
 export { default as MiniGameShell } from './MiniGameShell.vue'
 export type { MiniGameResult, MiniGameConfig } from './types'
 
+import { defineAsyncComponent, type Component } from 'vue'
 import type { CareAction } from '../models/MimeModel'
 import type { MiniGameConfig } from './types'
-import type { Component } from 'vue'
-
-// --- Juegos clasicos (facil) ---
-import FeedGame from './FeedGame.vue'
-import CleanGame from './CleanGame.vue'
-import PlayGame from './PlayGame.vue'
-import LoveGame from './LoveGame.vue'
-import RestGame from './RestGame.vue'
-import DressGame from './DressGame.vue'
-
-// --- Segunda tanda (facil) ---
-import RipeFruitGame from './RipeFruitGame.vue'
-import BubblePopGame from './BubblePopGame.vue'
-import WhackToyGame from './WhackToyGame.vue'
-import CaressGame from './CaressGame.vue'
-import LightsOffGame from './LightsOffGame.vue'
-import FindClothesGame from './FindClothesGame.vue'
-
-// --- Avanzados ---
-import FeedCatchGame from './FeedCatchGame.vue'
-import ScrubGame from './ScrubGame.vue'
-import BasketGame from './BasketGame.vue'
-import SimonHeartsGame from './SimonHeartsGame.vue'
-import LullabyGame from './LullabyGame.vue'
-import OutfitMemoryGame from './OutfitMemoryGame.vue'
-
-// --- Segunda tanda (avanzado) ---
-import RecipeGame from './RecipeGame.vue'
-import DustChaseGame from './DustChaseGame.vue'
-import MemoryPairsGame from './MemoryPairsGame.vue'
-import HeartBeatGame from './HeartBeatGame.vue'
-import SheepCountGame from './SheepCountGame.vue'
-import LaundryGame from './LaundryGame.vue'
 
 export type Difficulty = 'easy' | 'advanced'
 
-/** Un juego del pool: componente + su configuracion para el shell */
+/** Definicion interna de un juego del pool */
+interface GameDef {
+  load: () => Promise<{ default: Component }>
+  config: MiniGameConfig
+}
+
+/** Lo que recibe CareScreen: componente listo para renderizar + config */
 export interface GameEntry {
   component: Component
   config: MiniGameConfig
@@ -64,59 +43,83 @@ const cfg = (
 ): MiniGameConfig => ({ title, icon, instruction, duration, timeoutIsWin })
 
 /** Pools de dificultad FACIL (juegos de 5-8 segundos) */
-const EASY_POOLS: Record<CareAction, GameEntry[]> = {
+const EASY_POOLS: Record<CareAction, GameDef[]> = {
   alimentar: [
-    { component: FeedGame, config: cfg('Alimentar', '🍖', 'Atrapa la comida!', 5000) },
-    { component: RipeFruitGame, config: cfg('Fruta madura', '🍎', 'Toca solo la fruta buena!', 8000) },
+    { load: () => import('./FeedGame.vue'), config: cfg('Alimentar', '🍖', 'Atrapa la comida!', 5000) },
+    { load: () => import('./RipeFruitGame.vue'), config: cfg('Fruta madura', '🍎', 'Toca solo la fruta buena!', 8000) },
+    { load: () => import('./DropFeedGame.vue'), config: cfg('Punteria', '🍩', 'Suelta la comida en la boca!', 8000) },
   ],
   limpiar: [
-    { component: CleanGame, config: cfg('Limpiar', '🛁', 'Limpia todas las manchas!', 5000) },
-    { component: BubblePopGame, config: cfg('Pompas', '🫧', 'Explota 10 pompas!', 8000) },
+    { load: () => import('./CleanGame.vue'), config: cfg('Limpiar', '🛁', 'Limpia todas las manchas!', 5000) },
+    { load: () => import('./BubblePopGame.vue'), config: cfg('Pompas', '🫧', 'Explota 10 pompas!', 8000) },
+    { load: () => import('./TrashSortGame.vue'), config: cfg('A su cubo', '♻️', 'Cada cosa a su cubo!', 8000) },
   ],
   jugar: [
-    { component: PlayGame, config: cfg('Jugar', '🎮', 'Toca al Mime 8 veces!', 5000) },
-    { component: WhackToyGame, config: cfg('Toca-topo', '🐹', 'Dale al juguete 8 veces!', 8000) },
+    { load: () => import('./PlayGame.vue'), config: cfg('Jugar', '🎮', 'Toca al Mime 8 veces!', 5000) },
+    { load: () => import('./WhackToyGame.vue'), config: cfg('Toca-topo', '🐹', 'Dale al juguete 8 veces!', 8000) },
+    { load: () => import('./BalloonBlowGame.vue'), config: cfg('Globos', '🎈', 'Infla hasta la zona verde!', 8000) },
   ],
   carino: [
-    { component: LoveGame, config: cfg('Cariño', '💕', 'Recoge los corazones!', 5000) },
-    { component: CaressGame, config: cfg('Mimitos', '🤗', 'Acaricia sin parar!', 8000) },
+    { load: () => import('./LoveGame.vue'), config: cfg('Cariño', '💕', 'Recoge los corazones!', 5000) },
+    { load: () => import('./CaressGame.vue'), config: cfg('Mimitos', '🤗', 'Acaricia sin parar!', 8000) },
+    { load: () => import('./HeartTraceGame.vue'), config: cfg('Traza el corazon', '💘', 'Une los puntos en orden!', 8000) },
   ],
   descansar: [
-    { component: RestGame, config: cfg('Descansar', '😴', 'No toques la pantalla!', 5000, true) },
-    { component: LightsOffGame, config: cfg('Luces fuera', '💡', 'Apaga todas las luces!', 8000) },
+    { load: () => import('./RestGame.vue'), config: cfg('Descansar', '😴', 'No toques la pantalla!', 5000, true) },
+    { load: () => import('./LightsOffGame.vue'), config: cfg('Luces fuera', '💡', 'Apaga todas las luces!', 8000) },
+    { load: () => import('./HushGame.vue'), config: cfg('Silencio', '🤫', 'Silencia los ruidos a tiempo!', 8000) },
   ],
   vestir: [
-    { component: DressGame, config: cfg('Vestir', '👔', 'Toca los del color correcto!', 5000) },
-    { component: FindClothesGame, config: cfg('Encuentra la prenda', '🔍', 'Busca las 3 iguales!', 8000) },
+    { load: () => import('./DressGame.vue'), config: cfg('Vestir', '👔', 'Toca los del color correcto!', 5000) },
+    { load: () => import('./FindClothesGame.vue'), config: cfg('Encuentra la prenda', '🔍', 'Busca las 3 iguales!', 8000) },
+    { load: () => import('./ShadowMatchGame.vue'), config: cfg('Sombras', '👥', 'Adivina la prenda por su sombra!', 8000) },
   ],
 }
 
-/** Pools de dificultad AVANZADA (juegos de 20-30 segundos, recompensa x1.5) */
-const ADVANCED_POOLS: Record<CareAction, GameEntry[]> = {
+/** Pools de dificultad AVANZADA (20-30 segundos, recompensa x1.5) */
+const ADVANCED_POOLS: Record<CareAction, GameDef[]> = {
   alimentar: [
-    { component: FeedCatchGame, config: cfg('Cosecha', '🧺', 'Atrapa 10 comidas buenas!', 25000) },
-    { component: RecipeGame, config: cfg('La receta', '👨‍🍳', 'Memoriza y repite la receta!', 25000) },
+    { load: () => import('./FeedCatchGame.vue'), config: cfg('Cosecha', '🧺', 'Atrapa 10 comidas buenas!', 25000) },
+    { load: () => import('./RecipeGame.vue'), config: cfg('La receta', '👨‍🍳', 'Memoriza y repite la receta!', 25000) },
+    { load: () => import('./BurgerStackGame.vue'), config: cfg('Torre de burger', '🍔', 'Apila 6 pisos sin fallar!', 25000) },
   ],
   limpiar: [
-    { component: ScrubGame, config: cfg('Campo minado', '🧽', 'Limpia sin tocar las minas!', 25000) },
-    { component: DustChaseGame, config: cfg('Caza el polvo', '💨', 'Atrapa las motas de polvo!', 20000) },
+    { load: () => import('./ScrubGame.vue'), config: cfg('Campo minado', '🧽', 'Limpia sin tocar las minas!', 25000) },
+    { load: () => import('./DustChaseGame.vue'), config: cfg('Caza el polvo', '💨', 'Atrapa las motas de polvo!', 20000) },
+    { load: () => import('./RecycleRushGame.vue'), config: cfg('Recicla rapido', '♻️', 'Cada objeto a su cubo!', 25000) },
   ],
   jugar: [
-    { component: BasketGame, config: cfg('Baloncesto', '🏀', 'Encesta 3 de 5 tiros!', 20000) },
-    { component: MemoryPairsGame, config: cfg('Parejas', '🃏', 'Encuentra las 3 parejas!', 25000) },
+    { load: () => import('./BasketGame.vue'), config: cfg('Baloncesto', '🏀', 'Encesta 3 de 5 tiros!', 20000) },
+    { load: () => import('./MemoryPairsGame.vue'), config: cfg('Parejas', '🃏', 'Encuentra las 3 parejas!', 25000) },
+    { load: () => import('./ReflexGame.vue'), config: cfg('Semaforo', '🚦', 'Toca solo en verde!', 20000) },
   ],
   carino: [
-    { component: SimonHeartsGame, config: cfg('Simon de corazones', '💞', 'Repite la secuencia!', 30000) },
-    { component: HeartBeatGame, config: cfg('Al ritmo', '💓', 'Toca los corazones en la linea!', 20000) },
+    { load: () => import('./SimonHeartsGame.vue'), config: cfg('Simon de corazones', '💞', 'Repite la secuencia!', 30000) },
+    { load: () => import('./HeartBeatGame.vue'), config: cfg('Al ritmo', '💓', 'Toca los corazones en la linea!', 20000) },
+    { load: () => import('./HugMeterGame.vue'), config: cfg('Abrazo perfecto', '🫂', 'Suelta en la zona ideal!', 20000) },
   ],
   descansar: [
-    { component: LullabyGame, config: cfg('Nana', '🌙', 'Toca cuando pase por la zona verde!', 20000) },
-    { component: SheepCountGame, config: cfg('Cuenta ovejas', '🐑', 'Cuantas ovejas han pasado?', 20000) },
+    { load: () => import('./LullabyGame.vue'), config: cfg('Nana', '🌙', 'Toca cuando pase por la zona verde!', 20000) },
+    { load: () => import('./SheepCountGame.vue'), config: cfg('Cuenta ovejas', '🐑', 'Cuantas ovejas han pasado?', 20000) },
+    { load: () => import('./DreamCatchGame.vue'), config: cfg('Cazasuenos', '🌠', 'Caza estrellas, evita pesadillas!', 20000) },
   ],
   vestir: [
-    { component: OutfitMemoryGame, config: cfg('Conjunto perfecto', '🧥', 'Memoriza y elige las 3 prendas!', 20000) },
-    { component: LaundryGame, config: cfg('Tendedero', '👕', 'Descuelga el color que se pide!', 20000) },
+    { load: () => import('./OutfitMemoryGame.vue'), config: cfg('Conjunto perfecto', '🧥', 'Memoriza y elige las 3 prendas!', 20000) },
+    { load: () => import('./LaundryGame.vue'), config: cfg('Tendedero', '👕', 'Descuelga el color que se pide!', 20000) },
+    { load: () => import('./SpotChangeGame.vue'), config: cfg('Que ha cambiado?', '🧐', 'Encuentra la prenda que cambio!', 20000) },
   ],
+}
+
+// Wrapper async de cada juego, creado una sola vez
+const componentCache = new Map<GameDef, Component>()
+
+function componentOf(def: GameDef): Component {
+  let comp = componentCache.get(def)
+  if (!comp) {
+    comp = defineAsyncComponent(def.load)
+    componentCache.set(def, comp)
+  }
+  return comp
 }
 
 // Ultimo juego mostrado por (accion, dificultad), para no repetir seguidos
@@ -124,7 +127,8 @@ const lastPicked = new Map<string, number>()
 
 /**
  * Elige un juego al azar del pool (accion, dificultad).
- * Si el pool tiene mas de un juego, nunca repite el ultimo mostrado.
+ * Nunca repite el ultimo mostrado del mismo pool, y lanza la descarga
+ * del chunk inmediatamente (la cuenta atras del shell la absorbe).
  */
 export function pickGame(action: CareAction, difficulty: Difficulty): GameEntry {
   const pool = difficulty === 'advanced' ? ADVANCED_POOLS[action] : EASY_POOLS[action]
@@ -135,7 +139,10 @@ export function pickGame(action: CareAction, difficulty: Difficulty): GameEntry 
     idx = (idx + 1) % pool.length
   }
   lastPicked.set(key, idx)
-  return pool[idx]!
+
+  const def = pool[idx]!
+  void def.load() // precarga: empieza a bajar el chunk ya
+  return { component: componentOf(def), config: def.config }
 }
 
 /** Tamanos de pool (para tests y docs) */
