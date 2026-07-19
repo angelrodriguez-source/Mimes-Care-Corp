@@ -36,13 +36,17 @@ self.addEventListener('fetch', (event) => {
   // No interceptar llamadas a Supabase ni a otros origenes
   if (url.origin !== self.location.origin) return
 
-  // Assets inmutables de Vite: cache primero
+  // Assets inmutables de Vite: cache primero.
+  // Solo se cachean respuestas OK — un 404/500 transitorio (p.ej. durante
+  // un deploy) no debe quedar congelado en la cache.
   if (url.pathname.includes('/assets/')) {
     event.respondWith(
       caches.match(request).then(
         (hit) => hit ?? fetch(request).then((res) => {
-          const copy = res.clone()
-          caches.open(CACHE).then((cache) => cache.put(request, copy))
+          if (res.ok) {
+            const copy = res.clone()
+            caches.open(CACHE).then((cache) => cache.put(request, copy))
+          }
           return res
         }),
       ),
@@ -54,8 +58,10 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((res) => {
-        const copy = res.clone()
-        caches.open(CACHE).then((cache) => cache.put(request, copy))
+        if (res.ok) {
+          const copy = res.clone()
+          caches.open(CACHE).then((cache) => cache.put(request, copy))
+        }
         return res
       })
       .catch(() => caches.match(request).then((hit) => hit ?? caches.match('./'))),
