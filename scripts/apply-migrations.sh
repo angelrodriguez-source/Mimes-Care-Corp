@@ -22,6 +22,27 @@ if [ -z "${SUPABASE_DB_URL:-}" ]; then
   exit 1
 fi
 
+# --- Diagnostico del formato (sin imprimir nunca el valor del secret) ---
+if printf '%s' "$SUPABASE_DB_URL" | grep -q '\[YOUR-PASSWORD\]'; then
+  echo "ERROR: la connection string todavia contiene [YOUR-PASSWORD]." >&2
+  echo "Sustituyelo por tu contrasena real de la base de datos, SIN corchetes." >&2
+  exit 1
+fi
+
+if ! printf '%s' "$SUPABASE_DB_URL" | grep -q '@'; then
+  echo "ERROR: la connection string NO contiene '@servidor'." >&2
+  echo "Se ha cortado al copiarla: falta la parte ':contrasena@aws-X-region.pooler.supabase.com:5432/postgres'." >&2
+  echo "Copia la cadena COMPLETA de Supabase > Project Settings > Database > Connection string (URI)." >&2
+  exit 1
+fi
+
+if ! printf '%s' "$SUPABASE_DB_URL" | grep -Eq '^postgres(ql)?://[^:@]+:[^@]+@[^@]+:[0-9]+/'; then
+  echo "ERROR: el formato de la connection string no es valido." >&2
+  echo "Debe tener la forma: postgresql://usuario:contrasena@servidor:5432/postgres" >&2
+  echo "Revisa que no haya espacios, saltos de linea, ni caracteres raros en la contrasena (@ # / :)." >&2
+  exit 1
+fi
+
 MIGRATIONS_DIR="$(cd "$(dirname "$0")/.." && pwd)/supabase/migrations"
 
 if [ ! -d "$MIGRATIONS_DIR" ]; then
