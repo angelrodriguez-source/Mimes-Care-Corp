@@ -32,6 +32,11 @@ Las 6 acciones tienen juego avanzado (recompensa x1.5 stats, afinidad peso 0.15)
 - [x] `descansar` → LullabyGame (timing en barra oscilante, 3 aciertos)
 - [x] `vestir` → OutfitMemoryGame (memoriza 3 prendas y eligelas en grid 3x3)
 
+### Pools aleatorios de mini-juegos (2026-07-19)
+- [x] Motor `pickGame(action, difficulty)` con anti-repeticion — elige al azar del pool
+- [x] Segunda tanda: 12 juegos nuevos (1 facil + 1 avanzado por accion) → **2 por pool, 24 en total**
+- [ ] Tercera tanda (objetivo: 3 por pool) — cuando el usuario quiera; anadir un juego = crear el .vue + una linea en el pool
+
 ## Bugs conocidos
 
 ### ~~RestGame tiene logica invertida~~ RESUELTO (2026-04-06)

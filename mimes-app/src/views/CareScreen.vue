@@ -10,7 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
 import StatBar from '../components/StatBar.vue'
-import { MiniGameShell, ACTION_GAMES, GAME_CONFIGS, ACTION_GAMES_ADVANCED, GAME_CONFIGS_ADVANCED } from '../minigames'
+import { MiniGameShell, pickGame } from '../minigames'
 import type { MiniGameResult, MiniGameConfig } from '../minigames'
 import { useUserStore } from '../stores/userStore'
 import { useCharacterMovement } from '../composables/useCharacterMovement'
@@ -218,14 +218,11 @@ function selectDifficulty(difficulty: 'easy' | 'advanced') {
   pendingAction.value = action
   pendingDifficulty.value = difficulty
 
-  // Lanzar mini-juego segun dificultad
-  if (difficulty === 'advanced' && ACTION_GAMES_ADVANCED[action]) {
-    activeGame.value = ACTION_GAMES_ADVANCED[action]!
-    activeGameConfig.value = GAME_CONFIGS_ADVANCED[action]!
-  } else {
-    activeGame.value = ACTION_GAMES[action]
-    activeGameConfig.value = GAME_CONFIGS[action]
-  }
+  // Elegir un juego al azar del pool (accion, dificultad) — pickGame
+  // evita repetir el mismo que la vez anterior
+  const entry = pickGame(action, difficulty)
+  activeGame.value = entry.component
+  activeGameConfig.value = entry.config
 }
 
 function closePicker() {

@@ -118,19 +118,39 @@ Todos reciben las mismas props via scoped slot: `active` y `onComplete`. Todos u
 - **Objetivo**: 4 aciertos sin errores
 - Indicador arriba: swatch de color + texto "Toca solo [color]"
 
-## Sistema de Dificultad
+## Sistema de Dificultad y Pools Aleatorios (2026-07-19)
 
-**Estado actual**: Selector implementado y 2 juegos avanzados publicados (jugar, limpiar).
+Cuando el usuario pulsa una accion, aparece el picker con dos opciones:
+- **Facil** (estrella, fondo verde): juegos cortos (5-8s)
+- **Avanzado** (fuego, fondo naranja): juegos largos y dificiles (20-30s), recompensa x1.5
 
-Cuando el usuario pulsa una accion de cuidado, aparece un modal con dos opciones:
-- **Facil** (estrella, fondo verde): Lanza el mini-juego clasico
-- **Avanzado** (fuego, fondo naranja): Lanza el juego avanzado si existe para esa accion. Si no existe, el boton aparece deshabilitado con texto "Proximamente"
+**Pools**: cada (accion, dificultad) tiene una LISTA de juegos en `src/minigames/index.ts`
+(`EASY_POOLS` / `ADVANCED_POOLS`, tipo `Record<CareAction, GameEntry[]>` donde
+`GameEntry = { component, config }`). Al elegir dificultad, `pickGame(action, difficulty)`
+devuelve uno al azar del pool, con **anti-repeticion**: nunca sale el mismo juego dos
+veces seguidas para la misma accion+dificultad (memoria en un Map a nivel de modulo).
 
-Los juegos avanzados viven en `ACTION_GAMES_ADVANCED` y `GAME_CONFIGS_ADVANCED`
-(`Partial<Record<CareAction, ...>>` en `src/minigames/index.ts`). `selectDifficulty('advanced')`
-usa esos mapas cuando hay entrada para la accion; si no, cae al juego facil.
+Estado actual: **2 juegos por pool** (24 juegos en total). Para anadir otro: crear el
+.vue con el contrato estandar y anadir `{ component, config }` al pool — nada mas.
+Las configs (titulo, icono, instruccion, duracion) viven junto a cada entrada del pool;
+el `GAME_CONFIGS` global de types.ts se elimino.
 
 **Estilos del picker**: scoped en CareScreen.vue (`position: fixed`, sin Teleport). Clases con prefijo `.picker-*`.
+
+## Segunda tanda de juegos (2026-07-19)
+
+**Faciles** (8s): RipeFruitGame (alimentar — whack-a-mole de fruta, evita la podrida),
+BubblePopGame (limpiar — explota 10 pompas que suben), WhackToyGame (jugar — topo 3x3,
+8 toques), CaressGame (carino — acaricia acumulando distancia de drag), LightsOffGame
+(descansar — apaga las 6 luces, se reencienden solas), FindClothesGame (vestir —
+encuentra las 3 prendas iguales al objetivo en un grid 3x3).
+
+**Avanzados** (20-25s): RecipeGame (alimentar — Simon de ingredientes, 2 rondas),
+DustChaseGame (limpiar — 6 motas de polvo que huyen del dedo), MemoryPairsGame
+(jugar — 3 parejas de cartas, max 5 fallos), HeartBeatGame (carino — ritmo: toca
+los corazones al cruzar la linea, 6/8 con max 2 fallos), SheepCountGame (descansar —
+cuenta las ovejas del desfile y elige el numero), LaundryGame (vestir — descuelga
+prendas del color pedido, que cambia cada 4s).
 
 ## Juegos Avanzados
 

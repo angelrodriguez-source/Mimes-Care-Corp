@@ -7,8 +7,8 @@
  *
  * MiniGameShell se encarga del flujo: cuenta atrás → juego → resultado.
  * Los juegos individuales solo se preocupan de su mecánica.
+ * Las configuraciones viven en los pools de `index.ts`.
  */
-import type { CareAction } from '../models/MimeModel'
 
 /** Resultado de un mini-juego */
 export interface MiniGameResult {
@@ -27,45 +27,4 @@ export interface MiniGameConfig {
   duration: number
   /** Si true, que el timer llegue a 0 cuenta como victoria (ej: RestGame) */
   timeoutIsWin?: boolean
-}
-
-/** Mapeo acción → configuración del mini-juego */
-export const GAME_CONFIGS: Record<CareAction, MiniGameConfig> = {
-  alimentar: {
-    title: 'Alimentar',
-    icon: '🍖',
-    instruction: 'Atrapa la comida!',
-    duration: 5000,
-  },
-  limpiar: {
-    title: 'Limpiar',
-    icon: '🛁',
-    instruction: 'Limpia todas las manchas!',
-    duration: 5000,
-  },
-  jugar: {
-    title: 'Jugar',
-    icon: '🎮',
-    instruction: 'Toca al Mime 8 veces!',
-    duration: 5000,
-  },
-  carino: {
-    title: 'Cariño',
-    icon: '💕',
-    instruction: 'Recoge los corazones!',
-    duration: 5000,
-  },
-  descansar: {
-    title: 'Descansar',
-    icon: '😴',
-    instruction: 'No toques la pantalla!',
-    duration: 5000,
-    timeoutIsWin: true,
-  },
-  vestir: {
-    title: 'Vestir',
-    icon: '👔',
-    instruction: 'Toca los del color correcto!',
-    duration: 5000,
-  },
 }
