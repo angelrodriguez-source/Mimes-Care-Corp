@@ -24,7 +24,7 @@ export type Personality = 'aventurero' | 'tranquilo' | 'picaro'
 /**
  * Los 3 temas de color disponibles.
  */
-export type ColorTheme = 'celeste' | 'lila' | 'melocoton'
+export type ColorTheme = 'celeste' | 'lila' | 'melocoton' | 'dorado'
 
 /**
  * Las 6 estadísticas que tiene cada Mime.

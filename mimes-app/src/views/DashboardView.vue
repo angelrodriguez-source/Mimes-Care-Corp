@@ -8,15 +8,23 @@
  *   3. Mimes a mi cargo: Mimes de otros que estas cuidando
  *   4. Adoptar: input para introducir un codigo de compartir
  */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import MimeCard from '../components/MimeCard.vue'
 import DailyRewardModal from '../components/DailyRewardModal.vue'
+import VideoBonusModal from '../components/VideoBonusModal.vue'
 import { useUserStore } from '../stores/userStore'
 import { useTutorialStore } from '../stores/tutorialStore'
 import { useSfx } from '../composables/useSfx'
 import { toStats, copyToClipboard } from '../utils/helpers'
-import { DAILY_REWARDS, ACCESSORIES } from '../constants/gameConstants'
+import { shareAchievement } from '../utils/shareCard'
+import {
+  DAILY_REWARDS,
+  ACCESSORIES,
+  LEGENDARY_CESIONES_REQUIRED,
+  VIDEO_BONUS_MAX_PER_DAY,
+  isWeekendBoost,
+} from '../constants/gameConstants'
 import {
   loadDashboardData,
   generateShareCode,
@@ -34,6 +42,8 @@ import {
   getOwnedAccessories,
   buyAccessory,
   addPoints,
+  claimVideoBonus,
+  unlockLegendary,
   type MimeWithNames,
   type MimeFromDB,
 } from '../services/mimeService'
@@ -326,6 +336,78 @@ async function handleSendMessage() {
   setTimeout(() => (claimMessage.value = ''), 4000)
 }
 
+// --- BONUS DE VIDEO (+5 PM, max 3/dia) ---
+
+const videoModalOpen = ref(false)
+
+/** Bonus de video que le quedan hoy al usuario (el RPC es la autoridad) */
+const videoBonusRemaining = computed(() => {
+  const p = userStore.profile
+  if (!p) return 0
+  const today = getLocalDateISO()
+  const usados = p.video_bonus_date === today ? (p.video_bonus_count ?? 0) : 0
+  return Math.max(0, VIDEO_BONUS_MAX_PER_DAY - usados)
+})
+
+async function handleVideoClaim() {
+  const res = await claimVideoBonus()
+  if (res.error) {
+    claimMessage.value = res.error
+    setTimeout(() => (claimMessage.value = ''), 3000)
+    return
+  }
+  sfx.play('coin')
+  await userStore.fetchProfile()
+}
+
+// --- MIME LEGENDARIO (desbloqueo tras 3 cesiones) ---
+
+const legendaryUnlocking = ref(false)
+
+const canUnlockLegendary = computed(() => {
+  const completadas = userStore.profile?.cesiones_completadas ?? 0
+  const yaLoTiene = myMimes.value.some(m => m.color_theme === 'dorado')
+  return completadas >= LEGENDARY_CESIONES_REQUIRED && !yaLoTiene
+})
+
+async function handleUnlockLegendary() {
+  if (legendaryUnlocking.value) return
+  legendaryUnlocking.value = true
+  const { success, error } = await unlockLegendary()
+  legendaryUnlocking.value = false
+
+  if (error || !success) {
+    claimMessage.value = error ?? 'No se pudo desbloquear'
+    setTimeout(() => (claimMessage.value = ''), 3000)
+    return
+  }
+  sfx.play('success')
+  await loadData()
+  claimMessage.value = '👑 Mime Legendario desbloqueado!'
+  setTimeout(() => (claimMessage.value = ''), 5000)
+  // Ofrecer presumir del logro
+  void shareAchievement({
+    titulo: 'He desbloqueado el Mime Legendario!',
+    subtitulo: `Tras ${LEGENDARY_CESIONES_REQUIRED} cesiones completadas 🐾`,
+    emoji: '👑',
+    colorTheme: 'dorado',
+  })
+}
+
+// --- PRESUMIR (tarjeta de logro compartible) ---
+
+async function handleBrag(mime: MimeWithNames) {
+  const esDorado = mime.color_theme === 'dorado'
+  await shareAchievement({
+    titulo: esDorado ? `${mime.nombre}, mi Mime Legendario` : `Este es ${mime.nombre}`,
+    subtitulo: mime.afinidad > 0
+      ? `Afinidad ${Math.round(mime.afinidad)}% · ¿me cuidas el siguiente?`
+      : '¿Te animas a cuidarlo?',
+    emoji: esDorado ? '👑' : '🐣',
+    colorTheme: mime.color_theme,
+  })
+}
+
 // --- TIENDA DE ACCESORIOS ---
 
 async function openShop() {
@@ -421,6 +503,11 @@ onUnmounted(() => {
           <span class="puntos-heart">&#9829;</span>
           <span>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</span>
         </div>
+        <button
+          class="help-btn video-btn"
+          :title="`Bonus de video (${videoBonusRemaining} restantes hoy)`"
+          @click="videoModalOpen = true"
+        >🎬<span v-if="videoBonusRemaining > 0" class="video-badge">{{ videoBonusRemaining }}</span></button>
         <button class="help-btn" data-tutorial="shop-btn" title="Tienda de accesorios" @click="openShop">🛍️</button>
         <button
           class="help-btn"
@@ -432,6 +519,22 @@ onUnmounted(() => {
         <button class="logout-btn" @click="handleLogout">Salir</button>
       </div>
     </header>
+
+    <!-- EVENTO DE FIN DE SEMANA -->
+    <div v-if="isWeekendBoost()" class="event-banner">
+      🎪 <strong>¡Finde de mimos!</strong> La afinidad sube x2 todo el fin de semana
+    </div>
+
+    <!-- DESBLOQUEO DEL MIME LEGENDARIO -->
+    <button
+      v-if="!loading && canUnlockLegendary"
+      class="legendary-banner"
+      :disabled="legendaryUnlocking"
+      @click="handleUnlockLegendary"
+    >
+      👑 <strong>¡Has completado {{ LEGENDARY_CESIONES_REQUIRED }} cesiones!</strong>
+      Toca para desbloquear tu Mime Legendario
+    </button>
 
     <!-- LOADING: skeletons con shimmer -->
     <div v-if="loading" class="section">
@@ -463,6 +566,7 @@ onUnmounted(() => {
             @share="handleShare(mime.id, mime.nombre)"
             @rename="openRename(mime.id, mime.nombre)"
             @message="openMessage(mime)"
+            @brag="handleBrag(mime)"
           />
         </div>
       </section>
@@ -615,6 +719,14 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- VIDEO BONUS MODAL -->
+    <VideoBonusModal
+      v-if="videoModalOpen"
+      :remaining="videoBonusRemaining"
+      @claim="handleVideoClaim"
+      @close="videoModalOpen = false"
+    />
+
     <!-- DAILY REWARD MODAL -->
     <DailyRewardModal
       v-if="dailyModal"
@@ -721,6 +833,62 @@ onUnmounted(() => {
 
 .help-btn:active {
   background: #c5cae9;
+}
+
+/* BANNERS DE EVENTO Y LEGENDARIO */
+.event-banner {
+  margin: 12px 16px 0;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, #fff3e0, #ffe0b2);
+  border: 1.5px solid #ffcc80;
+  border-radius: 14px;
+  font-size: 13px;
+  color: #e65100;
+  text-align: center;
+}
+
+.legendary-banner {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 12px 16px 0;
+  padding: 14px;
+  background: linear-gradient(90deg, #fff8e1, #ffecb3, #fff8e1);
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #8d6e00;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+  text-align: center;
+  animation: legendary-glow 2s ease-in-out infinite;
+}
+
+.legendary-banner:active { transform: scale(0.98); }
+.legendary-banner:disabled { opacity: 0.6; cursor: wait; }
+
+@keyframes legendary-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+  50% { box-shadow: 0 0 18px rgba(255, 215, 0, 0.8); }
+}
+
+/* Boton de video con contador */
+.video-btn { position: relative; }
+
+.video-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef5350;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 /* SECTIONS */

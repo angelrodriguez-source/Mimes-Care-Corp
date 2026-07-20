@@ -222,3 +222,13 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 6. `supabase/migration_v6_tutorial.sql` — Anade `tutorial_completed` a profiles y el RPC `mark_tutorial_completed`
 7. `supabase/migration_v7_social.sql` — RPCs `add_points`/`expire_cesion`, columnas de accesorios, policy UPDATE de messages y publicacion realtime
 8. `supabase/migrations/202607172100_google_display_name.sql` — (pipeline automatico) `handle_new_user` toma el nombre de Google (`full_name`/`name`) para logins OAuth
+
+## Cambios v10 (202607192200_ola1_viralidad.sql — pipeline automatico)
+
+| Cambio | Detalle |
+|--------|---------|
+| `color_theme` CHECK | Anade 'dorado' (Mime legendario) |
+| `profiles.cesiones_completadas` | Contador; lo incrementa `expire_cesion` para el cuidador |
+| `profiles.video_bonus_date/count` | Estado del bonus de video diario |
+| RPC `unlock_legendary()` | Crea el Mime dorado si cesiones >= 3 y no lo tiene (idempotente) |
+| RPC `claim_video_bonus(p_client_date)` | +5 PM, max 3/dia, FOR UPDATE atomico |

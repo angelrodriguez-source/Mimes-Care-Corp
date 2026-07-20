@@ -31,6 +31,8 @@ defineEmits<{
   release: []
   rename: []
   message: []
+  /** Compartir tarjeta de logro (imagen canvas via Web Share) */
+  brag: []
 }>()
 
 const mood = computed(() => deriveMood(props.stats))
@@ -49,6 +51,7 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
         :mood="mood"
         :scale="0.45"
         :accessory="getAccessory(accessory)?.emoji ?? null"
+        :afinidad="afinidad"
       />
     </div>
 
@@ -104,6 +107,9 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
       <button v-if="mode === 'own' && cuidadorName" class="card-btn message-btn" @click="$emit('message')">
         &#128172; Mensaje
       </button>
+      <button v-if="mode === 'own'" class="card-btn brag-btn" @click="$emit('brag')">
+        &#128248; Presumir
+      </button>
       <button v-if="mode === 'caring'" class="card-btn care-btn" @click="$emit('care')">
         Cuidar
       </button>
@@ -134,6 +140,10 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
 .border-celeste { border-left-color: #1565c0; }
 .border-lila { border-left-color: #6a1b9a; }
 .border-melocoton { border-left-color: #e65100; }
+.border-dorado {
+  border-left-color: #ffd700;
+  background: linear-gradient(90deg, #fffdf5 0%, white 30%);
+}
 
 .card-avatar {
   flex-shrink: 0;
@@ -293,6 +303,12 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
   color: #6a1b9a;
 }
 .message-btn:active { background: #d1c4e9; }
+
+.brag-btn {
+  background: #fff8e1;
+  color: #b8860b;
+}
+.brag-btn:active { background: #ffecb3; }
 
 .care-btn {
   background: #e8f5e9;

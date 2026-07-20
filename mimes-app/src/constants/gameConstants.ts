@@ -172,3 +172,21 @@ export function getAccessory(id: string | null | undefined): Accessory | null {
   if (!id) return null
   return ACCESSORIES.find(a => a.id === id) ?? null
 }
+
+// --- OLA 1: EVENTOS, LEGENDARIO Y BONUS DE VIDEO ---
+
+/** Cesiones completadas necesarias para desbloquear el Mime legendario */
+export const LEGENDARY_CESIONES_REQUIRED = 3
+
+/** Multiplicador de afinidad durante el evento de fin de semana */
+export const WEEKEND_AFFINITY_MULT = 2
+
+/** Bonus de video: recompensa y maximo diario */
+export const VIDEO_BONUS_PM = 5
+export const VIDEO_BONUS_MAX_PER_DAY = 3
+
+/** True si hoy (TZ local) es sabado o domingo — evento "finde x2 afinidad" */
+export function isWeekendBoost(): boolean {
+  const day = new Date().getDay()
+  return day === 0 || day === 6
+}

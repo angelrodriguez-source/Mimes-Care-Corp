@@ -13,11 +13,13 @@ import { useHeartBurst } from '../composables/useHeartBurst'
 
 const props = defineProps<{
   personality: 'aventurero' | 'tranquilo' | 'picaro'
-  colorTheme: 'celeste' | 'lila' | 'melocoton'
+  colorTheme: 'celeste' | 'lila' | 'melocoton' | 'dorado'
   mood?: 'feliz' | 'euforico' | 'triste' | 'dormido' | 'hambriento' | ''
   scale?: number
   /** Emoji del accesorio equipado (🎩, 👑...), null/undefined = ninguno */
   accessory?: string | null
+  /** Afinidad 0-100: anade aura visual en los hitos 50/75/100 */
+  afinidad?: number
 }>()
 
 // --- HAIR TYPE MAP ---
@@ -29,6 +31,11 @@ const hairType = computed(() => HAIR_MAP[props.personality])
 const characterClasses = computed(() => {
   const classes = ['character', props.personality, `mime-${props.colorTheme}`]
   if (props.mood) classes.push(`mood-${props.mood}`)
+  // Evolucion visual: hitos de afinidad (refuerzo variable visible)
+  const af = props.afinidad ?? 0
+  if (af >= 100) classes.push('aura-radiante')
+  else if (af >= 75) classes.push('aura-halo')
+  else if (af >= 50) classes.push('aura-brillo')
   return classes
 })
 
@@ -1132,6 +1139,40 @@ onUnmounted(() => {
   --ear-inner: #f4511e;
   --hair-color: #bf360c;
   --hair-highlight: #ff8a65;
+}
+
+/* Tema del Mime legendario (desbloqueable tras 3 cesiones) */
+.mime-dorado {
+  --body-color: #b8860b;
+  --belly-color: #fff8e1;
+  --collar-color: #ffe082;
+  --feet-color: #ffca28;
+  --ear-inner: #daa520;
+  --hair-color: #8d6e00;
+  --hair-highlight: #ffd700;
+}
+
+.mime-dorado .body {
+  box-shadow: 0 0 24px 4px rgba(255, 215, 0, 0.45);
+}
+
+/* === AURA POR AFINIDAD (hitos 50 / 75 / 100) === */
+.aura-brillo .body {
+  filter: brightness(1.06);
+}
+
+.aura-halo {
+  filter: drop-shadow(0 0 10px rgba(255, 213, 79, 0.55));
+}
+
+.aura-radiante {
+  filter: drop-shadow(0 0 16px rgba(255, 213, 79, 0.9));
+  animation: aura-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes aura-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(255, 213, 79, 0.7)); }
+  50% { filter: drop-shadow(0 0 22px rgba(255, 213, 79, 1)); }
 }
 </style>
 

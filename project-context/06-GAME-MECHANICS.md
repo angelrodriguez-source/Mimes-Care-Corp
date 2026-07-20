@@ -272,3 +272,24 @@ El Mime se lo "dice" al cuidador: burbuja sobre el personaje en CareScreen,
 tocable para descartar (marca `read = true`). Los mensajes no leidos se
 encolan y llegan en vivo por realtime si el cuidador esta en la pantalla.
 Direccion unica dueno → cuidador (la policy de INSERT solo permite al dueno).
+
+## Ola 1 de viralidad (2026-07-19)
+
+- **Voz Animalese**: los Mimes balbucean (Web Audio, useVoice) al tocarlos y
+  al "decir" mensajes. Tono por personalidad. Respeta el mute global.
+- **Evolucion por afinidad**: hitos visuales en MimeCharacter — 50% brillo,
+  75% halo, 100% aura radiante pulsante (prop `afinidad`).
+- **Finde x2**: sabados y domingos el peso de afinidad se multiplica x2
+  (`isWeekendBoost` + `WEEKEND_AFFINITY_MULT`, banner en dashboard).
+- **Mime Legendario**: al completar 3 cesiones como cuidador
+  (`profiles.cesiones_completadas`, la incrementa `expire_cesion`), banner
+  dorado → RPC `unlock_legendary` crea el 4º Mime (color `dorado`,
+  personalidad aleatoria). Tema CSS dorado con glow.
+- **Bonus de video**: boton 🎬 del header → modal con "video" placeholder de
+  15s → RPC `claim_video_bonus` (+5 PM, max 3/dia, atomico). Cuando haya
+  AdSense H5, el placeholder se sustituye por adBreak reward.
+- **Compartir logros**: `shareAchievement` (utils/shareCard) genera tarjeta
+  canvas 1080x1080 y la comparte via Web Share (fallback: copiar texto).
+  Boton "📸 Presumir" en las tarjetas propias + al desbloquear el legendario.
+- **Historico de mensajes**: boton 📜 en CareScreen → MessageHistory.vue
+  (chat cronologico con fechas relativas y checks de leido).

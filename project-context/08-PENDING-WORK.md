@@ -124,6 +124,7 @@ Riesgos evaluados y ASUMIDOS (juego casual, solo afectan al propio tramposo):
 - [x] **Habitaciones tematicas** por personalidad — aventurero=verde, tranquilo=lila, picaro=naranja (2026-04-07)
 - [x] **Crecimiento visual** del Mime segun dia de cesion — 40% dia 1 a 100% dia 6-7 (2026-04-07)
 - [x] **Renombrar Mimes** — boton editar en MimeCard, modal en Dashboard (2026-04-07)
+- [x] **Ola 1 de viralidad** — voz Animalese, historico de mensajes, compartir logros (canvas+Web Share), Mime Legendario dorado (3 cesiones), bonus de video 3x5 PM/dia (placeholder de ads), finde x2 afinidad y aura por hitos de afinidad. Migracion v10 (2026-07-19)
 - [ ] **Decoracion personalizable**
 - [x] **Accesorios/ropa** para vestir al Mime — 5 accesorios equipables sobre el pelo (MimeCharacter prop `accessory`), visibles en care screen y tarjetas (2026-07-14)
 - [x] **Sonidos/efectos** al interactuar — useSfx con Web Audio sintetizado (tap/success/fail/coin) + vibracion, toggle 🔊/🔇 persistido (2026-07-14)

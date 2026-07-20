@@ -38,6 +38,7 @@ const COLOR_MAP: Record<ColorTheme, { name: string; hex: string }> = {
   celeste: { name: 'azul', hex: '#1565c0' },
   lila: { name: 'morado', hex: '#6a1b9a' },
   melocoton: { name: 'naranja', hex: '#e65100' },
+  dorado: { name: 'dorado', hex: '#b8860b' },
 }
 
 const WRONG_COLORS = [

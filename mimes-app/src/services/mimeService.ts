@@ -562,3 +562,46 @@ export async function equipAccessory(mimeId: string, accessoryId: string | null)
     .eq('id', mimeId)
   return { error: error?.message ?? null }
 }
+
+// --- OLA 1: HISTORICO, BONUS DE VIDEO Y MIME LEGENDARIO ---
+
+/** Historial completo de mensajes de un Mime (mas antiguos primero) */
+export async function fetchMessageHistory(mimeId: string, limit = 50): Promise<MimeMessage[]> {
+  const { data } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('mime_id', mimeId)
+    .order('created_at', { ascending: true })
+    .limit(limit)
+  return (data ?? []) as MimeMessage[]
+}
+
+export interface VideoBonusResult {
+  success?: boolean
+  count: number
+  puntos_mimes: number
+  error?: string
+}
+
+/**
+ * Reclama el bonus de video (+5 PM, max 3/dia). RPC atomico de la v10;
+ * la fecha viaja en TZ local del cliente como en claim_daily_reward.
+ */
+export async function claimVideoBonus(): Promise<VideoBonusResult> {
+  const clientDate = new Date().toLocaleDateString('sv-SE')
+  const { data, error } = await supabase.rpc('claim_video_bonus', {
+    p_client_date: clientDate,
+  })
+  if (error) return { count: 0, puntos_mimes: 0, error: error.message }
+  return data as VideoBonusResult
+}
+
+/**
+ * Desbloquea el Mime legendario (dorado) si el usuario completo 3
+ * cesiones y aun no lo tiene. RPC de la v10.
+ */
+export async function unlockLegendary(): Promise<{ success?: boolean; error?: string }> {
+  const { data, error } = await supabase.rpc('unlock_legendary')
+  if (error) return { error: error.message }
+  return data as { success?: boolean; error?: string }
+}

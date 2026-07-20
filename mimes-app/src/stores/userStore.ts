@@ -23,6 +23,9 @@ export const useUserStore = defineStore('user', () => {
     last_daily_claim_date: string | null
     daily_streak: number
     tutorial_completed: boolean
+    cesiones_completadas?: number
+    video_bonus_date?: string | null
+    video_bonus_count?: number
   } | null>(null)
   // Para mostrar spinners mientras carga
   const loading = ref(true)
@@ -94,9 +97,11 @@ export const useUserStore = defineStore('user', () => {
   async function fetchProfile() {
     if (!user.value) return
 
+    // select('*'): resiliente a columnas nuevas de migraciones aun no
+    // aplicadas (un select explicito con una columna inexistente falla)
     const { data } = await supabase
       .from('profiles')
-      .select('display_name, puntos_mimes, last_daily_claim_date, daily_streak, tutorial_completed')
+      .select('*')
       .eq('id', user.value.id)
       .single()
 

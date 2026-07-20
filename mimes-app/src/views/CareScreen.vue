@@ -10,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
 import StatBar from '../components/StatBar.vue'
+import MessageHistory from '../components/MessageHistory.vue'
 import { MiniGameShell, pickGame } from '../minigames'
 import type { MiniGameResult, MiniGameConfig } from '../minigames'
 import { useUserStore } from '../stores/userStore'
@@ -38,9 +39,12 @@ import {
   REST_PAUSE_DURATION_MS,
   ADVANCED_REWARD_MULTIPLIER,
   ADVANCED_AFFINITY_WEIGHT,
+  WEEKEND_AFFINITY_MULT,
+  isWeekendBoost,
   getAccessory,
 } from '../constants/gameConstants'
 import { useSfx } from '../composables/useSfx'
+import { useVoice } from '../composables/useVoice'
 import {
   type MimeStats,
   type Personality,
@@ -129,10 +133,26 @@ async function handleEquip(accessoryId: string | null) {
   if (eqErr) showSaveError()
 }
 
+// --- VOZ DEL MIME (balbuceo Animalese) ---
+const { babble } = useVoice()
+
+/** El Mime "habla" al tocarlo (balbuceo segun su personalidad) */
+function handleMimeTap() {
+  babble(mimeName.value + ' pio pio', personality.value)
+}
+
+// --- HISTORICO DE MENSAJES ---
+const showHistory = ref(false)
+
 // --- MENSAJES DEL DUENO (el Mime los "dice" al cuidador) ---
 const pendingMessages = ref<MimeMessage[]>([])
 const currentMessage = computed(() => pendingMessages.value[0] ?? null)
 let unsubscribeMessages: (() => void) | null = null
+
+// Cuando aparece una burbuja nueva, el Mime la "dice" con su voz
+watch(currentMessage, msg => {
+  if (msg) babble(msg.content, personality.value)
+})
 
 async function loadMessages() {
   // Solo el cuidador ve la burbuja (el dueno ya sabe lo que escribio)
@@ -272,12 +292,15 @@ async function onMiniGameDone(result: MiniGameResult) {
 
 /** Aplica los efectos de una accion exitosa en la UI */
 function applySuccessEffects(action: CareAction) {
-  // Ganar en avanzado sube mas los stats y la afinidad
+  // Ganar en avanzado sube mas los stats y la afinidad; el evento de
+  // fin de semana multiplica el peso de afinidad (x2)
   const advanced = pendingDifficulty.value === 'advanced'
+  const weight =
+    (advanced ? ADVANCED_AFFINITY_WEIGHT : 0.1) *
+    (isWeekendBoost() ? WEEKEND_AFFINITY_MULT : 1)
   stats.value = applyCareAction(
     stats.value, action, advanced ? ADVANCED_REWARD_MULTIPLIER : 1)
-  afinidad.value = updateAffinity(
-    afinidad.value, stats.value, advanced ? ADVANCED_AFFINITY_WEIGHT : 0.1)
+  afinidad.value = updateAffinity(afinidad.value, stats.value, weight)
 
   // Feedback visual
   const icon = ACTION_CONFIG.find(a => a.action === action)?.icon ?? ''
@@ -343,6 +366,7 @@ onUnmounted(() => {
         <button class="accessory-btn" data-tutorial="accessory-btn" title="Accesorios" @click="openAccessoryPicker">
           {{ accessoryEmoji ?? '🎀' }}
         </button>
+        <button class="accessory-btn" title="Historial de mensajes" @click="showHistory = true">📜</button>
         <template v-if="isDev">
           <button class="reset-care-btn" @click="handleReset">Reset</button>
           <button class="growth-debug-btn" @click="mimeScale = Math.max(0.4, +(mimeScale - 0.1).toFixed(1))">-</button>
@@ -368,6 +392,7 @@ onUnmounted(() => {
             left: mimeX + '%',
             transform: `translateX(-50%) scaleX(${mimeDirection})`,
           }"
+          @click="handleMimeTap"
         >
           <MimeCharacter
             ref="mimeChar"
@@ -376,6 +401,7 @@ onUnmounted(() => {
             :mood="mood"
             :scale="mimeScale"
             :accessory="accessoryEmoji"
+            :afinidad="afinidad"
           />
         </div>
 
@@ -508,6 +534,14 @@ onUnmounted(() => {
         <button class="picker-cancel" @click="showAccessoryPicker = false">Cerrar</button>
       </div>
     </div>
+
+    <!-- HISTORICO DE MENSAJES -->
+    <MessageHistory
+      v-if="showHistory"
+      :mime-id="mimeId"
+      :mime-nombre="mimeName"
+      @close="showHistory = false"
+    />
 
     <!-- MINI-JUEGO OVERLAY -->
     <MiniGameShell
