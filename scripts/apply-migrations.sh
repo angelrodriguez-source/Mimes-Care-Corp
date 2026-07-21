@@ -50,12 +50,15 @@ if [ ! -d "$MIGRATIONS_DIR" ]; then
   exit 0
 fi
 
-# Tabla de control (idempotente)
+# Tabla de control (idempotente). RLS activado sin policies: PostgREST
+# (anon/authenticated) no puede tocarla; este runner conecta como
+# postgres (BYPASSRLS) asi que no le afecta.
 psql "$SUPABASE_DB_URL" -q -v ON_ERROR_STOP=1 -c \
   "CREATE TABLE IF NOT EXISTS public._migrations (
      name TEXT PRIMARY KEY,
      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );"
+   );
+   ALTER TABLE public._migrations ENABLE ROW LEVEL SECURITY;"
 
 applied=0
 skipped=0
