@@ -99,6 +99,13 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
         <span>{{ Math.round(afinidad) }}%</span>
       </div>
 
+      <!-- Los PM de la cesion son del dueno (v14): hacerlo visible motiva
+           a buscar buenos cuidadores -->
+      <div class="card-reward" v-if="mode === 'own' && cuidadorName && afinidad > 0">
+        <span class="reward-icon">&#127873;</span>
+        <span>ganaras <strong>{{ Math.round(afinidad) }} PM</strong> al terminar</span>
+      </div>
+
       <!-- Dias restantes de cesion -->
       <div class="card-cesion" v-if="daysLeft != null && daysLeft > 0">
         <span class="cesion-icon">&#9200;</span>
@@ -270,6 +277,17 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
 .affinity-heart {
   font-size: 10px;
 }
+
+.card-reward {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #e65100;
+}
+
+.reward-icon { font-size: 10px; }
 
 .card-cesion {
   display: flex;

@@ -52,7 +52,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     route: 'dashboard',
     target: 'share-btn-first',
     title: 'Pero tu no los cuidas',
-    body: 'La magia es social: tu no cuidas tus Mimes, los cuidan otros. Pulsa "Compartir" para generar un codigo y darselo a un amigo.',
+    body: 'La magia es social: tu no cuidas tus Mimes, los cuidan otros. Pulsa "Compartir" para generar un codigo y darselo a un amigo — cuanto mejor lo cuide, mas ganas tu.',
     placement: 'bottom',
   },
 
@@ -70,7 +70,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'cesion-info',
     route: 'dashboard',
     title: 'La cesion dura 7 dias',
-    body: 'Cuando un amigo adopta tu Mime, empieza una cesion de 7 dias. Al final, recibira Puntos Mimes segun la afinidad que haya conseguido.',
+    body: 'Cuando un amigo adopta tu Mime, empieza una cesion de 7 dias. Al terminar, TU cobras los Puntos Mimes segun la afinidad que haya conseguido. Por eso conviene buscar buenos cuidadores!',
     placement: 'center',
   },
   {
@@ -78,7 +78,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     route: 'dashboard',
     target: 'adopt-section',
     title: 'Y tu cuidas los de otros',
-    body: 'Si un amigo te pasa un codigo, introducelo aqui para adoptar su Mime durante 7 dias.',
+    body: 'Si un amigo te pasa un codigo, introducelo aqui para cuidar su Mime durante 7 dias. Los PM al final son para el, asi que lo normal es devolverse el favor: el cuida el tuyo y ambos cobrais.',
     placement: 'top',
   },
 
@@ -136,7 +136,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     route: 'dashboard',
     target: 'pm-badge',
     title: 'Puntos Mimes',
-    body: 'Los PM son la moneda del juego. Los ganas al terminar cesiones, reclamando tu recompensa diaria (racha!) y los gastas en acciones de cuidado.',
+    body: 'Los PM son la moneda del juego. Los ganas cuando alguien termina de cuidar uno de tus Mimes, con la recompensa diaria (racha!) y con el bonus de video. Los gastas en acciones de cuidado.',
     placement: 'bottom',
   },
   {

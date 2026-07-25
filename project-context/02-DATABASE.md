@@ -272,3 +272,19 @@ forjar movimientos desde la API.
 | `expire_cesion()` | Si el Mime es inicial, en vez de devolverlo a un dueno lo **gradua**: `dueno_id = cuidador_id`, `is_starter = FALSE` y sale de cesion. Devuelve `graduated` y `mime_name`. El pago de PM y el incremento de `cesiones_completadas` son identicos a una cesion normal |
 | `release_mime()` | Rechaza soltar un Mime inicial (se quedaria sin dueno ni cuidador, invisible para todos) |
 | Backfill | Da su Mime inicial a los jugadores ya registrados que no tengan uno en curso |
+
+## Cambios v14 (202607252330_cesion_paga_al_dueno.sql)
+
+`expire_cesion` cambia de beneficiario: los PM de la cesion pasan a ser del
+**DUENO** (`v_beneficiario := COALESCE(dueno_id, cuidador_id)`), no del
+cuidador. El Mime inicial no tiene dueno, asi que sigue pagando a su
+cuidador. `cesiones_completadas` sigue incrementandose para el CUIDADOR
+(mide el trabajo hecho y desbloquea el Mime Legendario).
+
+El apunte del libro mayor incluye el nombre del cuidador
+("Trufa cuidado por Laura") y el RPC devuelve `paid_owner` y
+`cuidador_name` para que la UI redacte el mensaje correcto.
+
+> Nota: el fallback cliente de `checkCesionExpiry` (pre-v7, no atomico) se
+> elimino: ya no podia saber a quien pagar y el RPC existe desde la v7. Si
+> el RPC falla, no se toca nada y se reintenta en la siguiente carga.

@@ -124,17 +124,21 @@ async function loadData() {
 
   // Checkear cesion expirada y abandono en Mimes propios con cuidador
   // (en paralelo: cada Mime es independiente, no hace falta serializar)
+  // Si vence una cesion propia, los PM son MIOS (v14): hay que refrescar perfil
+  let cobrado = false
   await Promise.all(decayedOwn.map(async mime => {
     if (!mime.cuidador_id) return
     // Primero: cesion de 7 dias expirada?
-    const { expired, reward } = await checkCesionExpiry(mime)
+    const { expired, reward, cuidadorName } = await checkCesionExpiry(mime)
     if (expired) {
+      const cuidador = cuidadorName ?? mime.cuidador_name ?? 'su cuidador'
       mime.cuidador_id = null
       mime.cuidador_name = undefined
       mime.afinidad = 0
       mime.cesion_start = null
-      claimMessage.value = `Cesion terminada! El cuidador recibio ${reward} PM`
-      setTimeout(() => (claimMessage.value = ''), 4000)
+      cobrado = true
+      claimMessage.value = `🎁 ${mime.nombre} ha vuelto de su cesion con ${cuidador}! Ganaste ${reward} PM`
+      setTimeout(() => (claimMessage.value = ''), 5000)
       return
     }
     // Segundo: abandono por afinidad baja
@@ -167,11 +171,15 @@ async function loadData() {
       })
       claimMessage.value = `🌱 ${mime.nombre} ha crecido! Ahora es tuyo y ganaste ${reward} PM`
     } else {
-      claimMessage.value = `Tu cesion de ${mime.nombre} termino! Ganaste ${reward} PM`
+      // Desde la v14 los PM de una cesion normal son para el dueno
+      claimMessage.value =
+        `Cuidaste a ${mime.nombre} durante su semana. ${mime.dueno_name ?? 'Su dueno'} gano ${reward} PM gracias a ti!`
     }
     setTimeout(() => (claimMessage.value = ''), 5000)
   }))
-  if (expiredIds.size > 0) await userStore.fetchProfile()
+  // Refrescar perfil si cambiaron mis PM (cesion propia cobrada o Mime
+  // inicial graduado) o mi contador de cesiones completadas
+  if (cobrado || expiredIds.size > 0) await userStore.fetchProfile()
   const activeCaring = decayedCaring.filter(m => !expiredIds.has(m.id))
 
   // Los graduados se muestran ya en "Mis Mimes" sin esperar otra recarga

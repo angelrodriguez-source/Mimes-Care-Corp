@@ -10,7 +10,6 @@ import { statsToDbFields, toStats } from '../utils/helpers'
 import {
   INITIAL_PUNTOS,
   CESION_DURATION_DAYS,
-  PM_PER_AFFINITY,
   getAccessory,
 } from '../constants/gameConstants'
 import type { MimeStats, Personality, ColorTheme, CareAction } from '../models/MimeModel'
@@ -300,6 +299,9 @@ export interface CesionResult {
   cuidadorId?: string       // para actualizar sus puntos
   /** True si era el Mime inicial y ha pasado a ser propiedad del cuidador */
   graduated?: boolean
+  /** True si los PM han ido al dueno (cesion normal); false en el Mime inicial */
+  paidOwner?: boolean
+  cuidadorName?: string
   mimeName?: string
 }
 
@@ -312,48 +314,25 @@ export async function checkCesionExpiry(mime: MimeFromDB): Promise<CesionResult>
 
   if (elapsedDays < CESION_DURATION_DAYS) return { expired: false }
 
-  // v7: RPC atomico — aunque dueno y cuidador detecten la expiracion a la
-  // vez, el FOR UPDATE del servidor garantiza que solo se paga una vez
+  // RPC atomico: aunque dueno y cuidador detecten la expiracion a la vez,
+  // el FOR UPDATE del servidor garantiza que solo se paga una vez. Desde
+  // la v14 el pago va al DUENO (o al cuidador si es el Mime inicial).
   const { data, error } = await supabase.rpc('expire_cesion', { p_mime_id: mime.id })
-  if (!error && data && !data.error) {
-    return {
-      expired: !!data.expired,
-      reward: data.reward,
-      cuidadorId: data.cuidador_id,
-      graduated: !!data.graduated,
-      mimeName: data.mime_name,
-    }
+
+  // Sin fallback a proposito: replicar el cierre en el cliente ya no seria
+  // atomico ni sabria a quien pagar. Si el RPC falla, no se toca nada y se
+  // reintenta en la siguiente carga.
+  if (error || !data || data.error) return { expired: false }
+
+  return {
+    expired: !!data.expired,
+    reward: data.reward,
+    cuidadorId: data.cuidador_id,
+    cuidadorName: data.cuidador_name ?? undefined,
+    graduated: !!data.graduated,
+    paidOwner: !!data.paid_owner,
+    mimeName: data.mime_name,
   }
-
-  // Fallback pre-v7: dos escrituras no atomicas
-  const reward = Math.round((mime.afinidad / 100) * PM_PER_AFFINITY)
-  const cuidadorId = mime.cuidador_id
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('puntos_mimes')
-    .eq('id', cuidadorId)
-    .single()
-
-  const currentPuntos = profile?.puntos_mimes ?? 0
-
-  await Promise.all([
-    supabase
-      .from('mimes')
-      .update({
-        cuidador_id: null,
-        share_code: null,
-        afinidad: 0,
-        cesion_start: null,
-      })
-      .eq('id', mime.id),
-    supabase
-      .from('profiles')
-      .update({ puntos_mimes: currentPuntos + reward })
-      .eq('id', cuidadorId),
-  ])
-
-  return { expired: true, reward, cuidadorId }
 }
 
 // --- DIAS RESTANTES DE CESION ---

@@ -100,7 +100,7 @@ Se calcula automaticamente a partir de los stats. Funcion: `deriveMood(stats)`.
 ### Como se ganan
 - Valor inicial al registrarse: **100 PM**
 - **Truco secreto** 🤫: escribir `MIMESTATS` en el input de "Adoptar Mime" regala 100 PM (sin limite de usos — pensado para pruebas)
-- **Recompensa por cesion**: Al terminar una cesion de 7 dias, el cuidador recibe **afinidad × 100 PM** (ej: afinidad 75% = 75 PM)
+- **Recompensa por cesion** (v14, 2026-07-25): Al terminar una cesion de 7 dias, **el DUENO** recibe `ROUND(afinidad)` PM (ej: afinidad 75% = 75 PM). Antes cobraba el cuidador; se cambio para que compartir tenga valor y empujar la reciprocidad. Excepcion: el **Mime inicial** no tiene dueno, asi que sus PM son para el jugador que lo cria
 - **Recompensa diaria por login** (v5): Al abrir el dashboard por primera vez cada dia, modal con PM segun racha consecutiva (ver seccion abajo)
 - **Fuente secundaria** (pendiente): Tareas minimas (anuncios, etc.) — pocos PM
 - **El ciclo virtuoso**: Cuidas bien los de otros -> ganas PM al terminar cesion -> tienes PM para cuidar otros
@@ -171,6 +171,10 @@ Sube lentamente. Si stats = 80 y afinidad = 50: nueva = 50*0.9 + 80*0.1 = 53. Ca
    c. Cada accion: gasta PM, juega mini-juego, si gana mejora stats
 6. Angel ve su Mime cuidado:
    a. Dashboard -> "Mis Mimes" -> ve stats actualizados, nombre del cuidador
+      y cuantos PM ganara al terminar la semana
+7. Al vencer la cesion, Angel (DUENO) cobra los PM; Laura suma una cesion
+   completada (progreso hacia el Mime Legendario) y espera que Angel le
+   devuelva el favor cuidando uno de los suyos
 ```
 
 ## Sistema de Cesion (7 dias)
