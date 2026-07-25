@@ -29,12 +29,15 @@ export interface MimeFromDB {
   energia: number
   apariencia: number
   afinidad: number
-  dueno_id: string
+  /** null en el Mime inicial: no tiene dueno hasta que se gradua (v13) */
+  dueno_id: string | null
   cuidador_id: string | null
   share_code: string | null
   last_decay_at?: string
   cesion_start?: string | null
   accessory?: string | null
+  /** Mime inicial: al acabar su semana se convierte en propiedad del cuidador */
+  is_starter?: boolean
   created_at?: string
 }
 
@@ -176,7 +179,8 @@ export async function loadDashboardData(userId: string) {
   // Recoger IDs de usuarios para buscar nombres
   const userIds = new Set<string>()
   own.forEach(m => { if (m.cuidador_id) userIds.add(m.cuidador_id) })
-  caring.forEach(m => { userIds.add(m.dueno_id) })
+  // El Mime inicial no tiene dueno, asi que no hay nombre que buscar
+  caring.forEach(m => { if (m.dueno_id) userIds.add(m.dueno_id) })
 
   // Buscar nombres de perfiles
   const profileMap: Record<string, string> = {}
@@ -197,7 +201,9 @@ export async function loadDashboardData(userId: string) {
 
   const caringMimes: MimeWithNames[] = caring.map(m => ({
     ...m,
-    dueno_name: profileMap[m.dueno_id] || 'Desconocido',
+    // Sin dueno (Mime inicial) se deja undefined: la tarjeta muestra su
+    // propia etiqueta en vez de "De Desconocido"
+    dueno_name: m.dueno_id ? (profileMap[m.dueno_id] || 'Desconocido') : undefined,
   }))
 
   return { myMimes, caringMimes }
@@ -267,6 +273,10 @@ export async function checkAbandon(mime: MimeFromDB): Promise<{ abandoned: boole
   if (!mime.cuidador_id) return { abandoned: false }
   if (!shouldAbandon(mime.afinidad)) return { abandoned: false }
 
+  // El Mime inicial no abandona: no tiene dueno al que volver (y el
+  // trigger protect_mime_identity rechazaria el UPDATE del cliente)
+  if (mime.is_starter) return { abandoned: false }
+
   // No abandonar durante las primeras 24h de cesion — el cuidador
   // aun no ha tenido tiempo de interactuar y la afinidad empieza en 0
   if (mime.cesion_start) {
@@ -288,6 +298,9 @@ export interface CesionResult {
   expired: boolean
   reward?: number           // PM ganados por el cuidador
   cuidadorId?: string       // para actualizar sus puntos
+  /** True si era el Mime inicial y ha pasado a ser propiedad del cuidador */
+  graduated?: boolean
+  mimeName?: string
 }
 
 export async function checkCesionExpiry(mime: MimeFromDB): Promise<CesionResult> {
@@ -307,6 +320,8 @@ export async function checkCesionExpiry(mime: MimeFromDB): Promise<CesionResult>
       expired: !!data.expired,
       reward: data.reward,
       cuidadorId: data.cuidador_id,
+      graduated: !!data.graduated,
+      mimeName: data.mime_name,
     }
   }
 

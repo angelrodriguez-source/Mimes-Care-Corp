@@ -260,3 +260,15 @@ forjar movimientos desde la API.
 | Tabla `pm_ledger` + helper `log_pm` | Ver arriba |
 | `add_points(p_delta, p_reason, p_detail)` | Se elimino la version de 1 argumento (ambiguedad de sobrecarga); los DEFAULT mantienen compatibles las llamadas antiguas. Ahora registra en el libro mayor |
 | `claim_daily_reward`, `claim_video_bonus`, `expire_cesion` | Mismos cuerpos + `PERFORM log_pm(...)`. En `expire_cesion` el registro es del CUIDADOR (quien cobra), no de quien dispara el RPC |
+
+## Cambios v13 (202607252200_starter_mime.sql) — Mime inicial
+
+| Cambio | Detalle |
+|--------|---------|
+| `mimes.dueno_id` pasa a NULLABLE | Un Mime inicial no tiene dueno. Efecto en RLS revisado: `mime_visible_to_participants` y `dueno_manages_mime` comparan con `auth.uid()` y NULL nunca iguala, asi que un Mime sin dueno solo lo ve y gestiona su cuidador |
+| `mimes.is_starter` BOOLEAN | Marca el Mime inicial. Pasa a FALSE al graduarse |
+| `create_starter_mime(p_uid)` | Crea el Mime inicial ('Pipo', personalidad/color aleatorios emparejados, `cesion_start = NOW()`). EXECUTE revocado a PUBLIC |
+| `handle_new_user()` | Ademas de perfil + 3 Mimes propios, llama a `create_starter_mime` |
+| `expire_cesion()` | Si el Mime es inicial, en vez de devolverlo a un dueno lo **gradua**: `dueno_id = cuidador_id`, `is_starter = FALSE` y sale de cesion. Devuelve `graduated` y `mime_name`. El pago de PM y el incremento de `cesiones_completadas` son identicos a una cesion normal |
+| `release_mime()` | Rechaza soltar un Mime inicial (se quedaria sin dueno ni cuidador, invisible para todos) |
+| Backfill | Da su Mime inicial a los jugadores ya registrados que no tengan uno en curso |

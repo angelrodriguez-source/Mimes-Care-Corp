@@ -135,6 +135,7 @@ Riesgos evaluados y ASUMIDOS (juego casual, solo afectan al propio tramposo):
 - [ ] **Acciones premium** que suben mas la afinidad (necesarias para llegar al 100%)
 
 ### Onboarding
+- [x] **Mime inicial** — al registrarse el jugador recibe un Mime sin dueno para cuidar desde el primer momento; al acabar su semana cobra los PM y el Mime pasa a ser suyo. Desbloquea el loop principal en el minuto 0 y alimenta el social. Migracion v13 (2026-07-25)
 - [x] **Tutorial interactivo** — overlay global con spotlight y tooltip flotante que guia al usuario por dashboard y care screen. 15 pasos cubriendo bienvenida, mis mimes, compartir, cesion, adoptar, acciones de cuidado, dificultad avanzada, accesorios, mensajes, stats, economia, tienda y sonido (ampliado 2026-07-17). Auto-arranque la primera vez (`profile.tutorial_completed = false`) o relanzable con el boton `?` del header. Persistencia via RPC `mark_tutorial_completed`. Migracion v6 (2026-04-11)
 
 ## Progreso del Roadmap (de ARCHITECTURE.md)

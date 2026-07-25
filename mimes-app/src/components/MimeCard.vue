@@ -22,6 +22,8 @@ const props = defineProps<{
   duenoName?: string | null
   daysLeft?: number | null
   accessory?: string | null
+  /** Mime inicial: sin dueno, al acabar la semana pasa a ser tuyo */
+  isStarter?: boolean
   mode: 'own' | 'caring'
 }>()
 
@@ -85,6 +87,11 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
         <span class="meta-icon">&#127968;</span>
         <span>De <strong>{{ duenoName }}</strong></span>
       </div>
+      <!-- El Mime inicial no tiene dueno: al graduarse sera tuyo -->
+      <div class="card-meta starter-meta" v-if="isStarter">
+        <span class="meta-icon">&#127793;</span>
+        <span>Mime inicial &middot; <strong>al acabar sera tuyo</strong></span>
+      </div>
 
       <!-- Afinidad -->
       <div class="card-affinity" v-if="afinidad > 0">
@@ -113,7 +120,8 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
       <button v-if="mode === 'caring'" class="card-btn care-btn" @click="$emit('care')">
         Cuidar
       </button>
-      <button v-if="mode === 'caring'" class="card-btn release-btn" @click="$emit('release')">
+      <!-- El Mime inicial no se puede soltar: se quedaria sin dueno ni cuidador -->
+      <button v-if="mode === 'caring' && !isStarter" class="card-btn release-btn" @click="$emit('release')">
         Soltar
       </button>
     </div>
@@ -243,6 +251,10 @@ const healthColor = computed(() => getHealthColor(avgStats.value))
 
 .meta-icon {
   font-size: 12px;
+}
+
+.starter-meta {
+  color: #2e7d32;
 }
 
 .card-affinity {

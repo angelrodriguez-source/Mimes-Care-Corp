@@ -148,24 +148,42 @@ async function loadData() {
 
   // Checkear cesion expirada en Mimes a cargo (el cuidador lo ve)
   const expiredIds = new Set<string>()
+  // Mimes iniciales graduados: dejan de estar cedidos y pasan a ser propios
+  const graduados: MimeWithNames[] = []
   await Promise.all(decayedCaring.map(async mime => {
-    const { expired, reward } = await checkCesionExpiry(mime)
-    if (expired) {
-      expiredIds.add(mime.id)
+    const { expired, reward, graduated } = await checkCesionExpiry(mime)
+    if (!expired) return
+
+    expiredIds.add(mime.id)
+    if (graduated) {
+      graduados.push({
+        ...mime,
+        dueno_id: userId,
+        cuidador_id: null,
+        cuidador_name: undefined,
+        is_starter: false,
+        afinidad: 0,
+        cesion_start: null,
+      })
+      claimMessage.value = `🌱 ${mime.nombre} ha crecido! Ahora es tuyo y ganaste ${reward} PM`
+    } else {
       claimMessage.value = `Tu cesion de ${mime.nombre} termino! Ganaste ${reward} PM`
-      setTimeout(() => (claimMessage.value = ''), 4000)
     }
+    setTimeout(() => (claimMessage.value = ''), 5000)
   }))
   if (expiredIds.size > 0) await userStore.fetchProfile()
   const activeCaring = decayedCaring.filter(m => !expiredIds.has(m.id))
 
-  myMimes.value = decayedOwn
+  // Los graduados se muestran ya en "Mis Mimes" sin esperar otra recarga
+  myMimes.value = [...decayedOwn, ...graduados]
   caringMimes.value = activeCaring
   loading.value = false
 
   // Dar al tutorial el id del primer Mime propio para que la pantalla de
   // cuidado se pueda visitar durante el recorrido.
-  tutorialStore.setCareMimeId(decayedOwn[0]?.id ?? null)
+  // Preferir el Mime inicial (el que de verdad se cuida) para el recorrido
+  const starter = activeCaring.find(m => m.is_starter) ?? activeCaring[0]
+  tutorialStore.setCareMimeId(starter?.id ?? decayedOwn[0]?.id ?? null)
 }
 
 async function handleShare(mimeId: string, nombre: string) {
@@ -188,7 +206,7 @@ async function handleClaim() {
     claimCode.value = ''
     if (!userStore.user) return
     claimLoading.value = true
-    const { error } = await addPoints(userStore.user.id, CHEAT_REWARD)
+    const { error } = await addPoints(userStore.user.id, CHEAT_REWARD, 'truco')
     claimLoading.value = false
     if (!error) {
       sfx.play('coin')
@@ -579,7 +597,7 @@ onUnmounted(() => {
       </section>
 
       <!-- MIMES A MI CARGO -->
-      <section class="section">
+      <section class="section" data-tutorial="caring-section">
         <h2 class="section-title">Mimes a mi cargo</h2>
         <div v-if="caringMimes.length === 0" class="empty-state">
           <p>No estas cuidando ningun Mime todavia.</p>
@@ -598,6 +616,7 @@ onUnmounted(() => {
             :dueno-name="mime.dueno_name || null"
             :days-left="getCesionDaysLeft(mime.cesion_start)"
             :accessory="mime.accessory"
+            :is-starter="mime.is_starter"
             mode="caring"
             @care="goToCare(mime.id)"
             @release="handleRelease(mime.id)"

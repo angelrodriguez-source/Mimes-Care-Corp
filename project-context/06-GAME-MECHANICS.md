@@ -306,3 +306,28 @@ de cuidado (con el nombre de la accion), compras de tienda, el truco
 MIMESTATS y ajustes. El historial arranca vacio para los usuarios
 existentes: los PM anteriores a la v12 no dejaron registro y el modal lo
 explica en su estado vacio.
+
+## Mime inicial (2026-07-25)
+
+**Problema que resuelve**: al registrarse, el jugador recibia 3 Mimes PROPIOS
+pero ninguno que cuidar, asi que el loop principal (cuidar → mini-juegos → PM)
+estaba bloqueado hasta que un amigo le compartiera uno.
+
+**Como funciona**:
+1. Al registrarse, ademas de sus 3 Mimes, el jugador recibe un **Mime inicial**
+   llamado "Pipo" que aparece en "Mimes a mi cargo" con la etiqueta
+   🌱 *Mime inicial · al acabar sera tuyo*
+2. Ese Mime **no tiene dueno** (`dueno_id = NULL`, `is_starter = TRUE`) y su
+   cesion de 7 dias arranca en el momento del registro
+3. Se cuida exactamente igual que cualquier Mime cedido (mini-juegos, stats,
+   afinidad, accesorios, coste en PM)
+4. Al terminar la semana, `expire_cesion` paga los PM al jugador (como en
+   cualquier cesion: `ROUND(afinidad)`) y el Mime **se gradua**: pasa a ser
+   suyo (`dueno_id = jugador`), sale de cesion y ya puede compartirlo con un
+   amigo — con lo que el jugador entra en el loop social por su propio pie
+5. Cuenta para `cesiones_completadas`, asi que acerca el Mime Legendario
+
+**Restricciones**: no se puede soltar (se quedaria huerfano — bloqueado en la
+UI y en el RPC `release_mime`) ni abandona por afinidad baja (`checkAbandon`
+lo omite), y no se puede compartir mientras sea inicial (`generate_share_code`
+exige ser el dueno, y no lo tiene).

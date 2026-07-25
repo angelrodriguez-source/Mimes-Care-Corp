@@ -274,7 +274,7 @@ Overlay global del tutorial interactivo. Se monta una sola vez en `App.vue` (fue
 | `actions-menu` | CareScreen, menu lateral de 6 FABs | `care-actions` |
 | `status-summary` | CareScreen, resumen derecho (afinidad/mood/avg) | `care-stats` |
 
-**Tutorial flow** (15 pasos, definidos en `src/constants/tutorialSteps.ts`):
+**Tutorial flow** (16 pasos, definidos en `src/constants/tutorialSteps.ts`):
 1. `welcome` — centrado, bienvenida
 2. `my-mimes` — spotlight en seccion Mis Mimes
 3. `share` — spotlight en primera card (explica que los cuida otro)

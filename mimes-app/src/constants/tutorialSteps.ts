@@ -56,6 +56,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     placement: 'bottom',
   },
 
+  {
+    id: 'starter',
+    route: 'dashboard',
+    target: 'caring-section',
+    title: 'Y este es tu Mime inicial',
+    body: 'No tiene dueno: es tuyo para practicar. Cuidalo durante su semana y al terminar te llevaras sus Puntos Mimes... y ademas pasara a ser tuyo de verdad.',
+    placement: 'top',
+  },
+
   // --- CAPITULO 3: CESION Y ADOPCION ---
   {
     id: 'cesion-info',
