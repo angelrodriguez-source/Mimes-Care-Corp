@@ -293,3 +293,16 @@ Direccion unica dueno → cuidador (la policy de INSERT solo permite al dueno).
   Boton "📸 Presumir" en las tarjetas propias + al desbloquear el legendario.
 - **Historico de mensajes**: boton 📜 en CareScreen → MessageHistory.vue
   (chat cronologico con fechas relativas y checks de leido).
+
+## Historial de Puntos Mimes (2026-07-21)
+
+Tocar el badge de PM (en el dashboard o en la pantalla de cuidado) abre
+`PmHistoryModal`: saldo actual, resumen de ganado/gastado y los ultimos 40
+movimientos con icono, origen y fecha relativa.
+
+La fuente es la tabla `pm_ledger` (v12), que escriben los RPCs al mover PM:
+recompensa diaria, cesion completada, bonus de video, coste de cada accion
+de cuidado (con el nombre de la accion), compras de tienda, el truco
+MIMESTATS y ajustes. El historial arranca vacio para los usuarios
+existentes: los PM anteriores a la v12 no dejaron registro y el modal lo
+explica en su estado vacio.

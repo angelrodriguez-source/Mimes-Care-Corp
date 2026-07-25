@@ -13,6 +13,7 @@ import { useRouter } from 'vue-router'
 import MimeCard from '../components/MimeCard.vue'
 import DailyRewardModal from '../components/DailyRewardModal.vue'
 import VideoBonusModal from '../components/VideoBonusModal.vue'
+import PmHistoryModal from '../components/PmHistoryModal.vue'
 import { useUserStore } from '../stores/userStore'
 import { useTutorialStore } from '../stores/tutorialStore'
 import { useSfx } from '../composables/useSfx'
@@ -68,6 +69,7 @@ const renameInput = ref('')
 const messageModal = ref<{ mimeId: string; nombre: string; cuidador: string } | null>(null)
 const messageInput = ref('')
 const messageSending = ref(false)
+const pmHistoryOpen = ref(false)
 const shopOpen = ref(false)
 const ownedAccessories = ref<string[]>([])
 const shopBuying = ref('')
@@ -499,10 +501,15 @@ onUnmounted(() => {
         <p class="welcome">Hola, {{ userStore.profile?.display_name || 'Jugador' }}</p>
       </div>
       <div class="header-right">
-        <div class="puntos-badge" data-tutorial="pm-badge">
+        <button
+          class="puntos-badge"
+          data-tutorial="pm-badge"
+          title="Ver de donde vienen tus PM"
+          @click="pmHistoryOpen = true"
+        >
           <span class="puntos-heart">&#9829;</span>
           <span>{{ userStore.profile?.puntos_mimes ?? 0 }} PM</span>
-        </div>
+        </button>
         <button
           class="help-btn video-btn"
           :title="`Bonus de video (${videoBonusRemaining} restantes hoy)`"
@@ -719,6 +726,13 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- HISTORIAL DE PM -->
+    <PmHistoryModal
+      v-if="pmHistoryOpen"
+      :balance="userStore.profile?.puntos_mimes ?? 0"
+      @close="pmHistoryOpen = false"
+    />
+
     <!-- VIDEO BONUS MODAL -->
     <VideoBonusModal
       v-if="videoModalOpen"
@@ -783,6 +797,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
   background: #fff3e0;
   padding: 4px 10px;
   border-radius: 16px;

@@ -15,6 +15,7 @@
  */
 import { nextTick, onMounted, ref } from 'vue'
 import { fetchMessageHistory, type MimeMessage } from '../services/mimeService'
+import { formatRelativeDate } from '../utils/helpers'
 
 interface Props {
   mimeId: string
@@ -29,48 +30,6 @@ const emit = defineEmits<{
 const loading = ref(true)
 const messages = ref<MimeMessage[]>([])
 const listEl = ref<HTMLDivElement | null>(null)
-
-/** Meses abreviados en espanol para fechas antiguas ("12 mar") */
-const MESES_CORTOS = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-] as const
-
-/**
- * Convierte una fecha a texto relativo amigable:
- *   - hace <1 min  -> "ahora"
- *   - mismo dia    -> "hace 5 min" / "hace 2 h"
- *   - dia anterior -> "ayer"
- *   - mas antiguo  -> "12 mar" (con año si no es el actual: "12 mar 2025")
- */
-function formatRelative(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffMin = Math.floor(diffMs / 60_000)
-
-  if (diffMin < 1) return 'ahora'
-  if (diffMin < 60) return `hace ${diffMin} min`
-
-  const diffHoras = Math.floor(diffMin / 60)
-  if (diffHoras < 24) return `hace ${diffHoras} h`
-
-  // ¿Fue ayer? (comparacion por dia de calendario, no por 24h exactas)
-  const ayer = new Date(now)
-  ayer.setDate(now.getDate() - 1)
-  if (
-    d.getDate() === ayer.getDate() &&
-    d.getMonth() === ayer.getMonth() &&
-    d.getFullYear() === ayer.getFullYear()
-  ) {
-    return 'ayer'
-  }
-
-  const base = `${d.getDate()} ${MESES_CORTOS[d.getMonth()]}`
-  return d.getFullYear() === now.getFullYear()
-    ? base
-    : `${base} ${d.getFullYear()}`
-}
 
 /** Baja el scroll de la lista hasta el ultimo mensaje */
 async function scrollToBottom() {
@@ -121,7 +80,7 @@ onMounted(async () => {
             </span>
             <p class="bubble-text">{{ msg.content }}</p>
             <span class="bubble-meta">
-              {{ formatRelative(msg.created_at) }}
+              {{ formatRelativeDate(msg.created_at) }}
               <!-- Un check gris al enviar; doble check azul cuando esta leido -->
               <span class="check" :class="{ 'check-read': msg.read }">
                 {{ msg.read ? '✓✓' : '✓' }}

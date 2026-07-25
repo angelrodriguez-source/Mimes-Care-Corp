@@ -11,6 +11,7 @@ import MimeCharacter from '../components/MimeCharacter.vue'
 import MimeRoom from '../components/MimeRoom.vue'
 import StatBar from '../components/StatBar.vue'
 import MessageHistory from '../components/MessageHistory.vue'
+import PmHistoryModal from '../components/PmHistoryModal.vue'
 import { MiniGameShell, pickGame } from '../minigames'
 import type { MiniGameResult, MiniGameConfig } from '../minigames'
 import { useUserStore } from '../stores/userStore'
@@ -143,6 +144,9 @@ function handleMimeTap() {
 
 // --- HISTORICO DE MENSAJES ---
 const showHistory = ref(false)
+
+// --- HISTORIAL DE PUNTOS MIMES ---
+const pmHistoryOpen = ref(false)
 
 // --- MENSAJES DEL DUENO (el Mime los "dice" al cuidador) ---
 const pendingMessages = ref<MimeMessage[]>([])
@@ -373,10 +377,10 @@ onUnmounted(() => {
           <span class="growth-label">{{ Math.round(mimeScale * 100) }}%</span>
           <button class="growth-debug-btn" @click="mimeScale = Math.min(1.0, +(mimeScale + 0.1).toFixed(1))">+</button>
         </template>
-        <div class="puntos">
+        <button class="puntos" title="Ver de donde vienen tus PM" @click="pmHistoryOpen = true">
           <span class="puntos-icon">&#9829;</span>
           <span class="puntos-value">{{ puntosMimes }}</span>
-        </div>
+        </button>
       </header>
 
       <!-- HABITACION -->
@@ -535,6 +539,13 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- HISTORIAL DE PM -->
+    <PmHistoryModal
+      v-if="pmHistoryOpen"
+      :balance="puntosMimes"
+      @close="pmHistoryOpen = false"
+    />
+
     <!-- HISTORICO DE MENSAJES -->
     <MessageHistory
       v-if="showHistory"
@@ -633,6 +644,8 @@ onUnmounted(() => {
   padding: 4px 12px;
   border-radius: 20px;
   border: 1.5px solid #ffe0b2;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
 }
 
 .reset-care-btn {

@@ -7,7 +7,12 @@
 import { supabase } from './supabase'
 import { createInitialStats, applyDecay, shouldAbandon } from '../models/MimeModel'
 import { statsToDbFields, toStats } from '../utils/helpers'
-import { INITIAL_PUNTOS, CESION_DURATION_DAYS, PM_PER_AFFINITY } from '../constants/gameConstants'
+import {
+  INITIAL_PUNTOS,
+  CESION_DURATION_DAYS,
+  PM_PER_AFFINITY,
+  getAccessory,
+} from '../constants/gameConstants'
 import type { MimeStats, Personality, ColorTheme, CareAction } from '../models/MimeModel'
 
 // --- TIPOS ---
@@ -90,15 +95,26 @@ export async function updateUserPoints(userId: string, puntos: number) {
     .eq('id', userId)
 }
 
+/** Categorias de movimiento de PM (deben coincidir con el libro mayor, v12) */
+export type PmReason = 'diaria' | 'cesion' | 'video' | 'accion' | 'tienda' | 'truco' | 'ajuste'
+
 /**
  * Suma (o resta) PM de forma atomica via RPC `add_points` (migracion v7).
+ * Desde la v12 registra el movimiento en el libro mayor (pm_ledger) con
+ * su motivo y detalle, que es lo que alimenta el historial de PM.
  * Si el RPC aun no existe, cae al metodo antiguo (leer + escribir absoluto).
  */
 export async function addPoints(
   userId: string,
   delta: number,
+  reason: PmReason = 'ajuste',
+  detail?: string,
 ): Promise<{ puntos: number | null; error: string | null }> {
-  const { data, error } = await supabase.rpc('add_points', { p_delta: delta })
+  const { data, error } = await supabase.rpc('add_points', {
+    p_delta: delta,
+    p_reason: reason,
+    p_detail: detail ?? null,
+  })
   if (!error) {
     const res = data as { puntos_mimes?: number; error?: string }
     return { puntos: res?.puntos_mimes ?? null, error: res?.error ?? null }
@@ -375,7 +391,7 @@ export async function persistCareActionResult(
     const [statsRes, actionRes, pointsRes] = await Promise.all([
       updateMimeStats(mimeId, stats, afinidad),
       logCareAction(mimeId, userId, action, cost),
-      addPoints(userId, -cost),
+      addPoints(userId, -cost, 'accion', action),
     ])
     const err = statsRes.error?.message ?? actionRes.error?.message ?? pointsRes.error
     return { error: err ?? null }
@@ -538,7 +554,8 @@ export async function buyAccessory(
 ): Promise<{ error: string | null }> {
   if (owned.includes(accessoryId)) return { error: 'Ya lo tienes' }
 
-  const { error: payErr } = await addPoints(userId, -price)
+  const nombre = getAccessory(accessoryId)?.label ?? accessoryId
+  const { error: payErr } = await addPoints(userId, -price, 'tienda', nombre)
   if (payErr) return { error: payErr }
 
   const { error } = await supabase
@@ -548,7 +565,7 @@ export async function buyAccessory(
 
   if (error) {
     // Devolver los PM si no se pudo guardar la compra
-    await addPoints(userId, price)
+    await addPoints(userId, price, 'ajuste', `Devolucion: ${nombre}`)
     return { error: error.message }
   }
   return { error: null }
@@ -604,4 +621,30 @@ export async function unlockLegendary(): Promise<{ success?: boolean; error?: st
   const { data, error } = await supabase.rpc('unlock_legendary')
   if (error) return { error: error.message }
   return data as { success?: boolean; error?: string }
+}
+
+// --- HISTORIAL DE PUNTOS MIMES (libro mayor, v12) ---
+
+export interface PmEntry {
+  id: number
+  delta: number
+  reason: PmReason
+  detail: string | null
+  balance_after: number | null
+  created_at: string
+}
+
+/**
+ * Ultimos movimientos de PM del usuario autenticado. La RLS de
+ * pm_ledger ya filtra por usuario, asi que no hace falta pasar el id.
+ */
+export async function fetchPmHistory(limit = 40): Promise<PmEntry[]> {
+  const { data, error } = await supabase
+    .from('pm_ledger')
+    .select('id, delta, reason, detail, balance_after, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  // Pre-v12 la tabla no existe: historial vacio en vez de romper la UI
+  if (error) return []
+  return (data ?? []) as PmEntry[]
 }

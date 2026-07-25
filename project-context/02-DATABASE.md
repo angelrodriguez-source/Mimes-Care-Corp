@@ -232,3 +232,31 @@ Al registrarse un usuario, el trigger `on_auth_user_created` ejecuta `handle_new
 | `profiles.video_bonus_date/count` | Estado del bonus de video diario |
 | RPC `unlock_legendary()` | Crea el Mime dorado si cesiones >= 3 y no lo tiene (idempotente) |
 | RPC `claim_video_bonus(p_client_date)` | +5 PM, max 3/dia, FOR UPDATE atomico |
+
+### `pm_ledger` (v12)
+Libro mayor de Puntos Mimes: un registro por movimiento. Alimenta el
+historial que ve el jugador al tocar el badge de PM.
+
+| Columna | Tipo | Descripcion |
+|---------|------|-------------|
+| `id` | BIGSERIAL PK | |
+| `user_id` | UUID FK | profiles.id, CASCADE |
+| `delta` | INTEGER | Positivo = ingreso, negativo = gasto |
+| `reason` | TEXT | 'diaria' \| 'cesion' \| 'video' \| 'accion' \| 'tienda' \| 'truco' \| 'ajuste' |
+| `detail` | TEXT | Texto libre (accion, accesorio, nombre del Mime...) |
+| `balance_after` | INTEGER | Saldo resultante tras el movimiento |
+| `created_at` | TIMESTAMPTZ | |
+
+**RLS**: solo `SELECT` de lo propio (`user_id = auth.uid()`, rol authenticated).
+Sin policies de INSERT/UPDATE/DELETE — el historial es inmutable desde el
+cliente. Lo escriben unicamente los RPCs a traves del helper
+`log_pm(...)`, cuyo EXECUTE esta revocado a PUBLIC para que nadie pueda
+forjar movimientos desde la API.
+
+## Cambios v12 (202607212100_pm_ledger.sql)
+
+| Cambio | Detalle |
+|--------|---------|
+| Tabla `pm_ledger` + helper `log_pm` | Ver arriba |
+| `add_points(p_delta, p_reason, p_detail)` | Se elimino la version de 1 argumento (ambiguedad de sobrecarga); los DEFAULT mantienen compatibles las llamadas antiguas. Ahora registra en el libro mayor |
+| `claim_daily_reward`, `claim_video_bonus`, `expire_cesion` | Mismos cuerpos + `PERFORM log_pm(...)`. En `expire_cesion` el registro es del CUIDADOR (quien cobra), no de quien dispara el RPC |

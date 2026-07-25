@@ -52,3 +52,43 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     return false
   }
 }
+
+const MESES_CORTOS = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+] as const
+
+/**
+ * Convierte una fecha a texto relativo amigable en español:
+ *   - hace <1 min  -> "ahora"
+ *   - mismo dia    -> "hace 5 min" / "hace 2 h"
+ *   - dia anterior -> "ayer"
+ *   - mas antiguo  -> "12 mar" (con año si no es el actual: "12 mar 2025")
+ *
+ * Lo usan los historiales de mensajes y de Puntos Mimes.
+ */
+export function formatRelativeDate(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+  const now = new Date()
+  const diffMin = Math.floor((now.getTime() - d.getTime()) / 60_000)
+
+  if (diffMin < 1) return 'ahora'
+  if (diffMin < 60) return `hace ${diffMin} min`
+
+  const diffHoras = Math.floor(diffMin / 60)
+  if (diffHoras < 24) return `hace ${diffHoras} h`
+
+  // ¿Fue ayer? (comparacion por dia de calendario, no por 24h exactas)
+  const ayer = new Date(now)
+  ayer.setDate(now.getDate() - 1)
+  if (
+    d.getDate() === ayer.getDate() &&
+    d.getMonth() === ayer.getMonth() &&
+    d.getFullYear() === ayer.getFullYear()
+  ) {
+    return 'ayer'
+  }
+
+  const base = `${d.getDate()} ${MESES_CORTOS[d.getMonth()] ?? ''}`
+  return d.getFullYear() === now.getFullYear() ? base : `${base} ${d.getFullYear()}`
+}

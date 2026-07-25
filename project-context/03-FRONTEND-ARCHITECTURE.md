@@ -133,6 +133,10 @@ Centraliza TODAS las llamadas a Supabase para Mimes. Los componentes no usan `su
 | `getOwnedAccessories(userId)` | Ids de accesorios comprados (pre-v7 devuelve `[]`) |
 | `buyAccessory(userId, id, price, owned)` | Cobra con addPoints y anade a la coleccion (devuelve los PM si falla el guardado) |
 | `equipAccessory(mimeId, id\|null)` | Equipa/quita el accesorio de un Mime |
+| `fetchMessageHistory(mimeId, limit)` | Historial completo de mensajes de un Mime |
+| `fetchPmHistory(limit)` | Ultimos movimientos de PM del usuario (tabla `pm_ledger`; RLS filtra por usuario) |
+| `claimVideoBonus()` | RPC `claim_video_bonus` (+5 PM, max 3/dia) |
+| `unlockLegendary()` | RPC `unlock_legendary` (crea el 4o Mime dorado) |
 
 **Tipos exportados**: `MimeFromDB` (incluye `cesion_start`), `MimeWithNames`, `CesionResult` — interfaces que mapean las columnas de la tabla.
 
@@ -242,6 +246,7 @@ Centraliza etiquetas, colores y configuraciones usadas en multiples componentes:
 | `toStats(m)` | Convierte registro plano de DB a MimeStats |
 | `statsToDbFields(stats)` | Convierte MimeStats a objeto para update de Supabase |
 | `copyToClipboard(text)` | Copia al portapapeles con fallback |
+| `formatRelativeDate(date)` | Fecha relativa en español ("hace 5 min", "ayer", "12 mar"). Compartida por los historiales de mensajes y de PM |
 
 ## Estilos Globales (`src/assets/`)
 
