@@ -62,6 +62,9 @@ free tier no pause el proyecto; si falla, GitHub avisa por email.
 
 ## Documentacion
 
+Para arrancar OTRA app con este mismo montaje (deploy y migraciones
+automaticas): **[PLANTILLA-NUEVA-APP.md](PLANTILLA-NUEVA-APP.md)**.
+
 Toda la documentacion viva esta en [`project-context/`](project-context/):
 vision general, base de datos, arquitectura frontend, componentes,
 mini-juegos, mecanicas y trabajo pendiente. `CLAUDE.md` define las
