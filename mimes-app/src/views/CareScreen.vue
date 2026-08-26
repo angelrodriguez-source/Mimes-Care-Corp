@@ -171,6 +171,10 @@ async function dismissMessage() {
   await markMessageRead(msg.id)
 }
 
+// --- MODO VISITA (no soy el cuidador: mirar si, gastar PM no) ---
+const esVisita = ref(false)
+const tieneCuidador = ref(false)
+
 // --- CARGAR MIME ---
 async function loadMime() {
   loading.value = true
@@ -194,6 +198,12 @@ async function loadMime() {
   afinidad.value = decayed.afinidad
   stats.value = toStats(decayed)
   puntosMimes.value = userStore.profile?.puntos_mimes ?? 0
+
+  // Modo visita: solo el CUIDADOR puede realizar acciones. El dueno
+  // puede entrar a mirar (y el tutorial a ensenar), pero sin gastar PM
+  // — "tus Mimes los cuidan otros" es la regla central del juego.
+  esVisita.value = decayed.cuidador_id !== userStore.user?.id
+  tieneCuidador.value = decayed.cuidador_id !== null
 
   // Crecimiento segun dia de cesion: dia 1=40%, dia 2=50%... dia 6-7=100%
   const day = getCesionDay(decayed.cesion_start)
@@ -226,6 +236,8 @@ const { play: playSfx } = useSfx()
 
 // --- EJECUTAR ACCION (muestra selector de dificultad) ---
 function handleAction(action: CareAction) {
+  // Guard de respaldo del modo visita (el menu ya esta oculto en la UI)
+  if (esVisita.value) return
   const cost = ACTION_COSTS[action]
   if (puntosMimes.value < cost) return
 
@@ -441,8 +453,8 @@ onUnmounted(() => {
         <span class="summary-arrow" :class="{ open: showStats }">&#9654;</span>
       </button>
 
-      <!-- MENU ACCIONES (lateral izquierdo) -->
-      <div class="actions-menu" data-tutorial="actions-menu">
+      <!-- MENU ACCIONES (lateral izquierdo) — solo para el cuidador -->
+      <div v-if="!esVisita" class="actions-menu" data-tutorial="actions-menu">
         <button
           v-for="a in ACTION_CONFIG"
           :key="a.action"
@@ -455,6 +467,13 @@ onUnmounted(() => {
           <span class="fab-icon">{{ a.icon }}</span>
           <span class="fab-cost">{{ ACTION_COSTS[a.action] }}</span>
         </button>
+      </div>
+
+      <!-- MODO VISITA: aviso en lugar del menu de acciones -->
+      <div v-if="esVisita && !loading" class="visita-banner">
+        👀 <strong>Modo visita</strong> —
+        <template v-if="tieneCuidador">a {{ mimeName }} lo cuida su cuidador; tú solo puedes mirar (¡y saludar!)</template>
+        <template v-else>{{ mimeName }} espera cuidador. Compártelo desde el panel para que un amigo lo cuide</template>
       </div>
 
       <!-- PANEL DE STATS (drawer desde la derecha) -->
@@ -775,6 +794,24 @@ onUnmounted(() => {
 .summary-arrow.open { transform: rotate(180deg); }
 
 /* === MENU ACCIONES === */
+/* Banner del modo visita (sustituye al menu de acciones) */
+.visita-banner {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1.5px solid #ffe0b2;
+  border-radius: 14px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #5d4037;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
 .actions-menu {
   position: absolute;
   left: 12px;

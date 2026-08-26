@@ -30,12 +30,15 @@ const targetRect = ref<DOMRect | null>(null)
 // --- NAVEGACION AUTOMATICA ENTRE RUTAS ---
 async function navigateIfNeeded(step: TutorialStep) {
   if (!step.route) return
+  // replace (no push): el recorrido del tutorial no debe dejar huellas
+  // en el historial — si no, "atras" tras acabar devolvia al usuario a
+  // la pantalla de cuidado del tour
   if (step.route === 'dashboard' && route.name !== 'dashboard') {
-    await router.push({ name: 'dashboard' })
+    await router.replace({ name: 'dashboard' })
   } else if (step.route === 'care' && route.name !== 'care') {
     const mimeId = tutorial.careMimeId
     if (mimeId) {
-      await router.push({ name: 'care', params: { id: mimeId } })
+      await router.replace({ name: 'care', params: { id: mimeId } })
     }
   }
 }
