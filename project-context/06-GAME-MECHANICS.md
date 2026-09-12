@@ -335,3 +335,14 @@ estaba bloqueado hasta que un amigo le compartiera uno.
 UI y en el RPC `release_mime`) ni abandona por afinidad baja (`checkAbandon`
 lo omite), y no se puede compartir mientras sea inicial (`generate_share_code`
 exige ser el dueno, y no lo tiene).
+
+## Modo demo (2026-09-12)
+
+Ruta `/care/demo` (boton "🎮 Probar el modo demo" en la seccion Mimes a mi
+cargo — destacado si esta vacia, enlace discreto si no). Carga un Mime
+LOCAL ("Trasto", personalidad/color aleatorios, stats a medias) con una
+cartera falsa de 500 PM. Todo funciona (mini-juegos, stats, afinidad,
+accesorios — en demo estan todos desbloqueados), pero NINGUNA escritura
+llega a Supabase: `esDemo` desconecta persistCareActionResult, addPoints,
+equipAccessory, resetMime y el resync de perfil. Chip fijo "🎮 Demo —
+nada se guarda". Pensado para ensenar la app sin tener Mimes cedidos.

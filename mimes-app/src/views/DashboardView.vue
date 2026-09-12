@@ -610,6 +610,9 @@ onUnmounted(() => {
         <div v-if="caringMimes.length === 0" class="empty-state">
           <p>No estas cuidando ningun Mime todavia.</p>
           <p class="empty-hint">Pide a alguien que comparta su Mime contigo</p>
+          <button class="demo-btn" @click="router.push('/care/demo')">
+            🎮 Probar el modo demo
+          </button>
         </div>
         <div v-else class="cards-list">
           <MimeCard
@@ -630,6 +633,12 @@ onUnmounted(() => {
             @release="handleRelease(mime.id)"
           />
         </div>
+        <!-- Acceso discreto al demo tambien cuando ya cuidas Mimes -->
+        <button
+          v-if="caringMimes.length > 0"
+          class="demo-link"
+          @click="router.push('/care/demo')"
+        >🎮 Modo demo (para ensenar la app, nada se guarda)</button>
       </section>
 
       <!-- ADOPTAR MIME -->
@@ -959,6 +968,34 @@ onUnmounted(() => {
 }
 
 /* EMPTY STATE */
+/* Botones del modo demo */
+.demo-btn {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: #5c6bc0;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+}
+
+.demo-btn:active { background: #3f51b5; }
+
+.demo-link {
+  display: block;
+  margin: 10px auto 0;
+  background: none;
+  border: none;
+  color: #9fa8da;
+  font-size: 12px;
+  font-family: 'Baloo 2', cursive;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .empty-state {
   text-align: center;
   padding: 20px;

@@ -43,6 +43,7 @@ import {
   WEEKEND_AFFINITY_MULT,
   isWeekendBoost,
   getAccessory,
+  ACCESSORIES,
 } from '../constants/gameConstants'
 import { useSfx } from '../composables/useSfx'
 import { useVoice } from '../composables/useVoice'
@@ -121,7 +122,10 @@ const accessoryEmoji = computed(() => getAccessory(equippedAccessory.value)?.emo
 
 async function openAccessoryPicker() {
   if (!userStore.user) return
-  myAccessories.value = await getOwnedAccessories(userStore.user.id)
+  // Demo: todos los accesorios desbloqueados para poder ensenarlos
+  myAccessories.value = esDemo.value
+    ? ACCESSORIES.map(a => a.id)
+    : await getOwnedAccessories(userStore.user.id)
   showAccessoryPicker.value = true
 }
 
@@ -130,6 +134,7 @@ async function handleEquip(accessoryId: string | null) {
   if (accessoryId === equippedAccessory.value) return
   equippedAccessory.value = accessoryId
   playSfx('tap')
+  if (esDemo.value) return // demo: se ve puesto, pero no se guarda
   const { error: eqErr } = await equipAccessory(mimeId.value, accessoryId)
   if (eqErr) showSaveError()
 }
@@ -175,11 +180,48 @@ async function dismissMessage() {
 const esVisita = ref(false)
 const tieneCuidador = ref(false)
 
+// --- MODO DEMO (/care/demo) ---
+// Mime local de mentira con cartera de PM falsa: se puede cuidar y
+// jugar a todo, pero NINGUNA escritura llega a Supabase. Sirve para
+// ensenar la app aunque no tengas Mimes cedidos.
+const esDemo = computed(() => route.params.id === 'demo')
+const DEMO_PM = 500
+
+/** Prepara el Mime de demostracion (sin tocar la base de datos) */
+function loadDemoMime() {
+  const combos = [
+    { personalidad: 'aventurero', color: 'celeste' },
+    { personalidad: 'tranquilo', color: 'lila' },
+    { personalidad: 'picaro', color: 'melocoton' },
+  ] as const
+  const combo = combos[Math.floor(Math.random() * combos.length)]!
+
+  mimeName.value = 'Trasto'
+  personality.value = combo.personalidad
+  colorTheme.value = combo.color
+  // Stats a medias: que se note la mejora al cuidarlo
+  stats.value = { hambre: 48, higiene: 55, diversion: 42, carino: 50, energia: 60, apariencia: 45 }
+  afinidad.value = 18
+  puntosMimes.value = DEMO_PM
+  mimeScale.value = 0.85
+  equippedAccessory.value = null
+  esVisita.value = false
+  tieneCuidador.value = true
+  loading.value = false
+  startWalking()
+}
+
 // --- CARGAR MIME ---
 async function loadMime() {
   loading.value = true
   const id = route.params.id as string
   mimeId.value = id
+
+  // Modo demo: Mime local, nada de Supabase
+  if (esDemo.value) {
+    loadDemoMime()
+    return
+  }
 
   const { mime, error: err } = await fetchMimeById(id)
 
@@ -283,6 +325,13 @@ async function onMiniGameDone(result: MiniGameResult) {
   activeGameConfig.value = null
   pendingAction.value = null
 
+  // Modo demo: efectos solo en local, la cartera es de mentira
+  if (esDemo.value) {
+    if (result.success) applySuccessEffects(action)
+    puntosMimes.value = Math.max(0, puntosMimes.value - cost)
+    return
+  }
+
   if (result.success) {
     applySuccessEffects(action)
     const { error: saveErr } = await persistCareActionResult(
@@ -336,6 +385,7 @@ async function handleReset() {
   stats.value = createInitialStats()
   afinidad.value = 0
   puntosMimes.value = INITIAL_PUNTOS
+  if (esDemo.value) return
 
   await resetMime(mimeId.value, userStore.user!.id)
   userStore.fetchProfile()
@@ -382,18 +432,21 @@ onUnmounted(() => {
         <button class="accessory-btn" data-tutorial="accessory-btn" title="Accesorios" @click="openAccessoryPicker">
           {{ accessoryEmoji ?? '🎀' }}
         </button>
-        <button class="accessory-btn" title="Historial de mensajes" @click="showHistory = true">📜</button>
+        <button v-if="!esDemo" class="accessory-btn" title="Historial de mensajes" @click="showHistory = true">📜</button>
         <template v-if="isDev">
           <button class="reset-care-btn" @click="handleReset">Reset</button>
           <button class="growth-debug-btn" @click="mimeScale = Math.max(0.4, +(mimeScale - 0.1).toFixed(1))">-</button>
           <span class="growth-label">{{ Math.round(mimeScale * 100) }}%</span>
           <button class="growth-debug-btn" @click="mimeScale = Math.min(1.0, +(mimeScale + 0.1).toFixed(1))">+</button>
         </template>
-        <button class="puntos" title="Ver de donde vienen tus PM" @click="pmHistoryOpen = true">
+        <button class="puntos" title="Ver de donde vienen tus PM" @click="!esDemo && (pmHistoryOpen = true)">
           <span class="puntos-icon">&#9829;</span>
           <span class="puntos-value">{{ puntosMimes }}</span>
         </button>
       </header>
+
+      <!-- CHIP DEL MODO DEMO -->
+      <div v-if="esDemo" class="demo-chip">🎮 Demo — juega libremente, nada se guarda</div>
 
       <!-- HABITACION -->
       <MimeRoom
@@ -794,6 +847,23 @@ onUnmounted(() => {
 .summary-arrow.open { transform: rotate(180deg); }
 
 /* === MENU ACCIONES === */
+/* Chip flotante del modo demo */
+.demo-chip {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  background: rgba(92, 107, 192, 0.92);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+}
+
 /* Banner del modo visita (sustituye al menu de acciones) */
 .visita-banner {
   position: fixed;
