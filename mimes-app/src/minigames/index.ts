@@ -82,6 +82,7 @@ const ADVANCED_POOLS: Record<CareAction, GameDef[]> = {
     { load: () => import('./FeedCatchGame.vue'), config: cfg('Cosecha', '🧺', 'Atrapa 10 comidas buenas!', 25000) },
     { load: () => import('./RecipeGame.vue'), config: cfg('La receta', '👨‍🍳', 'Memoriza y repite la receta!', 25000) },
     { load: () => import('./BurgerStackGame.vue'), config: cfg('Torre de burger', '🍔', 'Apila 6 pisos sin fallar!', 25000) },
+    { load: () => import('./CutFruitGame.vue'), config: cfg('Mitad y mitad', '🔪', 'Parte cada fruta en dos mitades iguales!', 20000) },
   ],
   limpiar: [
     { load: () => import('./ScrubGame.vue'), config: cfg('Campo minado', '🧽', 'Limpia sin tocar las minas!', 25000) },

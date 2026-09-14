@@ -130,7 +130,7 @@ Cuando el usuario pulsa una accion, aparece el picker con dos opciones:
 devuelve uno al azar del pool, con **anti-repeticion**: nunca sale el mismo juego dos
 veces seguidas para la misma accion+dificultad (memoria en un Map a nivel de modulo).
 
-Estado actual: **3 juegos por pool** (36 juegos en total). Para anadir otro: crear el
+Estado actual: **3 juegos por pool** (4 en alimentar avanzado) — 37 juegos en total. Para anadir otro: crear el
 .vue con el contrato estandar y anadir `{ load, config }` al pool — nada mas.
 Las configs (titulo, icono, instruccion, duracion) viven junto a cada entrada del pool;
 el `GAME_CONFIGS` global de types.ts se elimino.
@@ -238,3 +238,18 @@ via `useSfx`.
      - Solo guarda PM gastados en Supabase
 6. userStore.fetchProfile() -> refresca PM del header
 ```
+
+## CutFruitGame — "Mitad y mitad" (2026-09-14)
+
+Avanzado de alimentar (4o del pool, 20s). Aparece una fruta ASIMETRICA
+(blob SVG generado al azar: 14 radios irregulares + un lado sesgado mas
+gordo, curvas Q suaves, 4 paletas de fruta) y hay que cortarla en dos
+mitades iguales trazando una linea libre con el dedo (pointer events).
+
+El reparto se mide de verdad: el path se rasteriza en un canvas fuera de
+pantalla y se cuentan los pixeles a cada lado de la recta (muestreo 1 de
+cada 2). Corte bueno = ningun lado < 42%. Las mitades se separan con
+clip-paths de medio plano y se muestra el reparto ("54% / 46%"). Un
+trazo que no atraviesa la fruta avisa y no consume intento.
+
+3 frutas, se gana con 2 cortes buenos (termina antes si ya esta decidido).
